@@ -1,0 +1,24 @@
+{
+  "name": "@roomsense/seed",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "seed:local": "tsx src/upload.ts",
+    "seed:azure": "tsx src/upload.ts"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.0",
+    "@roomsense/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.10",
+    "azurite": "^3.32.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2"
+  }
+}
