@@ -39,6 +39,7 @@
 - [x] (C) README + architecture doc + demo script + og-image +docs @O #26 dep:#22 — done 2026-07-19
 - [ ] (D) real Microsoft Graph adapter (post-demo, if budget lands) +future #27
 - [ ] (D) real IoT Hub ingestion adapter (post-demo) +future #28
+- [ ] (B) OPTIONS preflight intermittently bypasses function code on Flex Consumption +bug @H #29 — see detail below
 
 ## API contract for #5-#12 (frozen — frontend mock mode builds against this)
 - GET /api/health → { status: "ok", buildSha, tables: boolean }
@@ -68,7 +69,7 @@
 - Real/fetch mode requires the `SIMULATOR_KEY` app setting on roomsense-api — currently UNSET, so the live endpoint fails closed (401) for everyone (by design, see api/src/functions/simulate.ts). Presenter mode will prompt for a key and show "Invalid key" until Toine sets one. Enter it once per browser tab (sessionStorage `roomsense.simKey`, never baked into the bundle).
 - Cadence: 30s server-side tick (advances the shared clock / mock counter); actual visible movement follows each page's own poll (Live: 10s). This is intentional, not a bug — don't "fix" it to update instantly.
 
-## OPEN INFRA ISSUE: OPTIONS preflight intermittently answered before reaching function code (2026-07-19)
+## #29 detail: OPTIONS preflight intermittently answered before reaching function code (2026-07-19)
 Discovered while browser-verifying #25 (presenter mode) against the LIVE API — this affects any
 endpoint needing a real preflight (custom header or non-simple method), not just /simulate/tick.
 
