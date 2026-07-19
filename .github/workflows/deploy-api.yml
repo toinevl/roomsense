@@ -63,7 +63,7 @@ jobs:
           tmpdir="$(mktemp -d)"
           cp api/host.json api/package.json "$tmpdir/"
           cp -r api/src api/scripts api/vitest.config.ts api/dist "$tmpdir/" 2>/dev/null || true
-          (cd "$tmpdir" && zip -r "$ZIP_PATH" . >/dev/null 2>&1)
+          (cd "$tmpdir" && zip -X -r "$ZIP_PATH" . >/dev/null 2>&1)
           echo "Zip size: $(stat -c%s "$ZIP_PATH")"
           FULL_URL="https://${PUBLISH_URL}"
           if [ "$FULL_URL" != "$PUBLISH_URL" ]; then
@@ -84,14 +84,34 @@ jobs:
         if: steps.deploy-mode.outputs.mode == 'oidc'
         run: |
           az resource update --resource-group "$RESOURCE_GROUP" --name scm --namespace Microsoft.Web --resource-type basicPublishingCredentialsPolicies --parent "sites/$APP_NAME" --set properties.allow=true || true
+      - name: Stage self-contained deploy package
+        if: steps.deploy-mode.outputs.mode == 'oidc'
+        # api/dist holds ONLY the esbuild bundle — the host also needs host.json,
+        # a package.json whose main points at the bundle, and @azure/functions
+        # (the one dep the bundle externalizes). Remote/Oryx build is off: it
+        # cannot resolve the workspace:* dep and Flex has no Kudu build anyway.
+        run: |
+          set -euo pipefail
+          rm -rf api/deploy-pkg && mkdir -p api/deploy-pkg
+          cp api/host.json api/deploy-pkg/
+          cp -r api/dist api/deploy-pkg/dist
+          node -e "
+            const p = require('./api/package.json');
+            require('fs').writeFileSync('api/deploy-pkg/package.json', JSON.stringify({
+              name: p.name, version: p.version, main: 'dist/src/index.js',
+              dependencies: { '@azure/functions': p.dependencies['@azure/functions'] }
+            }, null, 2));
+          "
+          cd api/deploy-pkg && npm install --omit=dev --no-audit --no-fund
       - name: Deploy to Functions (OIDC)
         if: steps.deploy-mode.outputs.mode == 'oidc'
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ env.APP_NAME }}
-          package: api/dist
-          scm-do-build-during-deployment: true
-          enable-oryx-build: true
+          package: api/deploy-pkg
+          scm-do-build-during-deployment: false
+          enable-oryx-build: false
+          remote-build: false
       - name: Add CORS for SWA (idempotent guard with cors show)
         if: steps.deploy-mode.outputs.mode == 'oidc'
         run: |
