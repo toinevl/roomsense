@@ -48,11 +48,17 @@ jobs:
           AZURE_FUNCTIONAPP_PUBLISH_PROFILE: ${{ secrets.AZURE_PUBLISH_PROFILE }}
         run: |
           set -euo pipefail
+          echo "AZURE_PUBLISH_PROFILE length: ${#AZURE_FUNCTIONAPP_PUBLISH_PROFILE}"
           PROFILE_FILE="$(mktemp)"
           printf '%s' "$AZURE_FUNCTIONAPP_PUBLISH_PROFILE" > "$PROFILE_FILE"
           PUBLISH_URL="$(grep -oP 'publishUrl="\K[^"]+' "$PROFILE_FILE" | head -n 1)"
           USERNAME="$(grep -oP 'userName="\K[^"]+' "$PROFILE_FILE" | head -n 1)"
           PASSWORD="$(grep -oP 'userPWD="\K[^"]+' "$PROFILE_FILE" | head -n 1)"
+          DESTINATION_URL="$(grep -oP 'destinationAppUrl="\K[^"]+' "$PROFILE_FILE" | head -n 1)"
+
+          echo "publishUrl=${PUBLISH_URL}"
+          echo "destinationAppUrl=${DESTINATION_URL}"
+          echo "username=${USERNAME}"
           if [ -z "$PUBLISH_URL" ] || [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
             echo "Missing publish profile fields"; exit 1
           fi
@@ -61,15 +67,25 @@ jobs:
           cp api/host.json api/package.json "$tmpdir/"
           cp -r api/src api/scripts api/vitest.config.ts api/dist "$tmpdir/" 2>/dev/null || true
           (cd "$tmpdir" && zip -r "$ZIP_PATH" . >/dev/null 2>&1)
-          curl -sS -X POST "$PUBLISH_URL/api/zipdeploy" \
+          echo "Zip size: $(stat -c%s "$ZIP_PATH")"
+          HEADERS_FILE="$(mktemp)"
+          curl -sS -D "$HEADERS_FILE" -X POST "$PUBLISH_URL/api/zipdeploy" \
             --user "$USERNAME:$PASSWORD" \
             --header "Content-Type: application/zip" \
-            --data-binary @"$ZIP_PATH" >/tmp/roomsense-zipdeploy.log
-          STATUS="$(tail -n 1 /tmp/roomsense-zipdeploy.log | grep -oP '<status>\K[^<]+' || true)"
-          if [ "$STATUS" != "200" ] && [ "$STATUS" != "202" ]; then
-            echo "Zip deploy failed: $STATUS"; tail -n 20 /tmp/roomsense-zipdeploy.log; exit 1
+            --header "Accept: application/json" \
+            --data-binary @"$ZIP_PATH" >/tmp/roomsense-zipdeploy.log || true
+          STATUS="$(grep -oP '<status>\K[^<]+' /tmp/roomsense-zipdeploy.log || true)"
+          HTTP_CODE="$(grep -iE '^HTTP/[0-9.]+ [0-9]+' "$HEADERS_FILE" | tail -n1 | awk '{print $2}' || true)"
+          echo "zipdeploy http_code=${HTTP_CODE:-unknown}"
+          if [ -n "$HTTP_CODE" ] && { [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "202" ] || [ "$HTTP_CODE" = "409" ]; }; then
+            echo "Zip deploy accepted"
+            exit 0
           fi
-          echo "Zip deploy accepted"
+          if [ "$HTTP_CODE" = "401" ] || [ "$HTTP_CODE" = "403" ]; then
+            echo "Zip deploy auth failed"; tail -n 20 /tmp/roomsense-zipdeploy.log; exit 1
+          fi
+          echo "Zip deploy failed: ${STATUS:-no xml status} http=${HTTP_CODE:-unknown}"
+          tail -n 40 /tmp/roomsense-zipdeploy.log; exit 1
       - name: Az login (OIDC)
         if: steps.deploy-mode.outputs.mode == 'oidc'
         uses: azure/login@v2
