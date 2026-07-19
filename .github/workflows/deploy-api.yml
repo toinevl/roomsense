@@ -67,24 +67,21 @@ jobs:
           cp api/host.json api/package.json "$tmpdir/"
           cp -r api/src api/scripts api/vitest.config.ts api/dist "$tmpdir/" 2>/dev/null || true
           (cd "$tmpdir" && zip -r "$ZIP_PATH" . >/dev/null 2>&1)
+          PROTO_URL="https://${PUBLISH_URL}"
+          ZIP_URL="${PROTO_URL}/api/syncActions"
+          echo "zipdeploy_url=${ZIP_URL}"
           echo "Zip size: $(stat -c%s "$ZIP_PATH")"
-          HEADERS_FILE="$(mktemp)"
-          curl -sS -D "$HEADERS_FILE" -X POST "$PUBLISH_URL/api/zipdeploy" \
+          RES="$(curl -sS -o /tmp/roomsense-zipdeploy.log -w "%{http_code}" -X POST "$ZIP_URL" \
             --user "$USERNAME:$PASSWORD" \
-            --header "Content-Type: application/zip" \
             --header "Accept: application/json" \
-            --data-binary @"$ZIP_PATH" >/tmp/roomsense-zipdeploy.log || true
-          STATUS="$(grep -oP '<status>\K[^<]+' /tmp/roomsense-zipdeploy.log || true)"
-          HTTP_CODE="$(grep -iE '^HTTP/[0-9.]+ [0-9]+' "$HEADERS_FILE" | tail -n1 | awk '{print $2}' || true)"
-          echo "zipdeploy http_code=${HTTP_CODE:-unknown}"
-          if [ -n "$HTTP_CODE" ] && { [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "202" ] || [ "$HTTP_CODE" = "409" ]; }; then
+            -F "file=@${ZIP_PATH};type=application/zip" || true)"
+          echo "zipdeploy http_code=${RES}"
+          if [ "$RES" = "200" ] || [ "$RES" = "202" ] || [ "$RES" = "409" ]; then
             echo "Zip deploy accepted"
             exit 0
           fi
-          if [ "$HTTP_CODE" = "401" ] || [ "$HTTP_CODE" = "403" ]; then
-            echo "Zip deploy auth failed"; tail -n 20 /tmp/roomsense-zipdeploy.log; exit 1
-          fi
-          echo "Zip deploy failed: ${STATUS:-no xml status} http=${HTTP_CODE:-unknown}"
+          if [ "$RES" = "401" ] || [ "$RES" = "403" ]; then echo "Zip deploy auth failed"; fi
+          echo "Zip deploy failed: http=${RES}"
           tail -n 40 /tmp/roomsense-zipdeploy.log; exit 1
       - name: Az login (OIDC)
         if: steps.deploy-mode.outputs.mode == 'oidc'
