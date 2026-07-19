@@ -111,3 +111,29 @@ document this as a known limitation in the README; implement workaround #2 (SWA 
 Files changed for #29: wishlist.md (this entry). api/host.json had its empty `extensions.http`
 block removed (commit ebde3ae) — that change is benign and stays even though it didn't fix the
 bug, because empty-but-present config blocks are still a plausible footgun.
+
+## Data reseed: real TU/e buildings, one week (2026-07-19)
+Requested by Toine: reseed against the real TU/e Atlas/Flux/Neuron buildings with a week of
+sensor + reservation data, instead of the fictional 30-day mock. Room fixtures were already
+updated to real TU/e buildings/room numbers (commit e325790, `<floor>.<room>` IDs, `@tue.nl`
+addresses) before this ran.
+
+- Ran `DAYS=7 TABLES_CONNECTION_STRING=<roomsensestorage> pnpm seed:azure` against live Azure.
+- Gotcha hit: SensorReadings/OccupancySnapshots row keys are timestamp-derived, so upsert cleanly
+  overwrites on re-seed — but Reservations row keys are content-derived
+  (`${startTs}_${hash(organizer+subject)}`), so a top-up run left the OLD 30-day reservations
+  sitting alongside the NEW 7-day ones for the same dates, producing literal double-booked rooms
+  (two different reservations, same room, same overlapping hour). Confirmed and fixed by deleting
+  just the `Reservations` table (`az storage table delete --name Reservations --account-name
+  roomsensestorage --auth-mode login` — note: no `--yes` flag, that errors) and re-running the
+  upload, which recreates it cleanly. Readings/snapshots were intentionally left at their original
+  30-day span (Toine's call) — only Reservations is now scoped to exactly the last 7 days.
+- `az storage table delete` needs explicit human approval — Claude Code's auto-mode classifier
+  blocks it as a destructive action; there is no code workaround, ask the user.
+- Verified live: 15 real rooms (Atlas/Flux/Neuron), 319 reservations across the week, zero
+  overlapping start times per room/day (scripted check across all 15 rooms × 7 days), KPIs and
+  the Live-page ghost overlay browser-verified against a real room (Senaatzaal, atlas-0.710,
+  capacity 80).
+- If reseeding again with a different `days` value in future: always clear Reservations first:
+  `az storage table delete --name Reservations --account-name roomsensestorage --auth-mode login`
+  then re-run `pnpm seed:azure`. SensorReadings/OccupancySnapshots don't need this.
