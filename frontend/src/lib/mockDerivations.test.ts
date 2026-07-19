@@ -41,10 +41,10 @@ describe('deriveRooms', () => {
     const names = rooms.map((r) => r.name)
     expect(names).toContain('Vergaderzaal Höganäs')
     expect(names).toContain('Zaal Curaçao')
-    expect(names).toContain('Café Corner')
-    expect(names).toContain('Boardroom Ørsted')
+    expect(names).toContain('Café Atlas Corner')
+    expect(names).toContain('Boardroom Hèlmholtz')
     // Byte-level check, not just substring match: confirm no mangled encoding.
-    const hoganas = rooms.find((r) => r.roomId === 'atlas-2-210')
+    const hoganas = rooms.find((r) => r.roomId === 'atlas-1.320')
     expect(hoganas?.name).toBe('Vergaderzaal Höganäs')
   })
 

@@ -24,6 +24,11 @@ describe('generate', () => {
     expect(names).toMatch(/Höganäs/)
     expect(names).toMatch(/Curaçao/)
     expect(names).toMatch(/Café/)
+    // TU/e campus buildings only
+    const buildings = new Set(out.rooms.map((r) => r.building))
+    expect([...buildings].sort()).toEqual(['atlas', 'flux', 'neuron'])
+    // Real TU/e room format: <floor>.<room>
+    expect(out.rooms.every((r) => r.roomId.match(/^atlas-|flux-|neuron-\d/))).toBe(true)
   })
 
   test('ghost-meeting rate is roughly 20%', () => {
