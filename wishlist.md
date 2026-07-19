@@ -39,7 +39,7 @@
 - [x] (C) README + architecture doc + demo script + og-image +docs @O #26 dep:#22 — done 2026-07-19
 - [ ] (D) real Microsoft Graph adapter (post-demo, if budget lands) +future #27
 - [ ] (D) real IoT Hub ingestion adapter (post-demo) +future #28
-- [ ] (B) OPTIONS preflight intermittently bypasses function code on Flex Consumption +bug @H #29 — see detail below
+- [x] (B) OPTIONS preflight bypasses function code on Flex Consumption +bug @H #29 — root-caused 2026-07-19 (platform limitation; documented)
 
 ## API contract for #5-#12 (frozen — frontend mock mode builds against this)
 - GET /api/health → { status: "ok", buildSha, tables: boolean }
@@ -69,27 +69,45 @@
 - Real/fetch mode requires the `SIMULATOR_KEY` app setting on roomsense-api — currently UNSET, so the live endpoint fails closed (401) for everyone (by design, see api/src/functions/simulate.ts). Presenter mode will prompt for a key and show "Invalid key" until Toine sets one. Enter it once per browser tab (sessionStorage `roomsense.simKey`, never baked into the bundle).
 - Cadence: 30s server-side tick (advances the shared clock / mock counter); actual visible movement follows each page's own poll (Live: 10s). This is intentional, not a bug — don't "fix" it to update instantly.
 
-## #29 detail: OPTIONS preflight intermittently answered before reaching function code (2026-07-19)
+## #29 detail: OPTIONS preflight bypasses function code on Flex Consumption (root-caused 2026-07-19)
 Discovered while browser-verifying #25 (presenter mode) against the LIVE API — this affects any
-endpoint needing a real preflight (custom header or non-simple method), not just /simulate/tick.
+endpoint needing a real preflight (any cross-origin browser request that triggers one).
 
-- Symptom: OPTIONS /api/* sometimes returns 204 with ZERO headers (no Access-Control-Allow-Origin,
-  not even the unconditional Allow-Methods/Allow-Headers that `corsPreflightResponse()` always sets)
-  — inconsistent, flips between working and broken across minutes with no code/deploy in between.
-- Ruled out: `az functionapp cors show` confirmed `allowedOrigins: []` throughout — platform CORS
-  (the thing fixed for #22) is not reappearing.
-- Evidence it's NOT reaching our function at all: Application Insights `requests` table shows **zero
-  entries** for the OPTIONS call during a failure window, even though the app itself is warm and
-  answering plain GETs fine (confirmed `/api/health` 200, `/api/rooms` GET+CORS fine in the same
-  window). Something below the Functions runtime — the Kestrel front-end that fronts the Node worker
-  on Flex Consumption — is short-circuiting OPTIONS before dispatch, at least some of the time.
-- Leading candidate (unverified — didn't want to edit api/** outside my lane): `api/host.json` has
-  `"extensions": { "http": {} }` — an explicitly empty http extension block. Worth testing whether
-  removing it (vs. omitting the key entirely) changes this, since an empty-but-present CORS-adjacent
-  config block is a plausible trigger for host-level auto-OPTIONS-answering.
-- Impact on #25: presenter mode's CODE and UX are fully correct and verified (mock mode 6/6 e2e green;
-  live-mode prompt/sessionStorage/401-handling flow all behave correctly when the fetch itself
-  succeeds) — this is a pre-existing, endpoint-agnostic infra gap it surfaced, not a #25 bug. Real
-  presenter-mode ticks will fail intermittently with a browser CORS error until this is root-caused.
-- `az functionapp restart` was tried as a mitigation attempt — did not resolve it (still 10/10 failing
-  immediately after a full restart + confirmed warm health check).
+ROOT CAUSE — PLATFORM LIMITATION (not a bug in our code):
+Microsoft's own docs state: "CORS: CORS settings are currently not supported. Exceptions might
+occur if CORS is configured for Flex Consumption apps."
+(https://learn.microsoft.com/en-us/azure/azure-functions/flex-consumption-plan#considerations)
+On Flex Consumption, the Kestrel front-end that fronts the Node worker detects the CORS preflight
+pattern (Origin + Access-Control-Request-Method headers) and short-circuits with an empty 204
+before the request is dispatched to function code. Our corsPreflightResponse() never runs.
+Confirmed by:
+- 5/5 preflights (Origin + ACRM) return 204 with ZERO CORS headers (no Allow-Origin,
+  no Allow-Methods, no Allow-Headers)
+- Same endpoint with NO Origin/ACRM (not a preflight) returns our full CORS header set
+- GitHub issue #5200 (azure-functions-host, 2019) — exact same repro, never resolved
+- GitHub issue #2524 (azure-functions-dotnet-worker, 2024) — Flex Consumption repro
+
+Verified NON-fixes (all tried, none worked):
+- Clear platform CORS (allowedOrigins=[]) and disable supportCredentials — Kestrel still short-circuits
+- Add SWA origin to platform CORS — Kestrel still short-circuits
+- Remove empty `extensions.http` block from host.json (commit ebde3ae) — no change
+- az functionapp restart — no change
+
+What WORKS (the only paths forward):
+1. Migrate API off Flex Consumption to Consumption (Linux) or Premium — platform CORS works there.
+   Cost impact: small. This is the recommended fix before any production use.
+2. Reverse-proxy through SWA's managed API proxy (SWA adds CORS itself; the Function is never
+   called cross-origin from the browser).
+3. Put Azure Front Door / API Management in front and configure CORS there.
+4. Accept the limitation: the demo SWA's mock-mode fixtures work fine; only live API calls
+  requiring preflight fail. The demo script already uses mock mode for everything except the
+  optional /simulate/tick.
+
+Impact on #25: presenter mode CODE/UX correct. Mock-mode e2e 6/6 green. Live-mode ticks will
+fail at the preflight stage until one of the four workarounds above is applied. Recommendation:
+document this as a known limitation in the README; implement workaround #2 (SWA proxy) or #1
+(plan migration) before any non-demo audience.
+
+Files changed for #29: wishlist.md (this entry). api/host.json had its empty `extensions.http`
+block removed (commit ebde3ae) — that change is benign and stays even though it didn't fix the
+bug, because empty-but-present config blocks are still a plausible footgun.
