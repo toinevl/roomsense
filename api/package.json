@@ -1,0 +1,32 @@
+{
+  "name": "@roomsense/api",
+  "version": "0.0.0",
+  "private": true,
+  "description": "RoomSense API — Azure Functions v4 (Node 20/TS). Lane: Hermes.",
+  "main": "dist/src/index.js",
+  "scripts": {
+    "bundle": "node scripts/bundle.mjs",
+    "build": "pnpm bundle",
+    "watch": "tsc --watch",
+    "prestart": "npm run build",
+    "start": "func start",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@azure/data-tables": "^13.3.0",
+    "@azure/functions": "^4.7.0",
+    "@azure/identity": "^4.13.0",
+    "@roomsense/shared": "workspace:*",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.10",
+    "azure-functions-core-tools": "^4.0.7004",
+    "azurite": "^3.32.0",
+    "esbuild": "^0.28.1",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.2"
+  }
+}

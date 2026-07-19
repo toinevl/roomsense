@@ -15,12 +15,12 @@
 - [x] (A) Phase0 shared types + rowKeys with zod & tests +core @O #2 — done 2026-07-19 (12 tests)
 - [x] (A) Phase0 deterministic seed generator (office curve, 20% ghosts, 04:00 reset) +core @O #3 — done 2026-07-19 (9 tests)
 - [x] (A) Phase0 Azurite upload script + local row-count verify +core @O #4 — done 2026-07-19 (43k readings verified)
-- [ ] (A) api scaffold + v4 registration guard test +api @H #5 dep:#4
-- [ ] (A) GET /health +api @H #6 dep:#5
-- [ ] (A) GET /rooms with latest occupancy +api @H #7 dep:#5
-- [ ] (A) GET /rooms/{id}/occupancy range query +api @H #8 dep:#5
-- [ ] (B) GET /rooms/{id}/readings raw telemetry +api @H #9 dep:#5
-- [ ] (B) GET /rooms/{id}/reservations +api @H #10 dep:#5
+- [x] (A) api scaffold + v4 registration guard test +api @H #5 — done 2026-07-19 (31 tests; bundle fix for shared ESM)
+- [x] (A) GET /health +api @H #6 — done 2026-07-19
+- [x] (A) GET /rooms with latest occupancy +api @H #7 — done 2026-07-19
+- [x] (A) GET /rooms/{id}/occupancy range query +api @H #8 — done 2026-07-19 (inverted-ticks bound swap fix)
+- [x] (B) GET /rooms/{id}/readings raw telemetry +api @H #9 — done 2026-07-19
+- [x] (B) GET /rooms/{id}/reservations +api @H #10 — done 2026-07-19
 - [ ] (A) GET /kpis (utilization, ghost rate, wasted EUR) +api @H #11 dep:#7
 - [ ] (B) POST /simulate/tick key-protected live mode +api @H #12 dep:#8
 - [x] (A) frontend scaffold + hash router + config.ts +ui @C #13 — done 2026-07-19
