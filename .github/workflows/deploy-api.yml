@@ -41,6 +41,8 @@ jobs:
         with: { node-version: "20", cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - name: Build api
+        env:
+          BUILD_SHA: ${{ github.sha }}
         run: pnpm --filter @roomsense/api build
       - name: Deploy (publish-profile fallback)
         if: steps.deploy-mode.outputs.mode == 'publish-profile'
@@ -120,13 +122,20 @@ jobs:
           scm-do-build-during-deployment: false
           enable-oryx-build: false
           remote-build: false
-      - name: Add CORS for SWA (idempotent guard with cors show)
+      - name: Ensure platform CORS is empty (function-level CORS only)
         if: steps.deploy-mode.outputs.mode == 'oidc'
+        # Platform-level `az functionapp cors add` intercepts OPTIONS preflight
+        # at the host layer before function code runs, and its own preflight
+        # response carries no Access-Control-Allow-Origin header — this broke
+        # every browser preflight (incl. /simulate/tick) until diagnosed
+        # 2026-07-19 (see wishlist.md). CORS is fully handled by api/src/lib/cors.ts;
+        # this step actively clears any platform origins instead of adding them.
         run: |
-          SWA_HOSTNAME="${{ vars.ROOMSENSE_SWA_URL }}"
-          if [ -z "$SWA_HOSTNAME" ]; then echo "Warning: ROOMSENSE_SWA_URL not set, skipping CORS add"; exit 0; fi
           EXISTING=$(az functionapp cors show --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" -o tsv --query "allowedOrigins" 2>/dev/null || echo "")
-          if echo "$EXISTING" | grep -q "$SWA_HOSTNAME"; then echo "CORS already configured for $SWA_HOSTNAME"; else echo "Adding CORS for $SWA_HOSTNAME"; az functionapp cors add --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" --allowed-origins "$SWA_HOSTNAME"; fi
+          for o in $EXISTING; do
+            echo "Removing stale platform CORS origin: $o"
+            az functionapp cors remove --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" --allowed-origins "$o"
+          done
       - name: Wait for warmup (cold start ~60s lesson)
         run: sleep 60
       - name: Smoke test (health endpoint with 90s retry tolerance)
