@@ -84,6 +84,14 @@ jobs:
         if: steps.deploy-mode.outputs.mode == 'oidc'
         run: |
           az resource update --resource-group "$RESOURCE_GROUP" --name scm --namespace Microsoft.Web --resource-type basicPublishingCredentialsPolicies --parent "sites/$APP_NAME" --set properties.allow=true || true
+      - name: Clear Run-From-Package for ZIP deploy
+        if: steps.deploy-mode.outputs.mode == 'oidc'
+        run: |
+          az functionapp config appsettings set \
+            --name "$APP_NAME" \
+            --resource-group "$RESOURCE_GROUP" \
+            --settings "WEBSITE_RUN_FROM_PACKAGE=" \
+            --output none
       - name: Stage self-contained deploy package
         if: steps.deploy-mode.outputs.mode == 'oidc'
         # api/dist holds ONLY the esbuild bundle — the host also needs host.json,
