@@ -350,6 +350,8 @@ table { border-collapse: collapse; width: 100%; }
 }
 .arch-note strong { color: var(--text-primary); }
 .seam-callout { border-left: 3px solid var(--series-5); }
+.limitation-callout { border-left: 3px solid var(--status-warning); }
+.limitation-callout a { color: var(--text-primary); }
 
 /* responsive */
 @media (max-width: 760px) {

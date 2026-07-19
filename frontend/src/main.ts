@@ -118,9 +118,9 @@ async function startPresenterMode(): Promise<void> {
     await tickOnce(key)
   } catch (err) {
     const unauthorized = err instanceof Error && err.message.startsWith('401')
-    setPresenterLabel(unauthorized ? 'Invalid key' : 'Tick failed')
+    setPresenterLabel(unauthorized ? 'Invalid key' : 'Blocked — see Architecture')
     if (unauthorized) sessionStorage.removeItem(SIM_KEY_STORAGE)
-    setTimeout(() => setPresenterLabel('Presenter mode'), 2500)
+    setTimeout(() => setPresenterLabel('Presenter mode'), unauthorized ? 2500 : 5000)
     return
   }
 
@@ -134,7 +134,7 @@ async function startPresenterMode(): Promise<void> {
     void tickOnce(key).catch((err) => {
       const unauthorized = err instanceof Error && err.message.startsWith('401')
       if (unauthorized) sessionStorage.removeItem(SIM_KEY_STORAGE)
-      stopPresenterMode(unauthorized ? 'Invalid key' : 'Tick failed')
+      stopPresenterMode(unauthorized ? 'Invalid key' : 'Blocked — see Architecture')
     })
   }, TICK_INTERVAL_MS)
 }

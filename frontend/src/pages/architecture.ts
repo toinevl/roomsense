@@ -263,6 +263,20 @@ function renderContent(): string {
       generator that models office-hours traffic, ~20% ghost meetings, and daily 04:00 counter resets to
       match Terabee's real cumulative-counter behaviour — realistic in shape, not in origin.
     </div>
+    <div class="arch-note limitation-callout">
+      <strong>Known limitation — Presenter mode's live tick:</strong> reading data (Dashboard, Live,
+      the reservations overlay) works normally — it's plain <code>GET</code> requests, which browsers
+      never preflight. But <a href="#live">Presenter mode</a>'s <code>POST /api/simulate/tick</code>
+      currently fails in the browser with a CORS error, even with a correct key. This is a
+      <a href="https://learn.microsoft.com/en-us/azure/azure-functions/flex-consumption-plan#considerations" target="_blank" rel="noopener">documented Azure Flex Consumption platform
+      limitation</a>, not a bug in this app's code: Flex Consumption's front-end intercepts the
+      browser's CORS preflight and returns an empty response before it ever reaches our function —
+      confirmed by zero request telemetry for the blocked calls. Fixing it for real means moving off
+      Flex Consumption (Consumption/Premium plan), proxying the API through the Static Web App's
+      managed API integration, or fronting it with Azure Front Door/API Management — see the project
+      wiki for the full diagnosis and options. Left as a known limitation for now; every other part of
+      the demo is unaffected.
+    </div>
   `
 }
 
