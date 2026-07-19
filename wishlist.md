@@ -33,7 +33,7 @@
 - [x] (A) ci.yml lint/typecheck/test with workflow_dispatch +infra @O #20 — done 2026-07-19
 - [x] (A) deploy workflows + CORS step + 60s cold-start smoke +infra @O #21 — done 2026-07-19 (unproven until #22 first run)
 - [x] (A) provision rgRoomSense, deploy, seed azure, e2e verify +deploy @O #22 dep:#21,#11,#15 — done 2026-07-19
-- [ ] (B) outlook-mock SourceAdapter + adding-a-source.md +extend @H #23 dep:#22
+- [x] (B) outlook-mock SourceAdapter + adding-a-source.md +extend @H #23 dep:#22 — done 2026-07-19
 - [x] (B) reservations overlay timeline (ghost visual) +extend @C #24 — done 2026-07-19 (Live page drill-in; browser + e2e verified)
 - [ ] (C) presenter mode auto-tick button +extend @C #25 dep:#22
 - [x] (C) README + architecture doc + demo script + og-image +docs @O #26 dep:#22 — done 2026-07-19
