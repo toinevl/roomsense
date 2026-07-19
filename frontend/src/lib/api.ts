@@ -74,7 +74,13 @@ const fetchClient: ApiClient = {
     request(`/rooms/${encodeURIComponent(roomId)}/readings${qs({ limit })}`),
   getRoomReservations: (roomId, date) =>
     request(`/rooms/${encodeURIComponent(roomId)}/reservations${qs({ date })}`),
-  getKpis: (from, to) => request(`/kpis${qs({ from, to })}`),
+  getKpis: (from, to) => {
+    // The frozen contract requires an explicit range (the API 400s without
+    // one — the mock is lenient, live is strict). Default: trailing 30 days.
+    const toTs = to ?? new Date().toISOString()
+    const fromTs = from ?? new Date(Date.parse(toTs) - 30 * 24 * 60 * 60 * 1000).toISOString()
+    return request(`/kpis${qs({ from: fromTs, to: toTs })}`)
+  },
   simulateTick: (key) =>
     request('/simulate/tick', { method: 'POST', headers: { 'x-sim-key': key } }),
   tickMockClock: () => 0,
