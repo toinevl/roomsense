@@ -1,7 +1,7 @@
 import { apiClient } from '../lib/api'
-import type { RoomWithOccupancy, SensorReading } from '../lib/apiTypes'
+import type { OccupancySnapshot, Reservation, RoomWithOccupancy, SensorReading } from '../lib/apiTypes'
 import { formatPercent, formatTimestamp } from '../lib/format'
-import { SEQUENTIAL_STEPS, sequentialStepForPct } from '../lib/charts'
+import { SEQUENTIAL_STEPS, createTooltip, linearScale, sequentialStepForPct, svgEl, tooltipRow } from '../lib/charts'
 import type { Page } from './types'
 
 const POLL_INTERVAL_MS = 10_000
@@ -110,6 +110,193 @@ function telemetryRow(reading: SensorReading): HTMLTableRowElement {
   return tr
 }
 
+// ---------------------------------------------------------------------------
+// Reservations overlay (#24) — booked slots (Outlook mock) laid over measured
+// occupancy for one room on one day, so a "ghost meeting" (booked, sensor saw
+// nobody) is visible at a glance next to the telemetry that proves it. Mirrors
+// the dashboard's "booked vs actually used" derivation: ghost status comes
+// from occupancy peaking at 0 during the slot, never a stored flag (see
+// CLAUDE.md). Uses only apiClient calls, so it works identically in mock and
+// fetch mode — no mock-only internals.
+// ---------------------------------------------------------------------------
+
+interface OverlayReservation extends Reservation {
+  ghost: boolean
+}
+
+/** Most recent day (UTC) with at least one reservation for this room, probed
+ *  backward from its last-seen timestamp — never the wall clock, since the
+ *  mock's fixed dataset window is independent of "today" (see dashboard.ts). */
+async function findRecentReservationDay(room: RoomWithOccupancy): Promise<string> {
+  let cursor = new Date(room.lastSeenTs || Date.now())
+  cursor.setUTCHours(0, 0, 0, 0)
+  for (let i = 0; i < 8; i++) {
+    const dateStr = cursor.toISOString().slice(0, 10)
+    const sample = await apiClient.getRoomReservations(room.roomId, dateStr)
+    if (sample.length > 0) return dateStr
+    cursor = new Date(cursor.getTime() - 24 * 3_600_000)
+  }
+  return cursor.toISOString().slice(0, 10)
+}
+
+function maxOccupancyDuring(occupancy: OccupancySnapshot[], startMs: number, endMs: number): number {
+  let peak = 0
+  for (const snap of occupancy) {
+    const ts = Date.parse(snap.ts)
+    if (ts < startMs || ts >= endMs) continue
+    if (snap.occupancy > peak) peak = snap.occupancy
+  }
+  return peak
+}
+
+function hourOfDayUtc(iso: string, dayStartMs: number): number {
+  return (Date.parse(iso) - dayStartMs) / 3_600_000
+}
+
+const OVERLAY_WIDTH = 720
+const OVERLAY_HEIGHT = 180
+const OVERLAY_PAD = { top: 10, right: 12, bottom: 24, left: 12 }
+const BAND_Y = OVERLAY_PAD.top
+const BAND_HEIGHT = 16
+const AREA_TOP = BAND_Y + BAND_HEIGHT + 10
+const AREA_BOTTOM = OVERLAY_HEIGHT - OVERLAY_PAD.bottom
+
+function renderReservationsOverlay(
+  room: RoomWithOccupancy,
+  date: string,
+  reservations: OverlayReservation[],
+  occupancy: OccupancySnapshot[],
+): HTMLElement {
+  const card = document.createElement('div')
+  card.className = 'overlay-card'
+
+  const title = document.createElement('div')
+  title.className = 'chart-title'
+  title.textContent = 'Booked vs. measured occupancy'
+  const caption = document.createElement('div')
+  caption.className = 'chart-caption'
+  caption.textContent = reservations.length
+    ? `${date} · ${reservations.length} booked slot${reservations.length === 1 ? '' : 's'}, ${reservations.filter((r) => r.ghost).length} ghost`
+    : `No reservations found for ${room.name} in the sampled window.`
+  card.append(title, caption)
+
+  if (reservations.length === 0 && occupancy.every((s) => s.occupancy === 0)) {
+    return card
+  }
+
+  const dayStartMs = Date.parse(`${date}T00:00:00.000Z`)
+  const x = linearScale(0, 24, OVERLAY_PAD.left, OVERLAY_WIDTH - OVERLAY_PAD.right)
+  const maxOcc = Math.max(1, room.capacity, ...occupancy.map((s) => s.occupancy))
+  const y = linearScale(0, maxOcc, AREA_BOTTOM, AREA_TOP)
+
+  const wrap = document.createElement('div')
+  wrap.className = 'overlay-svg-wrap'
+  const svg = svgEl('svg', {
+    viewBox: `0 0 ${OVERLAY_WIDTH} ${OVERLAY_HEIGHT}`,
+    role: 'img',
+    'aria-label': `Booked slots and measured occupancy for ${room.name} on ${date}`,
+  })
+  svg.style.width = '100%'
+  svg.style.height = `${OVERLAY_HEIGHT}px`
+
+  // Hour gridlines every 3h, labeled every 6h.
+  for (let h = 0; h <= 24; h += 3) {
+    const gx = x(h)
+    const line = svgEl('line', {
+      x1: gx, x2: gx, y1: AREA_TOP, y2: AREA_BOTTOM,
+      stroke: 'var(--gridline)', 'stroke-width': 1,
+    })
+    svg.appendChild(line)
+    if (h % 6 === 0) {
+      const label = svgEl('text', {
+        x: gx, y: OVERLAY_HEIGHT - 6, 'font-size': 9, fill: 'var(--text-muted)',
+        'text-anchor': h === 0 ? 'start' : h === 24 ? 'end' : 'middle',
+      })
+      label.textContent = `${String(h).padStart(2, '0')}:00`
+      svg.appendChild(label)
+    }
+  }
+
+  // Measured occupancy as a filled area.
+  if (occupancy.length > 0) {
+    const sorted = [...occupancy].sort((a, b) => Date.parse(a.ts) - Date.parse(b.ts))
+    const points = sorted.map((s) => `${x(hourOfDayUtc(s.ts, dayStartMs))},${y(s.occupancy)}`)
+    const first = sorted[0]!
+    const last = sorted[sorted.length - 1]!
+    const areaPath = [
+      `M ${x(hourOfDayUtc(first.ts, dayStartMs))},${AREA_BOTTOM}`,
+      `L ${points.join(' L ')}`,
+      `L ${x(hourOfDayUtc(last.ts, dayStartMs))},${AREA_BOTTOM}`,
+      'Z',
+    ].join(' ')
+    svg.appendChild(svgEl('path', { d: areaPath, fill: 'var(--series-1)', opacity: 0.18 }))
+    svg.appendChild(
+      svgEl('path', { d: `M ${points.join(' L ')}`, fill: 'none', stroke: 'var(--series-1)', 'stroke-width': 1.5 }),
+    )
+  }
+
+  const tooltip = createTooltip()
+  wrap.append(svg, tooltip.el)
+
+  // Reservation bands: green = someone showed, red = ghost (booked, empty).
+  for (const r of reservations) {
+    const startH = hourOfDayUtc(r.startTs, dayStartMs)
+    const endH = hourOfDayUtc(r.endTs, dayStartMs)
+    const rectX = x(Math.max(0, startH))
+    const rectW = Math.max(2, x(Math.min(24, endH)) - rectX)
+    const rect = svgEl('rect', {
+      x: rectX, y: BAND_Y, width: rectW, height: BAND_HEIGHT, rx: 3,
+      fill: r.ghost ? 'var(--status-critical)' : 'var(--status-good)',
+      opacity: 0.85,
+    })
+    rect.style.cursor = 'pointer'
+    rect.addEventListener('pointermove', (ev) => {
+      tooltip.show(ev.clientX, ev.clientY, wrap, [
+        tooltipRow(r.ghost ? 'var(--status-critical)' : 'var(--status-good)', r.subject, r.ghost ? 'ghost' : 'used'),
+        tooltipRow('transparent', 'Organizer', r.organizer),
+        tooltipRow(
+          'transparent',
+          'Time',
+          `${formatTimestamp(r.startTs).slice(-5)}–${formatTimestamp(r.endTs).slice(-5)}`,
+        ),
+        tooltipRow('transparent', 'Attendees', String(r.attendeeCount)),
+      ])
+    })
+    rect.addEventListener('pointerleave', () => tooltip.hide())
+    svg.appendChild(rect)
+  }
+
+  wrap.appendChild(svg)
+  card.appendChild(wrap)
+
+  const legend = document.createElement('div')
+  legend.className = 'overlay-legend'
+  legend.innerHTML = `
+    <span class="legend-item"><span class="legend-swatch" style="background:var(--status-good)"></span>Booked, used</span>
+    <span class="legend-item"><span class="legend-swatch" style="background:var(--status-critical)"></span>Ghost meeting</span>
+    <span class="legend-item"><span class="legend-swatch" style="background:var(--series-1);opacity:.4"></span>Measured occupancy</span>
+  `
+  card.appendChild(legend)
+
+  return card
+}
+
+async function loadReservationsOverlay(room: RoomWithOccupancy): Promise<HTMLElement> {
+  const date = await findRecentReservationDay(room)
+  const dayStart = `${date}T00:00:00.000Z`
+  const dayEnd = `${date}T23:59:59.999Z`
+  const [reservations, occupancy] = await Promise.all([
+    apiClient.getRoomReservations(room.roomId, date),
+    apiClient.getRoomOccupancy(room.roomId, dayStart, dayEnd),
+  ])
+  const overlayReservations: OverlayReservation[] = reservations.map((r) => {
+    const startMs = Date.parse(r.startTs)
+    const endMs = Date.parse(r.endTs)
+    return { ...r, ghost: maxOccupancyDuring(occupancy, startMs, endMs) === 0 }
+  })
+  return renderReservationsOverlay(room, date, overlayReservations, occupancy)
+}
+
 async function renderDrillPanel(): Promise<void> {
   if (!rootEl) return
   const slot = rootEl.querySelector('#drill-slot')!
@@ -171,6 +358,8 @@ async function renderDrillPanel(): Promise<void> {
     deviceMetaItem('Last seen', formatTimestamp(room.lastSeenTs)),
   )
   panel.appendChild(metaGrid)
+
+  panel.appendChild(await loadReservationsOverlay(room))
 
   const tableTitle = document.createElement('div')
   tableTitle.className = 'chart-title'

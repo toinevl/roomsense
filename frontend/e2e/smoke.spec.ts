@@ -39,6 +39,26 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(page.locator('.drill-panel')).toHaveCount(0)
   })
 
+  test('live page drill-in shows the reservations overlay (#24)', async ({ page }) => {
+    await page.goto('/#live')
+    const roomCards = page.locator('.room-card')
+
+    // Find a room whose overlay actually has booked slots — several rooms
+    // in the seeded window have none, so scan a few before asserting.
+    let overlayCaption = ''
+    const count = await roomCards.count()
+    for (let i = 0; i < count; i++) {
+      await roomCards.nth(i).click()
+      await expect(page.locator('.overlay-card')).toBeVisible()
+      overlayCaption = await page.locator('.overlay-card .chart-caption').innerText()
+      if (/booked slot/.test(overlayCaption)) break
+    }
+
+    expect(overlayCaption).toMatch(/booked slot/)
+    await expect(page.locator('.overlay-svg-wrap svg')).toBeVisible()
+    await expect(page.locator('.overlay-legend .legend-item')).toHaveCount(3)
+  })
+
   test('architecture page renders the diagram with honest labeling', async ({ page }) => {
     await page.goto('/#architecture')
     await expect(page.getByRole('heading', { name: /demo path vs\. real path/i })).toBeVisible()

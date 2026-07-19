@@ -310,6 +310,12 @@ table { border-collapse: collapse; width: 100%; }
 .telemetry-scroll table { font-size: 0.78rem; }
 .telemetry-scroll thead th { position: sticky; top: 0; background: var(--surface-card); z-index: 1; }
 
+.overlay-card { margin-bottom: 1.25rem; }
+.overlay-svg-wrap { position: relative; margin-top: 0.5rem; }
+.overlay-legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.4rem; font-size: 0.72rem; color: var(--text-secondary); }
+.legend-item { display: inline-flex; align-items: center; gap: 0.35rem; }
+.legend-swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
 /* ---------------------------------------------------------------------------
    Architecture page
    --------------------------------------------------------------------------- */
