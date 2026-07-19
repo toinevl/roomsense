@@ -49,15 +49,12 @@ jobs:
         run: |
           set -euo pipefail
           echo "AZURE_PUBLISH_PROFILE length: ${#AZURE_FUNCTIONAPP_PUBLISH_PROFILE}"
-          PROFILE_FILE="$(mktemp)"
-          printf '%s' "$AZURE_FUNCTIONAPP_PUBLISH_PROFILE" > "$PROFILE_FILE"
-          PUBLISH_URL="$(grep -oP 'publishUrl="\K[^"]+' "$PROFILE_FILE" | head -n 1)"
-          USERNAME="$(grep -oP 'userName="\K[^"]+' "$PROFILE_FILE" | head -n 1)"
-          PASSWORD="$(grep -oP 'userPWD="\K[^"]+' "$PROFILE_FILE" | head -n 1)"
-          DESTINATION_URL="$(grep -oP 'destinationAppUrl="\K[^"]+' "$PROFILE_FILE" | head -n 1)"
-
+          PROFILE_XML="$(mktemp)"
+          printf '%s' "$AZURE_FUNCTIONAPP_PUBLISH_PROFILE" > "$PROFILE_XML"
+          PUBLISH_URL="$(grep -oP 'publishUrl="\K[^"]+' "$PROFILE_XML" | head -n 1)"
+          USERNAME="$(grep -oP 'userName="\K[^"]+' "$PROFILE_XML" | head -n 1)"
+          PASSWORD="$(grep -oP 'userPWD="\K[^"]+' "$PROFILE_XML" | head -n 1)"
           echo "publishUrl=${PUBLISH_URL}"
-          echo "destinationAppUrl=${DESTINATION_URL}"
           echo "username=${USERNAME}"
           if [ -z "$PUBLISH_URL" ] || [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
             echo "Missing publish profile fields"; exit 1
@@ -67,22 +64,15 @@ jobs:
           cp api/host.json api/package.json "$tmpdir/"
           cp -r api/src api/scripts api/vitest.config.ts api/dist "$tmpdir/" 2>/dev/null || true
           (cd "$tmpdir" && zip -r "$ZIP_PATH" . >/dev/null 2>&1)
-          PROTO_URL="https://${PUBLISH_URL}"
-          ZIP_URL="${PROTO_URL}/api/syncActions"
-          echo "zipdeploy_url=${ZIP_URL}"
           echo "Zip size: $(stat -c%s "$ZIP_PATH")"
-          RES="$(curl -sS -o /tmp/roomsense-zipdeploy.log -w "%{http_code}" -X POST "$ZIP_URL" \
-            --user "$USERNAME:$PASSWORD" \
-            --header "Accept: application/json" \
-            -F "file=@${ZIP_PATH};type=application/zip" || true)"
-          echo "zipdeploy http_code=${RES}"
-          if [ "$RES" = "200" ] || [ "$RES" = "202" ] || [ "$RES" = "409" ]; then
-            echo "Zip deploy accepted"
-            exit 0
+          FULL_URL="https://${PUBLISH_URL}"
+          if [ "$FULL_URL" != "$PUBLISH_URL" ]; then
+            AZURE_URL="$FULL_URL/api/zipdeploy"
+          else
+            AZURE_URL="https://${PUBLISH_URL}/api/zipdeploy"
           fi
-          if [ "$RES" = "401" ] || [ "$RES" = "403" ]; then echo "Zip deploy auth failed"; fi
-          echo "Zip deploy failed: http=${RES}"
-          tail -n 40 /tmp/roomsense-zipdeploy.log; exit 1
+          echo "zipdeploy_url=${AZURE_URL}"
+          MS_DEPLOY_URL="$AZURE_URL" ZIP_PATH="$ZIP_PATH" ZIP_USER="$USERNAME" ZIP_PASS="$PASSWORD" node infra/publish-profile-deploy.mjs
       - name: Az login (OIDC)
         if: steps.deploy-mode.outputs.mode == 'oidc'
         uses: azure/login@v2
