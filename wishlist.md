@@ -21,8 +21,8 @@
 - [x] (A) GET /rooms/{id}/occupancy range query +api @H #8 — done 2026-07-19 (inverted-ticks bound swap fix)
 - [x] (B) GET /rooms/{id}/readings raw telemetry +api @H #9 — done 2026-07-19
 - [x] (B) GET /rooms/{id}/reservations +api @H #10 — done 2026-07-19
-- [ ] (A) GET /kpis (utilization, ghost rate, wasted EUR) +api @H #11 dep:#7
-- [ ] (B) POST /simulate/tick key-protected live mode +api @H #12 dep:#8
+- [x] (A) GET /kpis (utilization, ghost rate, wasted EUR) +api @H #11 — done 2026-07-19 (10 tests; peakUtilizationPct clamped to 100)
+- [x] (B) POST /simulate/tick key-protected live mode +api @H #12 — done 2026-07-19 (8 tests; cumulative counters, fail-closed auth)
 - [x] (A) frontend scaffold + hash router + config.ts +ui @C #13 — done 2026-07-19
 - [x] (A) typed api client with VITE_MOCK=1 fixture mode +ui @C #14 — done 2026-07-19 (22 tests)
 - [x] (A) C-level dashboard (KPI tiles, heatmap, booked-vs-used, ghost table) +ui @C #15 — done 2026-07-19
