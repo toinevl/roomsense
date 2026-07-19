@@ -55,3 +55,11 @@
 - Ghost derivation: derive ghosts from occupancy data (slot max occupancy == 0), NOT from any seed-internal flag. Walk-in traffic can overlap a generator-flagged ghost slot — occupancy-derived is the correct production semantic; do not "fix" toward the seed flag.
 - /rooms "latest occupancy": seed data ends at UTC midnight, so the literal newest snapshot is always ~0%. Frontend anchors "current" to the most recent office-hours (weekday 08:00-18:00 UTC) snapshot; consider the same anchoring server-side, or the dashboard shows dead rooms when demoed outside office hours.
 - pnpm-lock.yaml is the ONLY shared file between lanes; ci.yml temporarily uses --no-frozen-lockfile until both lanes are committed (revert at #22).
+
+## Deploy runbook facts (#22, verified 2026-07-19)
+- Subscription: Visual Studio Enterprise 2dbeb3f1-e45d-4207-a7e9-185330aad74b; rg rgRoomSense (westeurope).
+- Deploy identity: app `roomsense-github-deploy` (appId a4432cfb-4e76-4376-8785-95f8be16fd4e), Contributor on rg only. TWO federated credentials needed: classic subject AND GitHub's immutable-ID subject `repo:toinevl@46485764/roomsense@1305566744:ref:refs/heads/main` (GitHub now presents the ID form; AADSTS700213 tells you the exact subject to register).
+- Flex Consumption: publish-profile/Kudu does NOT exist (Empty reply from scm host) — OIDC + functions-action with prebuilt self-contained package only. A stale `WEBSITE_RUN_FROM_PACKAGE` app setting blocks all zip deploys (RunFromExternalUrlException) — delete it.
+- Live: https://lemon-mud-06bc7fd03.7.azurestaticapps.net (SWA) → https://roomsense-api.azurewebsites.net/api (vars.ROOMSENSE_API_URL MUST include /api).
+- For #25 (Hermes note): OPTIONS preflight currently returns 204 WITHOUT CORS headers — fine for plain GETs, but the x-sim-key POST will be preflighted and blocked; fix cors.ts preflight response before building presenter mode.
+- Demo-quality (optional, Hermes): GET /rooms returns literal latest snapshot (0% outside office hours); frontend anchors client-side, server could do the same.
