@@ -11,15 +11,6 @@ permissions:
   contents: read
 
 env:
-  # Required GitHub Actions secrets (set via Settings → Secrets and variables → Actions):
-  # - AZURE_CLIENT_ID: app registration's application (client) ID
-  # - AZURE_TENANT_ID: AAD tenant ID
-  # - AZURE_SUBSCRIPTION_ID: subscription ID holding rgRoomSense
-  #
-  # Required GitHub Actions repo variables:
-  # - ROOMSENSE_API_URL: deployed Function App URL (e.g. https://roomsense-api.azurewebsites.net)
-  #
-  # Setup: see infra/RECOVERY.md for OIDC federated credential creation steps.
   APP_NAME: roomsense-api
   RESOURCE_GROUP: rgRoomSense
 
@@ -32,11 +23,17 @@ jobs:
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
     steps:
       - uses: actions/checkout@v4
-      - name: Guard required secrets
+      - name: Select deploy mode
+        id: deploy-mode
         run: |
-          for v in AZURE_CLIENT_ID AZURE_TENANT_ID AZURE_SUBSCRIPTION_ID; do
-            if [ -z "${!v}" ]; then echo "Missing secret $v"; exit 1; fi
-          done
+          if [ -n "${{ secrets.AZURE_PUBLISH_PROFILE }}" ]; then
+            echo "mode=publish-profile" >> "$GITHUB_OUTPUT"
+          elif [ -n "${{ secrets.AZURE_CLIENT_ID }}" ] && [ -n "${{ secrets.AZURE_TENANT_ID }}" ] && [ -n "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]; then
+            echo "mode=oidc" >> "$GITHUB_OUTPUT"
+          else
+            echo "No deploy credentials configured (need AZURE_PUBLISH_PROFILE or OIDC trio)."
+            exit 1
+          fi
       - uses: pnpm/action-setup@v4
         with: { version: 9.12.0 }
       - uses: actions/setup-node@v4
@@ -44,16 +41,47 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - name: Build api
         run: pnpm --filter @roomsense/api build
+      - name: Deploy (publish-profile fallback)
+        if: steps.deploy-mode.outputs.mode == 'publish-profile'
+        env:
+          AZURE_FUNCTIONAPP_PUBLISH_PROFILE: ${{ secrets.AZURE_PUBLISH_PROFILE }}
+        run: |
+          set -euo pipefail
+          PROFILE_FILE="$(mktemp)"
+          printf '%s' "$AZURE_FUNCTIONAPP_PUBLISH_PROFILE" > "$PROFILE_FILE"
+          PUBLISH_URL="$(grep -oP 'publishUrl="\K[^"]+' "$PROFILE_FILE" | head -n 1)"
+          USERNAME="$(grep -oP 'userName="\K[^"]+' "$PROFILE_FILE" | head -n 1)"
+          PASSWORD="$(grep -oP 'userPWD="\K[^"]+' "$PROFILE_FILE" | head -n 1)"
+          if [ -z "$PUBLISH_URL" ] || [ -z "$USERNAME" ] || [ -z "$PASSWORD" ]; then
+            echo "Missing publish profile fields"; exit 1
+          fi
+          ZIP_PATH="/tmp/roomsense-api-$(date +%s).zip"
+          tmpdir="$(mktemp -d)"
+          cp api/host.json api/package.json "$tmpdir/"
+          cp -r api/src api/scripts api/vitest.config.ts "$tmpdir/" 2>/dev/null || true
+          (cd "$tmpdir" && zip -r "$ZIP_PATH" . >/dev/null 2>&1)
+          curl -sS -X POST "$PUBLISH_URL/api/zipdeploy" \
+            --user "$USERNAME:$PASSWORD" \
+            --header "Content-Type: application/zip" \
+            --data-binary @"$ZIP_PATH" >/tmp/roomsense-zipdeploy.log
+          STATUS="$(tail -n 1 /tmp/roomsense-zipdeploy.log | grep -oP '<status>\K[^<]+' || true)"
+          if [ "$STATUS" != "200" ] && [ "$STATUS" != "202" ]; then
+            echo "Zip deploy failed: $STATUS"; tail -n 20 /tmp/roomsense-zipdeploy.log; exit 1
+          fi
+          echo "Zip deploy accepted"
       - name: Az login (OIDC)
+        if: steps.deploy-mode.outputs.mode == 'oidc'
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
       - name: Enable SCM basic auth (standing lesson)
+        if: steps.deploy-mode.outputs.mode == 'oidc'
         run: |
           az resource update --resource-group "$RESOURCE_GROUP" --name scm --namespace Microsoft.Web --resource-type basicPublishingCredentialsPolicies --parent "sites/$APP_NAME" --set properties.allow=true || true
-      - name: Deploy to Functions
+      - name: Deploy to Functions (OIDC)
+        if: steps.deploy-mode.outputs.mode == 'oidc'
         uses: Azure/functions-action@v1
         with:
           app-name: ${{ env.APP_NAME }}
@@ -61,23 +89,12 @@ jobs:
           scm-do-build-during-deployment: true
           enable-oryx-build: true
       - name: Add CORS for SWA (idempotent guard with cors show)
+        if: steps.deploy-mode.outputs.mode == 'oidc'
         run: |
-          # Get deployed SWA hostname from output or repo variable
           SWA_HOSTNAME="${{ vars.ROOMSENSE_SWA_URL }}"
-          if [ -z "$SWA_HOSTNAME" ]; then
-            echo "Warning: ROOMSENSE_SWA_URL not set, skipping CORS add"
-            exit 0
-          fi
-
-          # Check if CORS is already set
+          if [ -z "$SWA_HOSTNAME" ]; then echo "Warning: ROOMSENSE_SWA_URL not set, skipping CORS add"; exit 0; fi
           EXISTING=$(az functionapp cors show --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" -o tsv --query "allowedOrigins" 2>/dev/null || echo "")
-
-          if echo "$EXISTING" | grep -q "$SWA_HOSTNAME"; then
-            echo "CORS already configured for $SWA_HOSTNAME"
-          else
-            echo "Adding CORS for $SWA_HOSTNAME"
-            az functionapp cors add --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" --allowed-origins "$SWA_HOSTNAME"
-          fi
+          if echo "$EXISTING" | grep -q "$SWA_HOSTNAME"; then echo "CORS already configured for $SWA_HOSTNAME"; else echo "Adding CORS for $SWA_HOSTNAME"; az functionapp cors add --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" --allowed-origins "$SWA_HOSTNAME"; fi
       - name: Wait for warmup (cold start ~60s lesson)
         run: sleep 60
       - name: Smoke test (health endpoint with 90s retry tolerance)
