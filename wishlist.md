@@ -67,3 +67,28 @@
 ## Presenter mode notes (#25, 2026-07-19)
 - Real/fetch mode requires the `SIMULATOR_KEY` app setting on roomsense-api — currently UNSET, so the live endpoint fails closed (401) for everyone (by design, see api/src/functions/simulate.ts). Presenter mode will prompt for a key and show "Invalid key" until Toine sets one. Enter it once per browser tab (sessionStorage `roomsense.simKey`, never baked into the bundle).
 - Cadence: 30s server-side tick (advances the shared clock / mock counter); actual visible movement follows each page's own poll (Live: 10s). This is intentional, not a bug — don't "fix" it to update instantly.
+
+## OPEN INFRA ISSUE: OPTIONS preflight intermittently answered before reaching function code (2026-07-19)
+Discovered while browser-verifying #25 (presenter mode) against the LIVE API — this affects any
+endpoint needing a real preflight (custom header or non-simple method), not just /simulate/tick.
+
+- Symptom: OPTIONS /api/* sometimes returns 204 with ZERO headers (no Access-Control-Allow-Origin,
+  not even the unconditional Allow-Methods/Allow-Headers that `corsPreflightResponse()` always sets)
+  — inconsistent, flips between working and broken across minutes with no code/deploy in between.
+- Ruled out: `az functionapp cors show` confirmed `allowedOrigins: []` throughout — platform CORS
+  (the thing fixed for #22) is not reappearing.
+- Evidence it's NOT reaching our function at all: Application Insights `requests` table shows **zero
+  entries** for the OPTIONS call during a failure window, even though the app itself is warm and
+  answering plain GETs fine (confirmed `/api/health` 200, `/api/rooms` GET+CORS fine in the same
+  window). Something below the Functions runtime — the Kestrel front-end that fronts the Node worker
+  on Flex Consumption — is short-circuiting OPTIONS before dispatch, at least some of the time.
+- Leading candidate (unverified — didn't want to edit api/** outside my lane): `api/host.json` has
+  `"extensions": { "http": {} }` — an explicitly empty http extension block. Worth testing whether
+  removing it (vs. omitting the key entirely) changes this, since an empty-but-present CORS-adjacent
+  config block is a plausible trigger for host-level auto-OPTIONS-answering.
+- Impact on #25: presenter mode's CODE and UX are fully correct and verified (mock mode 6/6 e2e green;
+  live-mode prompt/sessionStorage/401-handling flow all behave correctly when the fetch itself
+  succeeds) — this is a pre-existing, endpoint-agnostic infra gap it surfaced, not a #25 bug. Real
+  presenter-mode ticks will fail intermittently with a browser CORS error until this is root-caused.
+- `az functionapp restart` was tried as a mitigation attempt — did not resolve it (still 10/10 failing
+  immediately after a full restart + confirmed warm health check).
