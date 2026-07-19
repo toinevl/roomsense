@@ -1,5 +1,6 @@
 import './styles/main.css'
 import { apiClient } from './lib/api'
+import { config } from './config'
 import { dashboardPage } from './pages/dashboard'
 import { livePage } from './pages/live'
 import { architecturePage } from './pages/architecture'
@@ -67,3 +68,81 @@ apiClient
     statusDot.classList.add('err')
     statusLabel.textContent = 'offline'
   })
+
+// ---------------------------------------------------------------------------
+// Presenter mode (#25) — global toggle, visible across every page, that
+// calls POST /simulate/tick every 30s so telemetry visibly advances during a
+// live demo instead of sitting on a static seeded snapshot. The 30s cadence
+// is deliberately slower than the Live page's own 10s poll: this control
+// advances the *server's* clock (real mode) or the shared mock clock (mock
+// mode); the existing per-page polling is what displays the result.
+//
+// The x-sim-key is never baked into the bundle — it's entered once via a
+// prompt and kept only in sessionStorage, so it doesn't survive in a public
+// JS file anyone can read. In mock mode no key is needed at all.
+// ---------------------------------------------------------------------------
+const SIM_KEY_STORAGE = 'roomsense.simKey'
+const TICK_INTERVAL_MS = 30_000
+
+const presenterToggle = document.getElementById('presenter-toggle') as HTMLButtonElement
+const presenterLabel = document.getElementById('presenter-label')!
+
+let presenterActive = false
+let presenterHandle: ReturnType<typeof setInterval> | null = null
+
+function setPresenterLabel(text: string): void {
+  presenterLabel.textContent = text
+}
+
+function stopPresenterMode(labelWhenStopped = 'Presenter mode'): void {
+  if (presenterHandle) {
+    clearInterval(presenterHandle)
+    presenterHandle = null
+  }
+  presenterActive = false
+  presenterToggle.classList.remove('active')
+  presenterToggle.setAttribute('aria-pressed', 'false')
+  setPresenterLabel(labelWhenStopped)
+}
+
+async function tickOnce(key: string): Promise<void> {
+  await apiClient.simulateTick(key)
+}
+
+async function startPresenterMode(): Promise<void> {
+  const key = config.mock ? '' : (sessionStorage.getItem(SIM_KEY_STORAGE) ?? window.prompt('Simulator key (x-sim-key):') ?? '')
+  if (!config.mock && !key) return // cancelled prompt — stay off
+
+  setPresenterLabel('Starting…')
+  try {
+    await tickOnce(key)
+  } catch (err) {
+    const unauthorized = err instanceof Error && err.message.startsWith('401')
+    setPresenterLabel(unauthorized ? 'Invalid key' : 'Tick failed')
+    if (unauthorized) sessionStorage.removeItem(SIM_KEY_STORAGE)
+    setTimeout(() => setPresenterLabel('Presenter mode'), 2500)
+    return
+  }
+
+  if (!config.mock) sessionStorage.setItem(SIM_KEY_STORAGE, key)
+  presenterActive = true
+  presenterToggle.classList.add('active')
+  presenterToggle.setAttribute('aria-pressed', 'true')
+  setPresenterLabel('Presenting')
+
+  presenterHandle = setInterval(() => {
+    void tickOnce(key).catch((err) => {
+      const unauthorized = err instanceof Error && err.message.startsWith('401')
+      if (unauthorized) sessionStorage.removeItem(SIM_KEY_STORAGE)
+      stopPresenterMode(unauthorized ? 'Invalid key' : 'Tick failed')
+    })
+  }, TICK_INTERVAL_MS)
+}
+
+presenterToggle.addEventListener('click', () => {
+  if (presenterActive) {
+    stopPresenterMode()
+  } else {
+    void startPresenterMode()
+  }
+})

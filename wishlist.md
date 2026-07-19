@@ -35,7 +35,7 @@
 - [x] (A) provision rgRoomSense, deploy, seed azure, e2e verify +deploy @O #22 dep:#21,#11,#15 — done 2026-07-19
 - [x] (B) outlook-mock SourceAdapter + adding-a-source.md +extend @H #23 dep:#22 — done 2026-07-19
 - [x] (B) reservations overlay timeline (ghost visual) +extend @C #24 — done 2026-07-19 (Live page drill-in; browser + e2e verified)
-- [ ] (C) presenter mode auto-tick button +extend @C #25 dep:#22
+- [x] (C) presenter mode auto-tick button +extend @C #25 — done 2026-07-19 (browser + e2e verified; mock-mode tick confirmed to advance displayed occupancy)
 - [x] (C) README + architecture doc + demo script + og-image +docs @O #26 dep:#22 — done 2026-07-19
 - [ ] (D) real Microsoft Graph adapter (post-demo, if budget lands) +future #27
 - [ ] (D) real IoT Hub ingestion adapter (post-demo) +future #28
@@ -63,3 +63,7 @@
 - Live: https://lemon-mud-06bc7fd03.7.azurestaticapps.net (SWA) → https://roomsense-api.azurewebsites.net/api (vars.ROOMSENSE_API_URL MUST include /api).
 - RESOLVED 2026-07-19: OPTIONS preflight was returning 204 without CORS headers on some endpoints. Root cause was NOT cors.ts (already correct) — a leftover `az functionapp cors add` from an earlier deploy attempt had configured platform-level CORS with a stale placeholder origin (`mango-coast-...` from Bicep parameters), which intercepts OPTIONS at the platform layer before function code runs. Fixed by clearing platform CORS entirely (`az functionapp cors remove` for every origin) so function-level `withCors`/`corsPreflightResponse` handles every request, OPTIONS included. Verified on all 6 endpoints incl. `/simulate/tick`. Do NOT re-add `az functionapp cors add` for this app — CORS is fully handled in code.
 - Demo-quality (optional, Hermes): GET /rooms returns literal latest snapshot (0% outside office hours); frontend anchors client-side, server could do the same.
+
+## Presenter mode notes (#25, 2026-07-19)
+- Real/fetch mode requires the `SIMULATOR_KEY` app setting on roomsense-api — currently UNSET, so the live endpoint fails closed (401) for everyone (by design, see api/src/functions/simulate.ts). Presenter mode will prompt for a key and show "Invalid key" until Toine sets one. Enter it once per browser tab (sessionStorage `roomsense.simKey`, never baked into the bundle).
+- Cadence: 30s server-side tick (advances the shared clock / mock counter); actual visible movement follows each page's own poll (Live: 10s). This is intentional, not a bug — don't "fix" it to update instantly.

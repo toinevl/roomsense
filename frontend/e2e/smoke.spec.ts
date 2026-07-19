@@ -59,6 +59,23 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(page.locator('.overlay-legend .legend-item')).toHaveCount(3)
   })
 
+  test('presenter mode toggles on/off without a key in mock mode (#25)', async ({ page }) => {
+    await page.goto('/#dashboard')
+    const toggle = page.locator('#presenter-toggle')
+    await expect(toggle).toHaveText('Presenter mode')
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+
+    await toggle.click()
+    await expect(toggle).toHaveText('Presenting')
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+    await expect(toggle).toHaveClass(/active/)
+
+    await toggle.click()
+    await expect(toggle).toHaveText('Presenter mode')
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+    await expect(toggle).not.toHaveClass(/active/)
+  })
+
   test('architecture page renders the diagram with honest labeling', async ({ page }) => {
     await page.goto('/#architecture')
     await expect(page.getByRole('heading', { name: /demo path vs\. real path/i })).toBeVisible()

@@ -162,6 +162,27 @@ table { border-collapse: collapse; width: 100%; }
 .status-dot.ok { background: var(--status-good); }
 .status-dot.err { background: var(--status-critical); }
 
+.presenter-toggle {
+  display: flex; align-items: center; gap: 0.45rem;
+  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em;
+  color: var(--text-secondary); background: transparent; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); padding: 0.35rem 0.7rem; cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.presenter-toggle:hover { color: var(--text-primary); border-color: var(--series-1); }
+.presenter-toggle .presenter-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); flex: none; }
+.presenter-toggle.active { color: var(--text-primary); border-color: var(--series-6); }
+.presenter-toggle.active .presenter-dot {
+  background: var(--series-6);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--series-6) 55%, transparent);
+  animation: presenter-pulse 1.6s ease-out infinite;
+}
+@keyframes presenter-pulse {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--series-6) 55%, transparent); }
+  70%  { box-shadow: 0 0 0 7px color-mix(in srgb, var(--series-6) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--series-6) 0%, transparent); }
+}
+
 /* ---------------------------------------------------------------------------
    Layout shell
    --------------------------------------------------------------------------- */
