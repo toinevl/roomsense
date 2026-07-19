@@ -23,12 +23,12 @@
 - [ ] (B) GET /rooms/{id}/reservations +api @H #10 dep:#5
 - [ ] (A) GET /kpis (utilization, ghost rate, wasted EUR) +api @H #11 dep:#7
 - [ ] (B) POST /simulate/tick key-protected live mode +api @H #12 dep:#8
-- [ ] (A) frontend scaffold + hash router + config.ts +ui @C #13 dep:#4
-- [ ] (A) typed api client with VITE_MOCK=1 fixture mode +ui @C #14 dep:#13
-- [ ] (A) C-level dashboard (KPI tiles, heatmap, booked-vs-used, ghost table) +ui @C #15 dep:#14
-- [ ] (A) technical live page (room grid, drill-in, 10s poll) +ui @C #16 dep:#14
-- [ ] (B) architecture page (real path vs demo path, adapter seam) +ui @C #17 dep:#13
-- [ ] (B) playwright smoke spec in mock mode +ui @C #18 dep:#15
+- [x] (A) frontend scaffold + hash router + config.ts +ui @C #13 — done 2026-07-19
+- [x] (A) typed api client with VITE_MOCK=1 fixture mode +ui @C #14 — done 2026-07-19 (22 tests)
+- [x] (A) C-level dashboard (KPI tiles, heatmap, booked-vs-used, ghost table) +ui @C #15 — done 2026-07-19
+- [x] (A) technical live page (room grid, drill-in, 10s poll) +ui @C #16 — done 2026-07-19
+- [x] (B) architecture page (real path vs demo path, adapter seam) +ui @C #17 — done 2026-07-19
+- [x] (B) playwright smoke spec in mock mode +ui @C #18 — done 2026-07-19 (4/4 e2e)
 - [x] (A) bicep: storage + flex function app + SWA + RECOVERY.md +infra @O #19 — done 2026-07-19 (bicep compiles; provision pending #22)
 - [x] (A) ci.yml lint/typecheck/test with workflow_dispatch +infra @O #20 — done 2026-07-19
 - [x] (A) deploy workflows + CORS step + 60s cold-start smoke +infra @O #21 — done 2026-07-19 (unproven until #22 first run)
@@ -50,3 +50,8 @@
 - POST /api/simulate/tick (header x-sim-key) → { appended: number, ts } | 401
 - Types come from @roomsense/shared. Ghost = reservation whose slot's max occupancy is 0.
 - wastedEur = ghostHours × room.capacity × COST_PER_DESK_HOUR_EUR (env, default 4).
+
+## Notes for Lane A (Hermes) from Lane B (frontend), 2026-07-19
+- Ghost derivation: derive ghosts from occupancy data (slot max occupancy == 0), NOT from any seed-internal flag. Walk-in traffic can overlap a generator-flagged ghost slot — occupancy-derived is the correct production semantic; do not "fix" toward the seed flag.
+- /rooms "latest occupancy": seed data ends at UTC midnight, so the literal newest snapshot is always ~0%. Frontend anchors "current" to the most recent office-hours (weekday 08:00-18:00 UTC) snapshot; consider the same anchoring server-side, or the dashboard shows dead rooms when demoed outside office hours.
+- pnpm-lock.yaml is the ONLY shared file between lanes; ci.yml temporarily uses --no-frozen-lockfile until both lanes are committed (revert at #22).
