@@ -21,6 +21,7 @@ jobs:
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      AZURE_PUBLISH_PROFILE: ${{ secrets.AZURE_PUBLISH_PROFILE }}
     steps:
       - uses: actions/checkout@v4
       - name: Select deploy mode
@@ -58,7 +59,7 @@ jobs:
           ZIP_PATH="/tmp/roomsense-api-$(date +%s).zip"
           tmpdir="$(mktemp -d)"
           cp api/host.json api/package.json "$tmpdir/"
-          cp -r api/src api/scripts api/vitest.config.ts "$tmpdir/" 2>/dev/null || true
+          cp -r api/src api/scripts api/vitest.config.ts api/dist "$tmpdir/" 2>/dev/null || true
           (cd "$tmpdir" && zip -r "$ZIP_PATH" . >/dev/null 2>&1)
           curl -sS -X POST "$PUBLISH_URL/api/zipdeploy" \
             --user "$USERNAME:$PASSWORD" \
