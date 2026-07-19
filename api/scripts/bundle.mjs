@@ -16,6 +16,12 @@
  */
 import { build } from 'esbuild'
 
+// BUILD_SHA is injected at bundle time so /api/health can report the deployed
+// commit. In CI the workflow exports GITHUB_SHA into env before `pnpm build`;
+// locally it falls back to 'dev'. esbuild `define` inlines a string literal —
+// we must JSON-quote it so the bundled source sees a valid JS string.
+const BUILD_SHA = JSON.stringify(process.env.BUILD_SHA ?? 'dev')
+
 const opts = {
   bundle: true,
   platform: 'node',
@@ -28,10 +34,13 @@ const opts = {
   // @azure/functions is provided by the Functions host at runtime — do not inline.
   external: ['@azure/functions'],
   // Anything else is inlined — no surprises from pnpm workspace symlinks or ESM/CJS mix.
+  define: {
+    'process.env.BUILD_SHA': BUILD_SHA,
+  },
   banner: {
     js: '// Bundled by esbuild. Do not edit; regenerate with: pnpm bundle',
   },
 }
 
 await build(opts)
-console.log('bundle: wrote dist/src/index.js')
+console.log(`bundle: wrote dist/src/index.js (BUILD_SHA=${JSON.parse(BUILD_SHA)})`)

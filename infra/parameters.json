@@ -12,15 +12,12 @@
       "value": "https://mango-coast-0abcdef1.westeurope.2.azurestaticapps.net,http://localhost:5173"
     },
     "deploySwa": {
-      "value": true
+      "value": false
     },
     "swaRepositoryUrl": {
       "value": ""
     },
     "swaRepositoryToken": {
-      "value": ""
-    },
-    "appInsightsConnectionString": {
       "value": ""
     }
   }

@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0a0a0a"/>
+      <stop offset="100%" stop-color="#171717"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#3987e5" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#3987e5" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+
+  <!-- Brand mark: ring + dot, echoing favicon -->
+  <g transform="translate(96 240)">
+    <circle cx="40" cy="40" r="34" fill="none" stroke="#3987e5" stroke-width="4"/>
+    <circle cx="40" cy="40" r="14" fill="#19c37d"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="196" y="294" font-family="Arial, Helvetica, sans-serif" font-weight="800" font-size="68" fill="#ffffff">RoomSense</text>
+
+  <!-- Headline -->
+  <text x="96" y="396" font-family="Arial, Helvetica, sans-serif" font-weight="700" font-size="46" fill="#e5e5e5">Room-occupancy intelligence</text>
+
+  <!-- Subline -->
+  <text x="96" y="450" font-family="Arial, Helvetica, sans-serif" font-weight="400" font-size="28" fill="#a3a3a3">Terabee sensors · Azure Functions · Table Storage · Vite</text>
+
+  <!-- Footer chips -->
+  <g transform="translate(96 530)" font-family="Arial, Helvetica, sans-serif" font-weight="600" font-size="20" fill="#a3a3a3">
+    <rect x="0" y="0" width="170" height="40" rx="8" fill="none" stroke="#333333" stroke-width="1.5"/>
+    <text x="14" y="26">C-level KPIs</text>
+    <rect x="190" y="0" width="180" height="40" rx="8" fill="none" stroke="#333333" stroke-width="1.5"/>
+    <text x="204" y="26">Live telemetry</text>
+    <rect x="390" y="0" width="170" height="40" rx="8" fill="none" stroke="#333333" stroke-width="1.5"/>
+    <text x="404" y="26">Ghost-meeting €</text>
+  </g>
+</svg>

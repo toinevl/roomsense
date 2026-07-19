@@ -10,3 +10,5 @@ __tablestorage__/
 *.log
 .DS_Store
 infra/main.json
+# Local-only setup scripts containing subscription IDs / SP credentials
+create_sp.sh

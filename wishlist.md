@@ -36,7 +36,7 @@
 - [ ] (B) outlook-mock SourceAdapter + adding-a-source.md +extend @H #23 dep:#22
 - [ ] (B) reservations overlay timeline (ghost visual) +extend @C #24 dep:#22
 - [ ] (C) presenter mode auto-tick button +extend @C #25 dep:#22
-- [ ] (C) README + architecture doc + demo script + og-image +docs @O #26 dep:#22
+- [x] (C) README + architecture doc + demo script + og-image +docs @O #26 dep:#22 — done 2026-07-19
 - [ ] (D) real Microsoft Graph adapter (post-demo, if budget lands) +future #27
 - [ ] (D) real IoT Hub ingestion adapter (post-demo) +future #28
 
