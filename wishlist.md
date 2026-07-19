@@ -29,9 +29,9 @@
 - [ ] (A) technical live page (room grid, drill-in, 10s poll) +ui @C #16 dep:#14
 - [ ] (B) architecture page (real path vs demo path, adapter seam) +ui @C #17 dep:#13
 - [ ] (B) playwright smoke spec in mock mode +ui @C #18 dep:#15
-- [ ] (A) bicep: storage + flex function app + SWA + RECOVERY.md +infra @O #19 dep:#1
-- [ ] (A) ci.yml lint/typecheck/test with workflow_dispatch +infra @O #20 dep:#5,#13
-- [ ] (A) deploy workflows + CORS step + 60s cold-start smoke +infra @O #21 dep:#19
+- [x] (A) bicep: storage + flex function app + SWA + RECOVERY.md +infra @O #19 — done 2026-07-19 (bicep compiles; provision pending #22)
+- [x] (A) ci.yml lint/typecheck/test with workflow_dispatch +infra @O #20 — done 2026-07-19
+- [x] (A) deploy workflows + CORS step + 60s cold-start smoke +infra @O #21 — done 2026-07-19 (unproven until #22 first run)
 - [ ] (A) provision rgRoomSense, deploy, seed azure, e2e verify +deploy @O #22 dep:#21,#11,#15
 - [ ] (B) outlook-mock SourceAdapter + adding-a-source.md +extend @H #23 dep:#22
 - [ ] (B) reservations overlay timeline (ghost visual) +extend @C #24 dep:#22

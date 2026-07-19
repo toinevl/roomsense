@@ -9,3 +9,4 @@ __queuestorage__/
 __tablestorage__/
 *.log
 .DS_Store
+infra/main.json
