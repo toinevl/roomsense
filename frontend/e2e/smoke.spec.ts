@@ -39,6 +39,17 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(page.locator('.drill-panel')).toHaveCount(0)
   })
 
+  test('live page telemetry table shows occupancy deltas, not just raw counters (#live-deltas)', async ({ page }) => {
+    await page.goto('/#live')
+    await page.locator('.room-card').first().click()
+    const headerCells = page.locator('.telemetry-scroll thead th')
+    await expect(headerCells).toContainText(['Δ in', 'Δ out'])
+    // At least one row (the newest reading has no older row to diff against,
+    // so row 0 is legitimately "—"; row 1 must have a real delta or a reset).
+    const secondRowDeltaIn = page.locator('.telemetry-scroll tbody tr').nth(1).locator('td').nth(3)
+    await expect(secondRowDeltaIn).not.toHaveText('')
+  })
+
   test('live page drill-in shows the reservations overlay (#24)', async ({ page }) => {
     await page.goto('/#live')
     const roomCards = page.locator('.room-card')

@@ -1,7 +1,8 @@
 import { apiClient } from '../lib/api'
-import type { OccupancySnapshot, Reservation, RoomWithOccupancy, SensorReading, SourceStatus } from '../lib/apiTypes'
+import type { OccupancySnapshot, Reservation, RoomWithOccupancy, SourceStatus } from '../lib/apiTypes'
 import { formatPercent, formatTimestamp } from '../lib/format'
 import { SEQUENTIAL_STEPS, createTooltip, linearScale, sequentialStepForPct, svgEl, tooltipRow } from '../lib/charts'
+import { computeReadingDeltas, type ReadingDelta } from '../lib/readingDeltas'
 import type { Page } from './types'
 
 const POLL_INTERVAL_MS = 10_000
@@ -129,12 +130,17 @@ function deviceMetaItem(label: string, value: string): HTMLDivElement {
   return item
 }
 
-function telemetryRow(reading: SensorReading): HTMLTableRowElement {
+function telemetryRow(delta: ReadingDelta): HTMLTableRowElement {
+  const { reading } = delta
   const tr = document.createElement('tr')
+  if (delta.reset) tr.classList.add('reading-reset')
+
   const cells: Array<[string, boolean]> = [
     [formatTimestamp(reading.ts), false],
     [String(reading.countIn), true],
     [String(reading.countOut), true],
+    [delta.reset ? '↺ reset' : delta.deltaIn === null ? '—' : `+${delta.deltaIn}`, true],
+    [delta.reset ? '↺ reset' : delta.deltaOut === null ? '—' : `+${delta.deltaOut}`, true],
     [`${reading.batteryPct.toFixed(1)}%`, true],
     [`${reading.rssi} dBm`, true],
     [`${reading.snr.toFixed(2)} dB`, true],
@@ -411,10 +417,12 @@ async function renderDrillPanel(): Promise<void> {
   table.className = 'sr-table'
   table.innerHTML = `<thead><tr>
     <th>Timestamp</th><th class="num">Count in</th><th class="num">Count out</th>
+    <th class="num">Δ in</th><th class="num">Δ out</th>
     <th class="num">Battery</th><th class="num">RSSI</th><th class="num">SNR</th>
   </tr></thead>`
   const tbody = document.createElement('tbody')
-  for (const reading of readings) tbody.appendChild(telemetryRow(reading))
+  const deltas = computeReadingDeltas(readings)
+  for (const delta of deltas) tbody.appendChild(telemetryRow(delta))
   table.appendChild(tbody)
   scrollWrap.appendChild(table)
   panel.appendChild(scrollWrap)

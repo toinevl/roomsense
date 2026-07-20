@@ -340,6 +340,7 @@ table { border-collapse: collapse; width: 100%; }
 .telemetry-scroll { max-height: 420px; overflow-y: auto; border: 1px solid var(--gridline); border-radius: var(--radius-sm); }
 .telemetry-scroll table { font-size: 0.78rem; }
 .telemetry-scroll thead th { position: sticky; top: 0; background: var(--surface-card); z-index: 1; }
+.reading-reset { background: color-mix(in srgb, var(--status-warning) 12%, transparent); }
 
 .overlay-card { margin-bottom: 1.25rem; }
 .overlay-svg-wrap { position: relative; margin-top: 0.5rem; }
