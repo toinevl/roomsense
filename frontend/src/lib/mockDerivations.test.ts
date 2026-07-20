@@ -9,6 +9,7 @@ import {
   deriveReadings,
   deriveReservations,
   deriveRooms,
+  deriveSources,
   findLatestActiveIndex,
   isGhostReservation,
 } from './mockDerivations'
@@ -210,5 +211,22 @@ describe('deriveKpis', () => {
 
   test('throws when from is after to', () => {
     expect(() => deriveKpis(seed, index, '2026-07-10T00:00:00.000Z', '2026-07-01T00:00:00.000Z')).toThrow()
+  })
+})
+
+describe('deriveSources', () => {
+  test('returns both registered adapters sorted by sourceId', () => {
+    const sources = deriveSources(seed)
+    const ids = sources.map((s) => s.sourceId)
+    expect(ids).toEqual([...ids].sort())
+    expect(ids).toContain('terabee-iothub-mock')
+    expect(ids).toContain('outlook-mock')
+  })
+
+  test('every source has a non-empty displayName and a known status', () => {
+    for (const s of deriveSources(seed)) {
+      expect(s.displayName.length).toBeGreaterThan(0)
+      expect(['active', 'inactive']).toContain(s.status)
+    }
   })
 })
