@@ -43,7 +43,7 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await page.goto('/#live')
     await page.locator('.room-card').first().click()
     const headerCells = page.locator('.telemetry-scroll thead th')
-    await expect(headerCells).toContainText(['Δ in', 'Δ out'])
+    await expect(headerCells).toContainText(['Δ in', 'Δ out', 'Δ occ'])
     // At least one row (the newest reading has no older row to diff against,
     // so row 0 is legitimately "—"; row 1 must have a real delta or a reset).
     const secondRowDeltaIn = page.locator('.telemetry-scroll tbody tr').nth(1).locator('td').nth(3)

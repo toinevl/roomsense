@@ -141,6 +141,7 @@ function telemetryRow(delta: ReadingDelta): HTMLTableRowElement {
     [String(reading.countOut), true],
     [delta.reset ? '↺ reset' : delta.deltaIn === null ? '—' : `+${delta.deltaIn}`, true],
     [delta.reset ? '↺ reset' : delta.deltaOut === null ? '—' : `+${delta.deltaOut}`, true],
+    [delta.reset ? '↺ reset' : delta.deltaOccupancy === null ? '—' : String(delta.deltaOccupancy), true],
     [`${reading.batteryPct.toFixed(1)}%`, true],
     [`${reading.rssi} dBm`, true],
     [`${reading.snr.toFixed(2)} dB`, true],
@@ -417,7 +418,7 @@ async function renderDrillPanel(): Promise<void> {
   table.className = 'sr-table'
   table.innerHTML = `<thead><tr>
     <th>Timestamp</th><th class="num">Count in</th><th class="num">Count out</th>
-    <th class="num">Δ in</th><th class="num">Δ out</th>
+    <th class="num">Δ in</th><th class="num">Δ out</th><th class="num">Δ occ</th>
     <th class="num">Battery</th><th class="num">RSSI</th><th class="num">SNR</th>
   </tr></thead>`
   const tbody = document.createElement('tbody')
