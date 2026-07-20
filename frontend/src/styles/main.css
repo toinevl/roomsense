@@ -297,6 +297,16 @@ table { border-collapse: collapse; width: 100%; }
 .poll-ring { width: 8px; height: 8px; border-radius: 50%; background: var(--series-5); animation: poll-spin 10s linear infinite; }
 @keyframes poll-spin { from { opacity: 0.3; } 50% { opacity: 1; } to { opacity: 0.3; } }
 
+.sources-strip { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; }
+.source-pill {
+  display: flex; align-items: center; gap: 0.4rem;
+  padding: 0.3rem 0.6rem; border-radius: 999px;
+  background: var(--surface-card); border: 1px solid var(--border);
+  font-size: 0.8rem;
+}
+.source-label { color: var(--text-primary); }
+.source-synced { color: var(--text-muted); }
+
 .room-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 0.75rem; margin-bottom: 2rem; }
 .room-card {
   background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius);

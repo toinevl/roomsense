@@ -1,5 +1,5 @@
 import { apiClient } from '../lib/api'
-import type { OccupancySnapshot, Reservation, RoomWithOccupancy, SensorReading } from '../lib/apiTypes'
+import type { OccupancySnapshot, Reservation, RoomWithOccupancy, SensorReading, SourceStatus } from '../lib/apiTypes'
 import { formatPercent, formatTimestamp } from '../lib/format'
 import { SEQUENTIAL_STEPS, createTooltip, linearScale, sequentialStepForPct, svgEl, tooltipRow } from '../lib/charts'
 import type { Page } from './types'
@@ -22,6 +22,7 @@ function renderSkeleton(): string {
       <h1 class="page-title">Live room telemetry</h1>
       <p class="page-sub">Raw Terabee people-counting readings per room. Click a room to drill into its device and the last ${READINGS_LIMIT} readings.</p>
     </div>
+    <div class="sources-strip" id="sources-strip" role="list" aria-label="Data sources"></div>
     <div class="live-toolbar">
       <div class="poll-indicator"><span class="poll-ring" aria-hidden="true"></span><span id="poll-label">auto-refreshing every 10s</span></div>
       <button type="button" class="table-toggle" id="manual-refresh">Refresh now</button>
@@ -76,6 +77,43 @@ function renderRoomGrid(rooms: RoomWithOccupancy[]): void {
   for (const room of rooms) {
     grid.appendChild(roomCard(room))
   }
+}
+
+function sourcePill(source: SourceStatus): HTMLDivElement {
+  const pill = document.createElement('div')
+  pill.className = 'source-pill'
+  pill.setAttribute('role', 'listitem')
+
+  const dot = document.createElement('span')
+  dot.className = `status-dot ${source.status === 'active' ? 'ok' : 'err'}`
+
+  const label = document.createElement('span')
+  label.className = 'source-label'
+  label.textContent = `${source.displayName} (${source.kind})`
+
+  const synced = document.createElement('span')
+  synced.className = 'source-synced mono'
+  // Absolute timestamp only — never a "Xm ago" relative string. The mock
+  // dataset's clock is frozen (seedData.ts MOCK_END), not wall-clock "now";
+  // a relative-time label would read as "3 months ago" for every adapter,
+  // always, regardless of when the demo runs (same trap documented on
+  // findLatestActiveIndex / findRecentReservationDay).
+  synced.textContent = source.lastSyncTs ? `synced ${formatTimestamp(source.lastSyncTs)}` : 'never synced'
+
+  pill.append(dot, label, synced)
+  pill.setAttribute(
+    'aria-label',
+    `${source.displayName}, ${source.status}, ${source.lastSyncTs ? `last synced ${formatTimestamp(source.lastSyncTs)}` : 'never synced'}`,
+  )
+  return pill
+}
+
+function renderSourcesStrip(sources: SourceStatus[]): void {
+  if (!rootEl) return
+  const strip = rootEl.querySelector('#sources-strip')
+  if (!strip) return
+  strip.innerHTML = ''
+  for (const source of sources) strip.appendChild(sourcePill(source))
 }
 
 function deviceMetaItem(label: string, value: string): HTMLDivElement {
@@ -400,6 +438,9 @@ export const livePage: Page = {
 
     const rooms = await apiClient.getRooms()
     renderRoomGrid(rooms)
+
+    const sources = await apiClient.getSources()
+    renderSourcesStrip(sources)
 
     container.querySelector('#manual-refresh')!.addEventListener('click', () => {
       void refresh()

@@ -83,6 +83,17 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(page.getByText(/data in this environment is generated/i).first()).toBeVisible()
   })
 
+  test('live page shows both data source adapters (#sources-strip)', async ({ page }) => {
+    await page.goto('/#live')
+    const pills = page.locator('.source-pill')
+    await expect(pills).toHaveCount(2)
+    for (const pill of await pills.all()) {
+      await expect(pill.locator('.status-dot')).toBeVisible()
+      const label = await pill.locator('.source-label').innerText()
+      expect(label.length).toBeGreaterThan(0)
+    }
+  })
+
   test('hash navigation switches the active nav link', async ({ page }) => {
     await page.goto('/#dashboard')
     await page.getByRole('link', { name: 'Live' }).click()
