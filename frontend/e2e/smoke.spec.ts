@@ -105,6 +105,12 @@ test.describe('RoomSense smoke (mock mode)', () => {
     }
   })
 
+  test('live page poll label reports how many rooms updated after a manual refresh (#live-freshness)', async ({ page }) => {
+    await page.goto('/#live')
+    await page.locator('#manual-refresh').click()
+    await expect(page.locator('#poll-label')).toContainText(/\d+\/15 rooms reported new data/)
+  })
+
   test('hash navigation switches the active nav link', async ({ page }) => {
     await page.goto('/#dashboard')
     await page.getByRole('link', { name: 'Live' }).click()

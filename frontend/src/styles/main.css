@@ -370,3 +370,12 @@ table { border-collapse: collapse; width: 100%; }
   .primary-nav { order: 3; width: 100%; }
   .heatmap-grid { min-width: 420px; }
 }
+
+/* ---------------------------------------------------------------------------
+   Live page — per-refresh freshness flash (task 3.2)
+   --------------------------------------------------------------------------- */
+.room-card--updated { animation: room-updated-flash 1.2s ease-out; }
+@keyframes room-updated-flash {
+  0% { box-shadow: 0 0 0 2px var(--series-1); }
+  100% { box-shadow: none; }
+}

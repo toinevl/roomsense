@@ -3,6 +3,7 @@ import type { OccupancySnapshot, Reservation, RoomWithOccupancy, SourceStatus } 
 import { formatPercent, formatTimestamp } from '../lib/format'
 import { SEQUENTIAL_STEPS, createTooltip, linearScale, sequentialStepForPct, svgEl, tooltipRow } from '../lib/charts'
 import { computeReadingDeltas, type ReadingDelta } from '../lib/readingDeltas'
+import { computeAdvancedRoomIds, snapshotLastSeen } from '../lib/roomFreshness'
 import type { Page } from './types'
 
 const POLL_INTERVAL_MS = 10_000
@@ -15,6 +16,7 @@ function buildingLabel(building: string): string {
 let pollHandle: ReturnType<typeof setInterval> | null = null
 let selectedRoomId: string | null = null
 let rootEl: HTMLElement | null = null
+let previousLastSeen: Map<string, string> = new Map()
 
 function renderSkeleton(): string {
   return `
@@ -71,12 +73,14 @@ function roomCard(room: RoomWithOccupancy): HTMLButtonElement {
   return card
 }
 
-function renderRoomGrid(rooms: RoomWithOccupancy[]): void {
+function renderRoomGrid(rooms: RoomWithOccupancy[], advanced: Set<string> = new Set()): void {
   if (!rootEl) return
   const grid = rootEl.querySelector('#room-grid')!
   grid.innerHTML = ''
   for (const room of rooms) {
-    grid.appendChild(roomCard(room))
+    const card = roomCard(room)
+    if (advanced.has(room.roomId)) card.classList.add('room-card--updated')
+    grid.appendChild(card)
   }
 }
 
@@ -435,7 +439,15 @@ async function refresh(): Promise<void> {
   if (!rootEl) return
   apiClient.tickMockClock()
   const rooms = await apiClient.getRooms()
-  renderRoomGrid(rooms)
+  const advanced = computeAdvancedRoomIds(rooms, previousLastSeen)
+  renderRoomGrid(rooms, advanced)
+  previousLastSeen = snapshotLastSeen(rooms)
+
+  const label = rootEl.querySelector('#poll-label')
+  if (label) {
+    label.textContent = `auto-refreshing every 10s · ${advanced.size}/${rooms.length} rooms reported new data last refresh`
+  }
+
   if (selectedRoomId) await renderDrillPanel()
 }
 
@@ -447,6 +459,7 @@ export const livePage: Page = {
 
     const rooms = await apiClient.getRooms()
     renderRoomGrid(rooms)
+    previousLastSeen = snapshotLastSeen(rooms)
 
     const sources = await apiClient.getSources()
     renderSourcesStrip(sources)
@@ -467,5 +480,6 @@ export const livePage: Page = {
     }
     rootEl = null
     selectedRoomId = null
+    previousLastSeen = new Map()
   },
 }
