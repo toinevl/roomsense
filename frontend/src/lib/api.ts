@@ -7,6 +7,7 @@ import {
   deriveReadings,
   deriveReservations,
   deriveRooms,
+  deriveSources,
   findLatestActiveIndex,
 } from './mockDerivations'
 import { getSeedData } from './seedData'
@@ -18,6 +19,7 @@ import type {
   RoomWithOccupancy,
   SensorReading,
   SimulateTickResponse,
+  SourceStatus,
 } from './apiTypes'
 
 /**
@@ -33,6 +35,7 @@ export interface ApiClient {
   getRoomReadings(roomId: string, limit?: number): Promise<SensorReading[]>
   getRoomReservations(roomId: string, date?: string): Promise<Reservation[]>
   getKpis(from?: string, to?: string): Promise<KpisResponse>
+  getSources(): Promise<SourceStatus[]>
   simulateTick(key: string): Promise<SimulateTickResponse>
   /**
    * Mock-only: advances the deterministic "live" tick used to make the room
@@ -81,6 +84,7 @@ const fetchClient: ApiClient = {
     const fromTs = from ?? new Date(Date.parse(toTs) - 30 * 24 * 60 * 60 * 1000).toISOString()
     return request(`/kpis${qs({ from: fromTs, to: toTs })}`)
   },
+  getSources: () => request('/sources'),
   simulateTick: (key) =>
     request('/simulate/tick', { method: 'POST', headers: { 'x-sim-key': key } }),
   tickMockClock: () => 0,
@@ -131,6 +135,8 @@ function makeMockClient(): ApiClient {
     getRoomReservations: async (roomId, date) => deriveReservations(index, roomId, date),
 
     getKpis: async (from, to) => deriveKpis(seed, index, from, to),
+
+    getSources: async () => deriveSources(seed),
 
     simulateTick: async () => {
       mockTick += 1
