@@ -34,6 +34,14 @@ export interface KpisResponse {
   underusedRooms: UnderusedRoom[]
 }
 
+export interface SourceStatus {
+  sourceId: string
+  kind: string
+  displayName: string
+  status: string
+  lastSyncTs?: string
+}
+
 export interface SimulateTickResponse {
   appended: number
   ts: string
