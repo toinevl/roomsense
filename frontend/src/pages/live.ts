@@ -1,7 +1,15 @@
 import { apiClient } from '../lib/api'
 import type { OccupancySnapshot, Reservation, RoomWithOccupancy, SourceStatus } from '../lib/apiTypes'
 import { formatPercent, formatTimestamp } from '../lib/format'
-import { SEQUENTIAL_STEPS, createTooltip, linearScale, sequentialStepForPct, svgEl, tooltipRow } from '../lib/charts'
+import {
+  SEQUENTIAL_STEPS,
+  buildSparklinePath,
+  createTooltip,
+  linearScale,
+  sequentialStepForPct,
+  svgEl,
+  tooltipRow,
+} from '../lib/charts'
 import { computeReadingDeltas, type ReadingDelta } from '../lib/readingDeltas'
 import { computeAdvancedRoomIds, snapshotLastSeen } from '../lib/roomFreshness'
 import type { Page } from './types'
@@ -132,6 +140,20 @@ function deviceMetaItem(label: string, value: string): HTMLDivElement {
   v.textContent = value
   item.append(l, v)
   return item
+}
+
+const SPARK_WIDTH = 120
+const SPARK_HEIGHT = 28
+
+/** Small inline trend line for a device metric. `values` is expected in the
+ *  API-contract order (descending by ts, newest first) — this reverses it
+ *  internally so the sparkline reads left-to-right as oldest -> newest. */
+function sparkline(values: number[], colorVar: string): SVGSVGElement {
+  const svg = svgEl('svg', { viewBox: `0 0 ${SPARK_WIDTH} ${SPARK_HEIGHT}`, class: 'sparkline' })
+  const oldestFirst = [...values].reverse()
+  const d = buildSparklinePath(oldestFirst, SPARK_WIDTH, SPARK_HEIGHT)
+  if (d) svg.appendChild(svgEl('path', { d, fill: 'none', stroke: colorVar, 'stroke-width': 1.5 }))
+  return svg
 }
 
 function telemetryRow(delta: ReadingDelta): HTMLTableRowElement {
@@ -407,6 +429,19 @@ async function renderDrillPanel(): Promise<void> {
     deviceMetaItem('Last seen', formatTimestamp(room.lastSeenTs)),
   )
   panel.appendChild(metaGrid)
+
+  // Battery/RSSI trend sparklines — reuse the `readings` array already
+  // fetched above for the telemetry table; no additional API call.
+  const trendRow = document.createElement('div')
+  trendRow.className = 'device-trend-row'
+  const batteryTrend = document.createElement('div')
+  batteryTrend.className = 'device-trend'
+  batteryTrend.append('Battery trend: ', sparkline(readings.map((r) => r.batteryPct), 'var(--series-2)'))
+  const rssiTrend = document.createElement('div')
+  rssiTrend.className = 'device-trend'
+  rssiTrend.append('Signal trend: ', sparkline(readings.map((r) => r.rssi), 'var(--series-3)'))
+  trendRow.append(batteryTrend, rssiTrend)
+  panel.appendChild(trendRow)
 
   panel.appendChild(await loadReservationsOverlay(room))
 

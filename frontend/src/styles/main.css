@@ -337,6 +337,10 @@ table { border-collapse: collapse; width: 100%; }
 .device-meta-item .dm-label { font-family: var(--font-mono); font-size: 0.65rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 0.15rem; }
 .device-meta-item .dm-value { font-family: var(--font-mono); font-weight: 600; }
 
+.device-trend-row { display: flex; gap: 1.5rem; margin: 0.5rem 0 1rem; font-size: 0.8rem; color: var(--text-muted); align-items: center; }
+.device-trend { display: flex; align-items: center; gap: 0.4rem; }
+.sparkline { width: 120px; height: 28px; }
+
 .telemetry-scroll { max-height: 420px; overflow-y: auto; border: 1px solid var(--gridline); border-radius: var(--radius-sm); }
 .telemetry-scroll table { font-size: 0.78rem; }
 .telemetry-scroll thead th { position: sticky; top: 0; background: var(--surface-card); z-index: 1; }

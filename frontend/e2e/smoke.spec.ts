@@ -50,6 +50,12 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(secondRowDeltaIn).not.toHaveText('')
   })
 
+  test('live page drill panel shows battery/signal trend sparklines (#live-sparklines)', async ({ page }) => {
+    await page.goto('/#live')
+    await page.locator('.room-card').first().click()
+    await expect(page.locator('.device-trend-row .sparkline')).toHaveCount(2)
+  })
+
   test('live page drill-in shows the reservations overlay (#24)', async ({ page }) => {
     await page.goto('/#live')
     const roomCards = page.locator('.room-card')
