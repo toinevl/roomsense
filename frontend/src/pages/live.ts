@@ -503,6 +503,13 @@ export const livePage: Page = {
       void refresh()
     })
 
+    const preselectedRoomId = sessionStorage.getItem('roomsense.selectedRoomId')
+    if (preselectedRoomId && rooms.some((r) => r.roomId === preselectedRoomId)) {
+      selectedRoomId = preselectedRoomId
+      sessionStorage.removeItem('roomsense.selectedRoomId')
+      void renderDrillPanel()
+    }
+
     pollHandle = setInterval(() => {
       void refresh()
     }, POLL_INTERVAL_MS)

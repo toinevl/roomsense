@@ -103,8 +103,9 @@ export const roomFinderPage: Page = {
     cardsContainer.className = 'room-cards'
 
     for (const room of available) {
-      const card = document.createElement('div')
+      const card = document.createElement('button')
       card.className = 'room-card'
+      card.type = 'button'
 
       const roomName = document.createElement('div')
       roomName.className = 'room-name'
@@ -120,6 +121,11 @@ export const roomFinderPage: Page = {
       occupancy.className = 'occupancy'
       occupancy.textContent = `${room.occupancy ?? 0} / ${room.capacity} people`
       card.appendChild(occupancy)
+
+      card.addEventListener('click', () => {
+        sessionStorage.setItem('roomsense.selectedRoomId', room.roomId)
+        window.location.hash = '#live'
+      })
 
       cardsContainer.appendChild(card)
     }
