@@ -38,10 +38,14 @@
 - [x] (C) presenter mode auto-tick button +extend @C #25 — done 2026-07-19 (browser + e2e verified; mock-mode tick confirmed to advance displayed occupancy)
 - [x] (C) README + architecture doc + demo script + og-image +docs @O #26 dep:#22 — done 2026-07-19
 - [x] (C) marketing use-case brainstorm + flagship roadmap (students/staff/profs) +plan @O #30 — done 2026-07-21
+- [ ] (C) evaluate 3 consumer UI strategies (mobile/social/ai) via user research +plan @O #35 — in progress 2026-07-21
 - [x] (B) room-finder page for students (find empty rooms) +flagship @C #31 dep:#22 — done 2026-07-21 (2 tests pass; route #finder)
 - [x] (B) semester-review report page for leadership (printable kpi one-pager) +flagship @C #32 dep:#22 — done 2026-07-21 (3 tests pass; print CSS; route #report)
 - [x] (B) roomsense-wrapped shareable card (fun stats, screenshots) +flagship @C #33 dep:#22 — done 2026-07-21 (1 test pass; route #wrapped)
 - [x] (B) trust & transparency faq page (privacy de-risk) +flagship @C #34 dep:#22 — done 2026-07-21 (1 test pass; route #trust; 7 Q&A)
+- [ ] (C) strategy 1: mobile-first tap-to-book (48px targets, animations, one-tap flow) +flagship @C #36 dep:#35
+- [ ] (C) strategy 2: social presence & network effects (avatars, team awareness, reviews, notifications) +extend @C @H #37 dep:#35
+- [ ] (D) strategy 3: ai recommendations & gamification (recommendations, predictions, streaks) +extend @C @H @ML #38 dep:#35
 - [ ] (D) real Microsoft Graph adapter (post-demo, if budget lands) +future #27
 - [ ] (D) real IoT Hub ingestion adapter (post-demo) +future #28
 - [x] (B) OPTIONS preflight bypasses function code on Flex Consumption +bug @H #29 — root-caused 2026-07-19 (platform limitation; documented)
