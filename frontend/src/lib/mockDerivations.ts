@@ -1,6 +1,6 @@
 import type { SeedOutput } from '@roomsense/seed'
 import type { OccupancySnapshot, Reservation, Room, SensorReading } from '@roomsense/shared'
-import type { HealthResponse, KpisResponse, RoomWithOccupancy, UnderusedRoom } from './apiTypes'
+import type { HealthResponse, KpisResponse, RoomWithOccupancy, SourceStatus, UnderusedRoom } from './apiTypes'
 
 /** Matches the API's `COST_PER_DESK_HOUR_EUR` env default (wishlist.md contract). */
 export const COST_PER_DESK_HOUR_EUR = 4
@@ -237,6 +237,19 @@ export function deriveKpis(seed: SeedOutput, index: SeedIndex, from?: string, to
     busiestBuilding,
     underusedRooms,
   }
+}
+
+/** GET /api/sources (mock) — mirrors the real handler's sourceId sort (sources.ts). */
+export function deriveSources(seed: SeedOutput): SourceStatus[] {
+  return [...seed.sources]
+    .sort((a, b) => a.sourceId.localeCompare(b.sourceId))
+    .map((s) => ({
+      sourceId: s.sourceId,
+      kind: s.kind,
+      displayName: s.displayName,
+      status: s.status,
+      lastSyncTs: s.lastSyncTs,
+    }))
 }
 
 function round1(value: number): number {

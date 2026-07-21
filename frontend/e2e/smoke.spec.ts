@@ -39,6 +39,23 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(page.locator('.drill-panel')).toHaveCount(0)
   })
 
+  test('live page telemetry table shows occupancy deltas, not just raw counters (#live-deltas)', async ({ page }) => {
+    await page.goto('/#live')
+    await page.locator('.room-card').first().click()
+    const headerCells = page.locator('.telemetry-scroll thead th')
+    await expect(headerCells).toContainText(['Δ in', 'Δ out', 'Δ occ'])
+    // At least one row (the newest reading has no older row to diff against,
+    // so row 0 is legitimately "—"; row 1 must have a real delta or a reset).
+    const secondRowDeltaIn = page.locator('.telemetry-scroll tbody tr').nth(1).locator('td').nth(3)
+    await expect(secondRowDeltaIn).not.toHaveText('')
+  })
+
+  test('live page drill panel shows battery/signal trend sparklines (#live-sparklines)', async ({ page }) => {
+    await page.goto('/#live')
+    await page.locator('.room-card').first().click()
+    await expect(page.locator('.device-trend-row .sparkline')).toHaveCount(2)
+  })
+
   test('live page drill-in shows the reservations overlay (#24)', async ({ page }) => {
     await page.goto('/#live')
     const roomCards = page.locator('.room-card')
@@ -81,6 +98,23 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(page.getByRole('heading', { name: /demo path vs\. real path/i })).toBeVisible()
     await expect(page.locator('#arch-diagram svg')).toBeVisible()
     await expect(page.getByText(/data in this environment is generated/i).first()).toBeVisible()
+  })
+
+  test('live page shows both data source adapters (#sources-strip)', async ({ page }) => {
+    await page.goto('/#live')
+    const pills = page.locator('.source-pill')
+    await expect(pills).toHaveCount(2)
+    for (const pill of await pills.all()) {
+      await expect(pill.locator('.status-dot')).toBeVisible()
+      const label = await pill.locator('.source-label').innerText()
+      expect(label.length).toBeGreaterThan(0)
+    }
+  })
+
+  test('live page poll label reports how many rooms updated after a manual refresh (#live-freshness)', async ({ page }) => {
+    await page.goto('/#live')
+    await page.locator('#manual-refresh').click()
+    await expect(page.locator('#poll-label')).toContainText(/\d+\/15 rooms reported new data/)
   })
 
   test('hash navigation switches the active nav link', async ({ page }) => {

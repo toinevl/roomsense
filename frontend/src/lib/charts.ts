@@ -106,3 +106,16 @@ export function tooltipRow(colorVar: string, label: string, value: string): HTML
   row.append(key, labelEl, valueEl)
   return row
 }
+
+/** Builds an SVG path `d` string for a single-series sparkline over `values`,
+ *  scaled to fit [0, width] x [0, height] (y inverted so higher values sit
+ *  higher on screen, matching every other chart in this file). */
+export function buildSparklinePath(values: number[], width: number, height: number): string {
+  if (values.length === 0) return ''
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  const x = linearScale(0, Math.max(1, values.length - 1), 0, width)
+  const y = linearScale(min, max, height, 0)
+  const points = values.map((v, i) => `${x(i)},${y(v)}`)
+  return `M ${points.join(' L ')}`
+}

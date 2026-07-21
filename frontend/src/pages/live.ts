@@ -1,7 +1,17 @@
 import { apiClient } from '../lib/api'
-import type { OccupancySnapshot, Reservation, RoomWithOccupancy, SensorReading } from '../lib/apiTypes'
+import type { OccupancySnapshot, Reservation, RoomWithOccupancy, SourceStatus } from '../lib/apiTypes'
 import { formatPercent, formatTimestamp } from '../lib/format'
-import { SEQUENTIAL_STEPS, createTooltip, linearScale, sequentialStepForPct, svgEl, tooltipRow } from '../lib/charts'
+import {
+  SEQUENTIAL_STEPS,
+  buildSparklinePath,
+  createTooltip,
+  linearScale,
+  sequentialStepForPct,
+  svgEl,
+  tooltipRow,
+} from '../lib/charts'
+import { computeReadingDeltas, type ReadingDelta } from '../lib/readingDeltas'
+import { computeAdvancedRoomIds, snapshotLastSeen } from '../lib/roomFreshness'
 import type { Page } from './types'
 
 const POLL_INTERVAL_MS = 10_000
@@ -14,6 +24,7 @@ function buildingLabel(building: string): string {
 let pollHandle: ReturnType<typeof setInterval> | null = null
 let selectedRoomId: string | null = null
 let rootEl: HTMLElement | null = null
+let previousLastSeen: Map<string, string> = new Map()
 
 function renderSkeleton(): string {
   return `
@@ -22,6 +33,7 @@ function renderSkeleton(): string {
       <h1 class="page-title">Live room telemetry</h1>
       <p class="page-sub">Raw Terabee people-counting readings per room. Click a room to drill into its device and the last ${READINGS_LIMIT} readings.</p>
     </div>
+    <div class="sources-strip" id="sources-strip" role="list" aria-label="Data sources"></div>
     <div class="live-toolbar">
       <div class="poll-indicator"><span class="poll-ring" aria-hidden="true"></span><span id="poll-label">auto-refreshing every 10s</span></div>
       <button type="button" class="table-toggle" id="manual-refresh">Refresh now</button>
@@ -69,13 +81,52 @@ function roomCard(room: RoomWithOccupancy): HTMLButtonElement {
   return card
 }
 
-function renderRoomGrid(rooms: RoomWithOccupancy[]): void {
+function renderRoomGrid(rooms: RoomWithOccupancy[], advanced: Set<string> = new Set()): void {
   if (!rootEl) return
   const grid = rootEl.querySelector('#room-grid')!
   grid.innerHTML = ''
   for (const room of rooms) {
-    grid.appendChild(roomCard(room))
+    const card = roomCard(room)
+    if (advanced.has(room.roomId)) card.classList.add('room-card--updated')
+    grid.appendChild(card)
   }
+}
+
+function sourcePill(source: SourceStatus): HTMLDivElement {
+  const pill = document.createElement('div')
+  pill.className = 'source-pill'
+  pill.setAttribute('role', 'listitem')
+
+  const dot = document.createElement('span')
+  dot.className = `status-dot ${source.status === 'active' ? 'ok' : 'err'}`
+
+  const label = document.createElement('span')
+  label.className = 'source-label'
+  label.textContent = `${source.displayName} (${source.kind})`
+
+  const synced = document.createElement('span')
+  synced.className = 'source-synced mono'
+  // Absolute timestamp only — never a "Xm ago" relative string. The mock
+  // dataset's clock is frozen (seedData.ts MOCK_END), not wall-clock "now";
+  // a relative-time label would read as "3 months ago" for every adapter,
+  // always, regardless of when the demo runs (same trap documented on
+  // findLatestActiveIndex / findRecentReservationDay).
+  synced.textContent = source.lastSyncTs ? `synced ${formatTimestamp(source.lastSyncTs)}` : 'never synced'
+
+  pill.append(dot, label, synced)
+  pill.setAttribute(
+    'aria-label',
+    `${source.displayName} (${source.kind}), ${source.status}, ${source.lastSyncTs ? `last synced ${formatTimestamp(source.lastSyncTs)}` : 'never synced'}`,
+  )
+  return pill
+}
+
+function renderSourcesStrip(sources: SourceStatus[]): void {
+  if (!rootEl) return
+  const strip = rootEl.querySelector('#sources-strip')
+  if (!strip) return
+  strip.innerHTML = ''
+  for (const source of sources) strip.appendChild(sourcePill(source))
 }
 
 function deviceMetaItem(label: string, value: string): HTMLDivElement {
@@ -91,12 +142,32 @@ function deviceMetaItem(label: string, value: string): HTMLDivElement {
   return item
 }
 
-function telemetryRow(reading: SensorReading): HTMLTableRowElement {
+const SPARK_WIDTH = 120
+const SPARK_HEIGHT = 28
+
+/** Small inline trend line for a device metric. `values` is expected in the
+ *  API-contract order (descending by ts, newest first) — this reverses it
+ *  internally so the sparkline reads left-to-right as oldest -> newest. */
+function sparkline(values: number[], colorVar: string): SVGSVGElement {
+  const svg = svgEl('svg', { viewBox: `0 0 ${SPARK_WIDTH} ${SPARK_HEIGHT}`, class: 'sparkline' })
+  const oldestFirst = [...values].reverse()
+  const d = buildSparklinePath(oldestFirst, SPARK_WIDTH, SPARK_HEIGHT)
+  if (d) svg.appendChild(svgEl('path', { d, fill: 'none', stroke: colorVar, 'stroke-width': 1.5 }))
+  return svg
+}
+
+function telemetryRow(delta: ReadingDelta): HTMLTableRowElement {
+  const { reading } = delta
   const tr = document.createElement('tr')
+  if (delta.reset) tr.classList.add('reading-reset')
+
   const cells: Array<[string, boolean]> = [
     [formatTimestamp(reading.ts), false],
     [String(reading.countIn), true],
     [String(reading.countOut), true],
+    [delta.reset ? '↺ reset' : delta.deltaIn === null ? '—' : `+${delta.deltaIn}`, true],
+    [delta.reset ? '↺ reset' : delta.deltaOut === null ? '—' : `+${delta.deltaOut}`, true],
+    [delta.reset ? '↺ reset' : delta.deltaOccupancy === null ? '—' : String(delta.deltaOccupancy), true],
     [`${reading.batteryPct.toFixed(1)}%`, true],
     [`${reading.rssi} dBm`, true],
     [`${reading.snr.toFixed(2)} dB`, true],
@@ -359,6 +430,19 @@ async function renderDrillPanel(): Promise<void> {
   )
   panel.appendChild(metaGrid)
 
+  // Battery/RSSI trend sparklines — reuse the `readings` array already
+  // fetched above for the telemetry table; no additional API call.
+  const trendRow = document.createElement('div')
+  trendRow.className = 'device-trend-row'
+  const batteryTrend = document.createElement('div')
+  batteryTrend.className = 'device-trend'
+  batteryTrend.append('Battery trend: ', sparkline(readings.map((r) => r.batteryPct), 'var(--series-2)'))
+  const rssiTrend = document.createElement('div')
+  rssiTrend.className = 'device-trend'
+  rssiTrend.append('Signal trend: ', sparkline(readings.map((r) => r.rssi), 'var(--series-3)'))
+  trendRow.append(batteryTrend, rssiTrend)
+  panel.appendChild(trendRow)
+
   panel.appendChild(await loadReservationsOverlay(room))
 
   const tableTitle = document.createElement('div')
@@ -373,10 +457,12 @@ async function renderDrillPanel(): Promise<void> {
   table.className = 'sr-table'
   table.innerHTML = `<thead><tr>
     <th>Timestamp</th><th class="num">Count in</th><th class="num">Count out</th>
+    <th class="num">Δ in</th><th class="num">Δ out</th><th class="num">Δ occ</th>
     <th class="num">Battery</th><th class="num">RSSI</th><th class="num">SNR</th>
   </tr></thead>`
   const tbody = document.createElement('tbody')
-  for (const reading of readings) tbody.appendChild(telemetryRow(reading))
+  const deltas = computeReadingDeltas(readings)
+  for (const delta of deltas) tbody.appendChild(telemetryRow(delta))
   table.appendChild(tbody)
   scrollWrap.appendChild(table)
   panel.appendChild(scrollWrap)
@@ -388,7 +474,15 @@ async function refresh(): Promise<void> {
   if (!rootEl) return
   apiClient.tickMockClock()
   const rooms = await apiClient.getRooms()
-  renderRoomGrid(rooms)
+  const advanced = computeAdvancedRoomIds(rooms, previousLastSeen)
+  renderRoomGrid(rooms, advanced)
+  previousLastSeen = snapshotLastSeen(rooms)
+
+  const label = rootEl.querySelector('#poll-label')
+  if (label) {
+    label.textContent = `auto-refreshing every 10s · ${advanced.size}/${rooms.length} rooms reported new data last refresh`
+  }
+
   if (selectedRoomId) await renderDrillPanel()
 }
 
@@ -400,6 +494,10 @@ export const livePage: Page = {
 
     const rooms = await apiClient.getRooms()
     renderRoomGrid(rooms)
+    previousLastSeen = snapshotLastSeen(rooms)
+
+    const sources = await apiClient.getSources()
+    renderSourcesStrip(sources)
 
     container.querySelector('#manual-refresh')!.addEventListener('click', () => {
       void refresh()
@@ -417,5 +515,6 @@ export const livePage: Page = {
     }
     rootEl = null
     selectedRoomId = null
+    previousLastSeen = new Map()
   },
 }
