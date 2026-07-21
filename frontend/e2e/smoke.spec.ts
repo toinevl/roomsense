@@ -123,4 +123,62 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(page).toHaveURL(/#live$/)
     await expect(page.locator('.primary-nav a.active')).toHaveText('Live')
   })
+
+  test('room finder page loads and shows available rooms', async ({ page }) => {
+    await page.goto('/#finder')
+    await page.waitForLoadState('networkidle')
+
+    await expect(page.getByRole('heading', { name: 'Find a Room' })).toBeVisible()
+
+    const cards = page.locator('.room-card')
+    const count = await cards.count()
+    expect(count).toBeGreaterThan(0)
+
+    // Check first card has expected content
+    const firstCard = cards.first()
+    await expect(firstCard).toContainText(/\d+ \/ \d+ people/)
+  })
+
+  test('report page loads and displays metrics', async ({ page }) => {
+    await page.goto('/#report')
+    await page.waitForLoadState('networkidle')
+
+    await expect(page.getByRole('heading', { name: 'Semester in Review' })).toBeVisible()
+
+    const metrics = page.locator('.metric')
+    await expect(metrics).toHaveCount(4)
+
+    const values = page.locator('.metric-value')
+    for (const value of await values.all()) {
+      const text = await value.innerText()
+      expect(text.trim().length).toBeGreaterThan(0)
+    }
+
+    await expect(page.locator('.report-co2')).toBeVisible()
+    await expect(page.locator('.report-underused')).toBeVisible()
+  })
+
+  test('trust page loads all faq items', async ({ page }) => {
+    await page.goto('/#trust')
+
+    // Check header visible
+    await expect(page.locator('.trust-header h1')).toContainText('Trust')
+
+    // Check FAQ items render
+    const faqItems = page.locator('.faq-item')
+    const count = await faqItems.count()
+    expect(count).toBeGreaterThanOrEqual(6)
+  })
+
+  test('wrapped card renders for screenshots', async ({ page }) => {
+    await page.goto('/#wrapped')
+    await page.waitForLoadState('networkidle')
+
+    const card = page.locator('.wrapped-card')
+    await expect(card).toBeVisible()
+
+    // Verify stats visible
+    await expect(page.locator('.busiest')).toBeVisible()
+    await expect(page.locator('.quietest')).toBeVisible()
+  })
 })

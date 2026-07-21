@@ -4,12 +4,20 @@ import { config } from './config'
 import { dashboardPage } from './pages/dashboard'
 import { livePage } from './pages/live'
 import { architecturePage } from './pages/architecture'
+import { roomFinderPage } from './pages/roomFinder'
+import { reportPage } from './pages/report'
+import { trustPage } from './pages/trust'
+import { wrappedPage } from './pages/wrapped'
 import type { Page } from './pages/types'
 
 const routes: Record<string, { page: Page; title: string }> = {
   dashboard: { page: dashboardPage, title: 'Dashboard' },
   live: { page: livePage, title: 'Live' },
   architecture: { page: architecturePage, title: 'Architecture' },
+  finder: { page: roomFinderPage, title: 'Find a Room' },
+  report: { page: reportPage, title: 'Semester in Review' },
+  trust: { page: trustPage, title: 'Trust & Transparency' },
+  wrapped: { page: wrappedPage, title: 'RoomSense Wrapped' },
 }
 
 const DEFAULT_ROUTE = 'dashboard'
