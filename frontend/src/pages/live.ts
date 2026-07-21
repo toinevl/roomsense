@@ -116,7 +116,7 @@ function sourcePill(source: SourceStatus): HTMLDivElement {
   pill.append(dot, label, synced)
   pill.setAttribute(
     'aria-label',
-    `${source.displayName}, ${source.status}, ${source.lastSyncTs ? `last synced ${formatTimestamp(source.lastSyncTs)}` : 'never synced'}`,
+    `${source.displayName} (${source.kind}), ${source.status}, ${source.lastSyncTs ? `last synced ${formatTimestamp(source.lastSyncTs)}` : 'never synced'}`,
   )
   return pill
 }

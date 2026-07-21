@@ -38,7 +38,7 @@ export interface SourceStatus {
   sourceId: string
   kind: string
   displayName: string
-  status: string
+  status: 'active' | 'inactive'
   lastSyncTs?: string
 }
 
