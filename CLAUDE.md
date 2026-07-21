@@ -9,6 +9,18 @@ Backlog + lane coordination: `wishlist.md` (single source of truth for progress)
 `packages/shared` is frozen after Phase 0 — changes only via orchestrator coordination commit.
 Always `git status`/`git log` before assuming tree state; commit with explicit paths, never `git add -A`.
 
+## New frontend pages MUST be in THREE places
+
+When adding a new page to the frontend, **three files must change** or the page
+will be unreachable or invisible:
+
+1. **Create** `frontend/src/pages/newPage.ts` — the page component
+2. **Modify** `frontend/src/main.ts` — import and register the route in the `routes` object
+3. **Modify** `frontend/index.html` — add a `<a>` link in `<nav class="primary-nav">` 
+   with `href="#routeName"` and `data-route="routeName"` attributes
+
+(A guard in main.ts warns in dev if a route has no nav link; CI does not catch this.)
+
 ## New API functions MUST be imported in api/src/index.ts
 
 The Azure Functions v4 programming model only registers functions whose module
