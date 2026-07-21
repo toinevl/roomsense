@@ -30,6 +30,22 @@ production (this shipped three dead endpoints at once in a sibling project).
 Keep a guard test in `api/src/index.test.ts` asserting every non-test module in
 `src/functions/` is imported.
 
+## Interactive UI elements (buttons, selectors) must be implemented, not just styled
+
+"False affordance" = styling that signals interactivity (`cursor: pointer`, hover
+effects) without backing behavior. Room Finder shipped with beautiful card styling
+but no click handlers, making rooms unchosen. This pattern is invisible to lint
+and tests because CSS passes; the app compiles and loads with zero errors.
+
+**Guards:**
+- Interactive cards/buttons MUST be `<button>` elements (semantic HTML + keyboard support).
+- If styling adds `cursor: pointer`, a unit test MUST verify click handlers exist.
+- Dev-mode guard warns if `.room-card` elements aren't buttons.
+
+**Example:** Room cards are buttons in `frontend/src/pages/roomFinder.ts`; clicking
+navigates to `#live` with room pre-selected via `sessionStorage`. Test suite
+explicitly checks that cards are buttons, not divs.
+
 ## Testing conventions
 
 Test fixtures must include real non-ASCII names (ä, ö, å, ç — e.g. `Vergaderzaal

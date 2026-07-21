@@ -132,5 +132,18 @@ export const roomFinderPage: Page = {
 
     wrapper.appendChild(cardsContainer)
     container.appendChild(wrapper)
+
+    if (import.meta.env.DEV) {
+      const cards = container.querySelectorAll('.room-card')
+      const notButtons = Array.from(cards).filter((card) => card.tagName !== 'BUTTON')
+
+      if (notButtons.length > 0) {
+        console.warn(
+          `⚠️  Room Finder: ${notButtons.length} card(s) are not buttons. ` +
+          `Room cards must be <button> elements with click handlers to navigate to room details. ` +
+          `Using divs creates false affordance: looks interactive but isn't.`
+        )
+      }
+    }
   },
 }
