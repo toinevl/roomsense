@@ -83,3 +83,89 @@ Close with the adapter seam:
 End with the roadmap slide if asked: #22 deploy, #23 Outlook-mock adapter,
 #24 reservations overlay, #25 presenter mode button. Post-demo: real Graph
 adapter (#27) and real IoT Hub (#28).
+
+---
+
+## Bonus slides — Audience-specific pitches
+
+Use these with students, staff, professors, or fundraising committees to tailor
+the RoomSense story. All four are built into the live app.
+
+### Bonus 1 — Students: Find me a room (`/#finder`)
+
+"One thing every student needs: a quiet place to study, *right now*."
+
+Open the Room Finder page. Show:
+- Green cards = empty or low-occupancy rooms
+- Sorted by building and floor (quick navigation)
+- One-tap to see details
+
+Story: "We're sitting on occupancy data that solves a daily student problem.
+This page is the product angle — not IT ops, but student experience. Campus
+WiFi shows you the library is full; RoomSense tells you where the quiet rooms
+are. That's a feature worth funding."
+
+### Bonus 2 — Leadership: Semester in Review (`/#report`)
+
+"What CFO or department head wants to see?"
+
+Open the Report page. Point out:
+- Average utilization %
+- Peak utilization %
+- Ghost-meeting rate %
+- Wasted floor-space €
+- Top underused rooms
+- Illustrative CO₂ impact (HVAC/lighting waste)
+
+Story: "This is a one-pager auto-generated every semester. Forward it to whoever
+holds the budget. It's the case for money: 'We're wasting €X and Y tonnes of CO₂
+on ghost meetings. RoomSense fixes this.' The report is the proof."
+
+Demo move: Open browser print preview (Ctrl+P or Cmd+P) and show it fits on one
+page. Mention this gets built into a monthly/semester digest that requires zero
+manual work.
+
+### Bonus 3 — Students (viral): RoomSense Wrapped (`/#wrapped`)
+
+"Spotify made 'Wrapped' because people love sharing their own stats."
+
+Open the Wrapped card. Show:
+- Busiest room you used
+- Quietest hideout you found
+- Ghost meeting hours campus-wide
+
+Story: "This is intentionally playful. Not for ops, but for students to
+screenshot and post. 'Here's my campus occupancy story.' It's marketing candy,
+but it's also proof the data is real and relatable. Organic reach."
+
+Demo move: Take a screenshot at phone dimensions (375px) — it looks perfect on
+mobile, ready to share.
+
+### Bonus 4 — All audiences: Trust & Transparency (`/#trust`)
+
+"The question everyone asks (but silently): 'Are you tracking me?'"
+
+Open the Trust FAQ page. Highlight:
+- "Do you track individuals?" → No, counts only.
+- "Do you have cameras?" → No, infrared time-of-flight.
+- "How long is data kept?" → 30 days (demo); configurable in production.
+- "Who can see what?" → Building-level public; room-level for staff.
+
+Story: "Preempt the privacy objection before they ask. This page is on every
+pitch. It's the trust unlock — once they know what you're *not* doing, every
+other feature lands better."
+
+---
+
+## Demo flow options
+
+**5-minute technical demo** (default):
+Slides 1–5 (problem → architecture → dashboard → live → adapter seam).
+
+**15-minute comprehensive demo** (student/staff/fundraising):
+Slides 1–5, then pick 2–3 bonus slides based on the room:
+- **For students:** Bonus 1 (Room Finder) + Bonus 3 (Wrapped)
+- **For staff/facilities:** Bonus 2 (Report) + Bonus 4 (Trust)
+- **For professors/researchers:** Slide 2 (architecture) + Bonus 4 (Trust) +
+  mention open dataset potential (in FEATURES.md)
+- **For fundraising committee:** Bonus 2 (Report) + Bonus 4 (Trust)
