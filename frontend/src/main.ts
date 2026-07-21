@@ -25,6 +25,19 @@ const DEFAULT_ROUTE = 'dashboard'
 const appEl = document.getElementById('app')!
 const navLinks = Array.from(document.querySelectorAll<HTMLAnchorElement>('.primary-nav a'))
 
+// Guard: every route must have a corresponding nav link (prevents orphaned pages)
+if (import.meta.env.DEV) {
+  const navRoutes = new Set(navLinks.map(link => link.dataset.route))
+  const routeKeys = Object.keys(routes)
+  const orphaned = routeKeys.filter(r => !navRoutes.has(r) && r !== DEFAULT_ROUTE)
+  if (orphaned.length > 0) {
+    console.warn(
+      `⚠️  Routes without nav links: ${orphaned.join(', ')}. ` +
+      `Add them to frontend/index.html <nav class="primary-nav"> or update the guard check.`
+    )
+  }
+}
+
 let activePage: Page | null = null
 
 function routeFromHash(): string {
