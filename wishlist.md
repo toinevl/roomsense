@@ -47,12 +47,56 @@
   - [x] CSS: 48px tap targets, flex layout, active/hover states (cb8a98d)
   - [x] CTA button placement (thumb zone, bottom of card)
   - [x] Dev guard + unit tests updated
-  - [ ] Browser test: <2s load on 3G throttle
-  - [ ] Confirmation modal component
-  - [ ] Success state page
-  - [ ] Usability test (5 students, SUS >72)
-- [ ] (C) strategy 2: social presence & network effects (avatars, team awareness, reviews, notifications) +extend @C @H #37 dep:#35
-- [ ] (D) strategy 3: ai recommendations & gamification (recommendations, predictions, streaks) +extend @C @H @ML #38 dep:#35
+  - [ ] Browser test: <2s load on 3G throttle (@C)
+  - [ ] Confirmation modal component (@C)
+  - [ ] Success state page (@C)
+  - [ ] Usability test (5 students, SUS >72) (@C)
+- [ ] (C) strategy 2: social presence & network effects (avatars, team awareness, reviews, notifications) +extend @C @H #37 dep:#35 — parallel phases
+  - **Phase 2a: Backend Foundation (Hermes, blocks avatar stack)**
+    - [ ] UserPresence table schema + presence state tracking (@H)
+    - [ ] GET /api/presence?building=X endpoint (@H)
+    - [ ] Friendships table + friend request workflow (@H)
+    - [ ] GET /api/users/{id}/friends endpoint (@H)
+  - **Phase 2b: Frontend MVP (Claude, blocks Phase 2a + 2c)**
+    - [ ] PresenceIndicator component — avatar stack on room cards (@C, mock data first)
+    - [ ] ConsentModal component — opt-in flow + privacy copy (@C)
+    - [ ] Privacy settings page (@C)
+    - [ ] In-app notification toasts (@C)
+  - **Phase 2c: Backend Extended (Hermes, after 2a)**
+    - [ ] RoomReviews table + review submission (@H)
+    - [ ] POST /api/reviews + GET /api/rooms/{id}/reviews endpoints (@H)
+    - [ ] UserPrivacySettings table (consent, retention) (@H)
+    - [ ] PATCH /api/users/{id}/privacy-settings endpoint (@H)
+  - **Phase 2d: Frontend Extended (Claude, after 2b + 2c)**
+    - [ ] RoomReviews component — display + write review (@C)
+    - [ ] FriendsNearMe tab (dedicated friend presence view) (@C)
+    - [ ] A/B test: presence on/off feature flag (@C)
+  - **Phase 2e: Compliance Gate (Orchestrator)**
+    - [ ] Legal/GDPR/FERPA audit before launch (@O)
+- [ ] (D) strategy 3: ai recommendations & gamification (recommendations, predictions, streaks) +extend @C @H @ML #38 dep:#35 — parallel phases
+  - **Phase 3a: Backend Rule-Based MVP (Hermes, week 1-3, blocks avatar stack)**
+    - [ ] Recommendation scoring algorithm (repeat 50% + popularity 30% + distance 20%) (@H)
+    - [ ] GET /api/recommendations?userId={id}&now={ts} endpoint (hero + 2 alts) (@H)
+    - [ ] GET /api/occupancy/prediction endpoint (+30m, +60m) (@H)
+    - [ ] GET /api/users/{id}/streak endpoint (@H)
+    - [ ] POST /api/users/{id}/booking endpoint (increments streak) (@H)
+    - [ ] GET /api/users/{id}/unlocks endpoint (feature progression) (@H)
+  - **Phase 3b: Frontend Components (Claude, after 3a)**
+    - [ ] RecommendationCard component — hero card + why-recommended tooltip (@C)
+    - [ ] OccupancyPrediction component — bar chart (now + 30m + 60m) (@C)
+    - [ ] StreakCounter component — persistent nav badge + progress modal (@C)
+    - [ ] FeatureUnlock modal — celebration + feature intro (@C)
+    - [ ] Integrate recommendations into room finder (@C)
+    - [ ] A/B test: feature flag for 30% on / 70% control (@C)
+  - **Phase 3c: Measurement & A/B (Claude, after 3b)**
+    - [ ] A/B test infrastructure + event logging (@C)
+    - [ ] Measure: CTR 40%+, time-to-decision -50%, DAU +30% (@C)
+    - [ ] Statistical significance test (p<0.05) (@C)
+  - **Phase 3d: ML Upgrade (Hermes + ML, week 5+, when 8+ weeks data ready)**
+    - [ ] Collaborative filtering model training (@ML)
+    - [ ] Deploy ML recommendations (replace rule-based) (@H/@ML)
+    - [ ] Occupancy prediction ML v2 (per-room + per-day-of-week) (@ML)
+    - [ ] Weekly model retraining pipeline (@ML)
 - [ ] (D) real Microsoft Graph adapter (post-demo, if budget lands) +future #27
 - [ ] (D) real IoT Hub ingestion adapter (post-demo) +future #28
 - [x] (B) OPTIONS preflight bypasses function code on Flex Consumption +bug @H #29 — root-caused 2026-07-19 (platform limitation; documented)
