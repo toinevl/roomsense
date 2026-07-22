@@ -8,6 +8,7 @@ import { roomFinderPage } from './pages/roomFinder'
 import { reportPage } from './pages/report'
 import { trustPage } from './pages/trust'
 import { wrappedPage } from './pages/wrapped'
+import { bookingSuccessPage } from './pages/bookingSuccess'
 import type { Page } from './pages/types'
 
 const routes: Record<string, { page: Page; title: string }> = {
@@ -18,6 +19,7 @@ const routes: Record<string, { page: Page; title: string }> = {
   report: { page: reportPage, title: 'Semester in Review' },
   trust: { page: trustPage, title: 'Trust & Transparency' },
   wrapped: { page: wrappedPage, title: 'RoomSense Wrapped' },
+  'booking-success': { page: bookingSuccessPage, title: 'Booking Confirmed' },
 }
 
 const DEFAULT_ROUTE = 'dashboard'

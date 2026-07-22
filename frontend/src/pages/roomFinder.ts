@@ -1,4 +1,5 @@
 import { apiClient } from '../lib/api'
+import { createConfirmationModal } from '../components/confirmationModal'
 import type { Page } from './types'
 
 const styles = `
@@ -151,8 +152,16 @@ export const roomFinderPage: Page = {
       ctaButton.textContent = 'Book Now'
       ctaButton.addEventListener('click', (e) => {
         e.stopPropagation()
-        sessionStorage.setItem('roomsense.selectedRoomId', room.roomId)
-        window.location.hash = '#live'
+        createConfirmationModal(document.body, room, {
+          onConfirm: (roomId) => {
+            sessionStorage.setItem('roomsense.selectedRoomId', roomId)
+            sessionStorage.setItem('roomsense.bookingTime', new Date().toISOString())
+            window.location.hash = '#booking-success'
+          },
+          onCancel: () => {
+            // Modal closes, user stays on room finder
+          },
+        })
       })
       card.appendChild(ctaButton)
 
