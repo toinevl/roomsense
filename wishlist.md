@@ -43,7 +43,14 @@
 - [x] (B) semester-review report page for leadership (printable kpi one-pager) +flagship @C #32 dep:#22 — done 2026-07-21 (3 tests pass; print CSS; route #report)
 - [x] (B) roomsense-wrapped shareable card (fun stats, screenshots) +flagship @C #33 dep:#22 — done 2026-07-21 (1 test pass; route #wrapped)
 - [x] (B) trust & transparency faq page (privacy de-risk) +flagship @C #34 dep:#22 — done 2026-07-21 (1 test pass; route #trust; 7 Q&A)
-- [ ] (C) strategy 1: mobile-first tap-to-book (48px targets, animations, one-tap flow) +flagship @C #36 dep:#35
+- [ ] (C) strategy 1: mobile-first tap-to-book (48px targets, animations, one-tap flow) +flagship @C #36 dep:#35 — in progress 2026-07-22
+  - [x] CSS: 48px tap targets, flex layout, active/hover states (cb8a98d)
+  - [x] CTA button placement (thumb zone, bottom of card)
+  - [x] Dev guard + unit tests updated
+  - [ ] Browser test: <2s load on 3G throttle
+  - [ ] Confirmation modal component
+  - [ ] Success state page
+  - [ ] Usability test (5 students, SUS >72)
 - [ ] (C) strategy 2: social presence & network effects (avatars, team awareness, reviews, notifications) +extend @C @H #37 dep:#35
 - [ ] (D) strategy 3: ai recommendations & gamification (recommendations, predictions, streaks) +extend @C @H @ML #38 dep:#35
 - [ ] (D) real Microsoft Graph adapter (post-demo, if budget lands) +future #27
