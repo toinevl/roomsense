@@ -38,30 +38,36 @@ describe('roomFinder', () => {
     expect(typeof roomFinderPage.mount).toBe('function')
   })
 
-  it('mounts and renders available rooms as clickable buttons', async () => {
+  it('mounts and renders available rooms with clickable CTA buttons', async () => {
     await roomFinderPage.mount(container)
 
     const cards = container.querySelectorAll('.room-card')
     expect(cards.length).toBeGreaterThan(0)
 
-    // Guard: Every room card MUST be a button (not just styled div)
-    // to ensure click handlers and accessibility work correctly
+    // Guard: Every room card MUST have a CTA button (not just styled div)
+    // to ensure click handlers and proper mobile affordance
     cards.forEach((card) => {
-      expect(card.tagName).toBe('BUTTON')
+      const ctaButton = card.querySelector('.room-card-cta')
+      expect(ctaButton).toBeTruthy()
+      expect(ctaButton?.tagName).toBe('BUTTON')
+      expect(ctaButton?.textContent).toBe('Book Now')
     })
   })
 
-  it('room cards must have click handlers (room selector pattern)', async () => {
+  it('room card CTA buttons respond to clicks', async () => {
     await roomFinderPage.mount(container)
 
-    const firstCard = container.querySelector('.room-card') as HTMLButtonElement
+    const firstCard = container.querySelector('.room-card')
     expect(firstCard).toBeTruthy()
-    expect(firstCard.tagName).toBe('BUTTON')
 
-    // Verify button is clickable (will fail if onclick is missing)
+    const ctaButton = firstCard?.querySelector('.room-card-cta') as HTMLButtonElement
+    expect(ctaButton).toBeTruthy()
+    expect(ctaButton.tagName).toBe('BUTTON')
+
+    // Verify button is clickable
     const clickSpy = vi.fn()
-    firstCard.addEventListener('click', clickSpy)
-    firstCard.click()
+    ctaButton.addEventListener('click', clickSpy)
+    ctaButton.click()
 
     // In real app, click navigates via window.location.hash.
     // Here we just verify the button responds to clicks.

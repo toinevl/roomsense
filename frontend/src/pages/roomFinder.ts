@@ -28,10 +28,10 @@ const styles = `
     cursor: pointer;
     transition: all 0.2s;
     background: #f9f9f9;
-    min-height: 80px;
+    min-height: 140px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     text-align: left;
     font-family: inherit;
     font-size: inherit;
@@ -39,6 +39,10 @@ const styles = `
   .room-card:hover {
     background: #e8f5e9;
     border-color: #4caf50;
+  }
+  .room-card:active {
+    background: #d4edda;
+    transform: scale(0.98);
   }
   .room-name {
     font-size: 1.125rem;
@@ -54,6 +58,27 @@ const styles = `
     font-size: 0.875rem;
     color: #4caf50;
     font-weight: 500;
+    margin-bottom: 0.75rem;
+  }
+  .room-card-cta {
+    min-height: 48px;
+    min-width: 48px;
+    padding: 0.75rem 1rem;
+    background: #4caf50;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    align-self: flex-start;
+  }
+  .room-card-cta:hover {
+    background: #45a049;
+  }
+  .room-card-cta:active {
+    transform: scale(0.95);
   }
   @media (min-width: 768px) {
     .room-cards {
@@ -103,9 +128,8 @@ export const roomFinderPage: Page = {
     cardsContainer.className = 'room-cards'
 
     for (const room of available) {
-      const card = document.createElement('button')
+      const card = document.createElement('div')
       card.className = 'room-card'
-      card.type = 'button'
 
       const roomName = document.createElement('div')
       roomName.className = 'room-name'
@@ -122,10 +146,15 @@ export const roomFinderPage: Page = {
       occupancy.textContent = `${room.occupancy ?? 0} / ${room.capacity} people`
       card.appendChild(occupancy)
 
-      card.addEventListener('click', () => {
+      const ctaButton = document.createElement('button')
+      ctaButton.className = 'room-card-cta'
+      ctaButton.textContent = 'Book Now'
+      ctaButton.addEventListener('click', (e) => {
+        e.stopPropagation()
         sessionStorage.setItem('roomsense.selectedRoomId', room.roomId)
         window.location.hash = '#live'
       })
+      card.appendChild(ctaButton)
 
       cardsContainer.appendChild(card)
     }
@@ -135,13 +164,16 @@ export const roomFinderPage: Page = {
 
     if (import.meta.env.DEV) {
       const cards = container.querySelectorAll('.room-card')
-      const notButtons = Array.from(cards).filter((card) => card.tagName !== 'BUTTON')
+      const missingCTA = Array.from(cards).filter((card) => {
+        const ctaButton = card.querySelector('.room-card-cta')
+        return !ctaButton
+      })
 
-      if (notButtons.length > 0) {
+      if (missingCTA.length > 0) {
         console.warn(
-          `⚠️  Room Finder: ${notButtons.length} card(s) are not buttons. ` +
-          `Room cards must be <button> elements with click handlers to navigate to room details. ` +
-          `Using divs creates false affordance: looks interactive but isn't.`
+          `⚠️  Room Finder: ${missingCTA.length} card(s) missing CTA button. ` +
+          `Each room card must have a .room-card-cta element to navigate to room details. ` +
+          `Missing CTA creates false affordance: card looks interactive but isn't.`
         )
       }
     }
