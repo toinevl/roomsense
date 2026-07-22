@@ -1,4 +1,7 @@
 # RoomSense wishlist — lanes: [H]=Hermes [C]=Claude [O]=orchestrator/either
+
+## SPA-only weather
+- [x] Fake dashboard weather card, no API key or network call +frontend @H #38
 # Coordination protocol:
 #   - This file is the single source of truth for progress; git history is ground truth.
 #   - Lanes own DISJOINT paths: @H owns api/**, @C owns frontend/**, @O owns infra/** + .github/workflows/**.
