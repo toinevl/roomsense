@@ -11,7 +11,7 @@ permissions:
   contents: read
 
 env:
-  APP_NAME: roomsense-api
+  APP_NAME: roomsense-api2
   RESOURCE_GROUP: rgRoomSense
   DEPLOY_MODE: ${{ vars.DEPLOY_MODE }}
 
@@ -113,29 +113,30 @@ jobs:
             }, null, 2));
           "
           cd api/deploy-pkg && npm install --omit=dev --no-audit --no-fund
-      - name: Deploy to Functions (OIDC)
+      - name: Deploy to Functions (OIDC) via func CLI
         if: steps.deploy-mode.outputs.mode == 'oidc'
-        uses: Azure/functions-action@v1
-        with:
-          app-name: ${{ env.APP_NAME }}
-          package: api/deploy-pkg
-          scm-do-build-during-deployment: false
-          enable-oryx-build: false
-          remote-build: false
-      - name: Ensure platform CORS is empty (function-level CORS only)
-        if: steps.deploy-mode.outputs.mode == 'oidc'
-        # Platform-level `az functionapp cors add` intercepts OPTIONS preflight
-        # at the host layer before function code runs, and its own preflight
-        # response carries no Access-Control-Allow-Origin header — this broke
-        # every browser preflight (incl. /simulate/tick) until diagnosed
-        # 2026-07-19 (see wishlist.md). CORS is fully handled by api/src/lib/cors.ts;
-        # this step actively clears any platform origins instead of adding them.
+        # func CLI deploy is the reliable path for Consumption (Y1/Dynamic) plan.
+        # Azure/functions-action@v1 uses Kudu zipdeploy internally, which produced
+        # 503 "Function host is not running" on Consumption Linux in testing — the
+        # host never started. func CLI does a proper trigger sync. See wishlist #39.
         run: |
-          EXISTING=$(az functionapp cors show --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" -o tsv --query "allowedOrigins" 2>/dev/null || echo "")
-          for o in $EXISTING; do
-            echo "Removing stale platform CORS origin: $o"
-            az functionapp cors remove --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" --allowed-origins "$o"
-          done
+          npm install -g azure-functions-core-tools@4 --unsafe-perm true
+          cd api/deploy-pkg
+          func azure functionapp publish "$APP_NAME" --node
+      - name: Ensure platform CORS is configured
+        if: steps.deploy-mode.outputs.mode == 'oidc'
+        # On Consumption (Y1/Dynamic) plan, platform CORS works correctly — it
+        # returns proper Access-Control-Allow-* headers on OPTIONS preflight.
+        # This is the opposite of Flex Consumption, where platform CORS broke
+        # preflights (see wishlist.md #29). We set both platform CORS (for
+        # preflight handling) and ALLOWED_ORIGINS app setting (for function-level
+        # cors.ts on actual requests).
+        run: |
+          # Set platform CORS origins
+          az functionapp cors remove --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" \
+            --allowed-origins "https://lemon-mud-06bc7fd03.7.azurestaticapps.net" "http://localhost:5173" 2>/dev/null || true
+          az functionapp cors add --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" \
+            --allowed-origins "https://lemon-mud-06bc7fd03.7.azurestaticapps.net" "http://localhost:5173"
       - name: Wait for warmup (cold start ~60s lesson)
         run: sleep 60
       - name: Smoke test (health endpoint with 90s retry tolerance)

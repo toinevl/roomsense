@@ -196,6 +196,14 @@ Files changed for #29: wishlist.md (this entry). api/host.json had its empty `ex
 block removed (commit ebde3ae) — that change is benign and stays even though it didn't fix the
 bug, because empty-but-present config blocks are still a plausible footgun.
 
+- [ ] (A) Migrate API from Flex Consumption → Consumption (Linux) to fix CORS preflight +infra @O #39 dep:#29 — in progress 2026-07-22
+  - Flex Consumption short-circuits browser preflights (OPTIONS) at the Kestrel front-end before
+    function code runs, returning an empty 204 with zero CORS headers. Function-level cors.ts never
+    executes for real browser preflights. This blocks presenter-mode live ticks from the SWA origin.
+  - Plan: create new Consumption (Linux) plan + function app roomsense-api2, deploy code, configure
+    platform CORS, verify preflight returns CORS headers, cutover SWA ROOMSENSE_API_URL, update Bicep
+    + deploy workflow, tear down old Flex plan/app.
+
 ## Data reseed: real TU/e buildings, one week (2026-07-19)
 Requested by Toine: reseed against the real TU/e Atlas/Flux/Neuron buildings with a week of
 sensor + reservation data, instead of the fictional 30-day mock. Room fixtures were already

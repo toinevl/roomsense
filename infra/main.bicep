@@ -57,19 +57,11 @@ module functions 'modules/functions.bicep' = {
   }
 }
 
-// Grant the Function app's system-assigned managed identity "Storage Blob Data Contributor" on the
-// storage account, so Flex Consumption's identity-based deployment.storage +
-// AzureWebJobsStorage__accountName can read blobs. Built-in role GUID:
-// ba92f5b4-2d11-453d-a403-e96b0029c9fe.
-resource storageBlobDataContributor 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
-  name: guid(base, 'storage-blob-data-contributor')
-  scope: storageExisting
-  properties: {
-    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', 'ba92f5b4-2d11-453d-a403-e96b0029c9fe')
-    principalId: functions.outputs.principalId
-    principalType: 'ServicePrincipal'
-  }
-}
+// NOTE: Flex Consumption required "Storage Blob Data Contributor" role assignment for
+// identity-based storage access. Consumption (Y1/Dynamic) plan uses connection strings
+// (AzureWebJobsStorage with AccountKey), so this role assignment is no longer needed.
+// The managed identity is still created on the function app for potential future use
+// (e.g., Key Vault references), but storage access is via connection string.
 
 module swa 'modules/swa.bicep' = if (deploySwa) {
   name: '${base}-swa'

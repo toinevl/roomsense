@@ -2,8 +2,9 @@ param appName string
 param location string
 @description('Storage account name — the key is resolved here via listKeys() so it never flows through a module output / deployment history')
 param storageAccountName string
+@description('Comma-separated CORS origins (SWA + localhost) — set as ALLOWED_ORIGINS for function-level CORS AND on the platform CORS config')
 param corsOrigins string
-@description('Application Insights connection string — the Functions runtime auto-detects this and streams host/worker logs + exceptions. Required for Flex Consumption log visibility.')
+@description('Application Insights connection string — the Functions runtime auto-detects this and streams host/worker logs + exceptions.')
 param appInsightsConnectionString string
 @description('Azure Tables connection string for the roomsense data tables (Rooms, SensorReadings, OccupancySnapshots, Reservations, Sources)')
 param tablesConnectionString string
@@ -16,12 +17,19 @@ resource storageExisting 'Microsoft.Storage/storageAccounts@2023-05-01' existing
   name: storageAccountName
 }
 
+// Consumption (Dynamic/Y1) plan — platform-managed per region. We reference the
+// shared WestEuropeLinuxDynamicPlan that az functionapp create --consumption-plan-location
+// auto-provisions. Using a dedicated plan name would create a separate plan, which
+// works but is unnecessary for a single function app.
+// IMPORTANT: do NOT use Flex Consumption (FC1) — its Kestrel front-end short-circuits
+// browser CORS preflights (OPTIONS) with an empty 204 before function code runs.
+// See wishlist.md #29 and #39 for the full root-cause analysis.
 resource functionPlan 'Microsoft.Web/serverfarms@2023-12-01' = {
-  name: '${appName}-plan'
+  name: '${location}LinuxDynamicPlan'
   location: location
-  sku: { name: 'FC1', tier: 'FlexConsumption' }
-  properties: { reserved: true }
-  kind: 'linux'
+  sku: { name: 'Y1', tier: 'Dynamic' }
+  properties: { reserved: true, targetWorkerSizeId: 0 }
+  kind: 'functionapp'
 }
 
 resource app 'Microsoft.Web/sites@2023-12-01' = {
@@ -33,45 +41,22 @@ resource app 'Microsoft.Web/sites@2023-12-01' = {
   }
   properties: {
     serverFarmId: functionPlan.id
-    // Flex Consumption REQUIRES functionAppConfig on create (the legacy
-    // siteConfig-only shape is rejected). deploymentStorage is the resourceId
-    // of the storage account the runtime uses (accessed via the system-assigned
-    // managed identity, NOT a connection string), replacing AzureWebJobsStorage.
-    functionAppConfig: {
-      deployment: {
-        storage: {
-          type: 'blobContainer'
-          value: '${storageExisting.properties.primaryEndpoints.blob}deployments'
-          authentication: {
-            type: 'SystemAssignedIdentity'
-          }
-        }
-      }
-      scaleAndConcurrency: {
-        instanceMemoryMB: 2048
-        maximumInstanceCount: 100
-      }
-      runtime: {
-        name: 'node'
-        version: '20'
-      }
-    }
+    httpsOnly: true
     siteConfig: {
+      linuxFxVersion: 'NODE|22'
+      use32BitWorkerProcess: false
+      alwaysOn: false
       cors: {
         allowedOrigins: split(corsOrigins, ',')
-        supportCredentials: true
+        supportCredentials: false
       }
-      scmIpSecurityRestrictions: []
-      scmIpSecurityRestrictionsUseMain: false
     }
-    httpsOnly: true
   }
 }
 
-// Enable SCM basic auth publishing credentials — required by some deployment
-// tooling (Azure deployment lessons). This is a separate sub-resource, not a
-// SiteConfig property. Can be tightened (allow=false) once OIDC deploy is
-// live.
+// Enable SCM basic auth publishing credentials — required by the func CLI
+// deploy path and some deployment tooling. Can be tightened (allow=false)
+// once OIDC deploy is confirmed stable on Consumption.
 resource scmBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@2023-12-01' = {
   name: 'scm'
   parent: app
@@ -84,15 +69,18 @@ resource appSettings 'Microsoft.Web/sites/config@2023-12-01' = {
   name: 'appsettings'
   parent: app
   properties: {
-    // Flex Consumption uses identity-based runtime storage: functionAppConfig
-    // .deployment.storage (blobContainer, SystemAssignedIdentity) hosts the
-    // package, and AzureWebJobsStorage__accountName points the triggers/metrics
-    // at the same account via the managed identity (no connection string).
-    AzureWebJobsStorage__accountName: storageAccountName
+    // Consumption plan uses AzureWebJobsStorage as a connection string (not
+    // identity-based like Flex Consumption). This is the runtime trigger/binding
+    // storage — separate from the data tables connection string below.
+    AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageExisting.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
     TABLES_CONNECTION_STRING: tablesConnectionString
     APPLICATIONINSIGHTS_CONNECTION_STRING: appInsightsConnectionString
     ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
     XDT_MicrosoftApplicationInsights_Mode: 'recommended'
+    ALLOWED_ORIGINS: corsOrigins
+    FUNCTIONS_EXTENSION_VERSION: '~4'
+    FUNCTIONS_WORKER_RUNTIME: 'node'
+    WEBSITE_NODE_DEFAULT_VERSION: '~22'
   }
 }
 
