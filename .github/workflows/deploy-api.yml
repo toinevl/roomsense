@@ -86,20 +86,33 @@ jobs:
         if: steps.deploy-mode.outputs.mode == 'oidc'
         run: |
           az resource update --resource-group "$RESOURCE_GROUP" --name scm --namespace Microsoft.Web --resource-type basicPublishingCredentialsPolicies --parent "sites/$APP_NAME" --set properties.allow=true || true
-      - name: Clear Run-From-Package for ZIP deploy
+      - name: Verify function app is Consumption-ready
         if: steps.deploy-mode.outputs.mode == 'oidc'
+        # Pre-deploy guard: fail fast if plan or content-share settings are wrong.
+        # This prevents wasting a deploy cycle on a mis-provisioned app (wishlist #39).
         run: |
-          az functionapp config appsettings set \
-            --name "$APP_NAME" \
-            --resource-group "$RESOURCE_GROUP" \
-            --settings "WEBSITE_RUN_FROM_PACKAGE=" \
-            --output none
+          set -euo pipefail
+          PLAN_ID=$(az functionapp show -g "$RESOURCE_GROUP" -n "$APP_NAME" --query appServicePlanId -o tsv)
+          PLAN_SKU=$(az appservice plan show --ids "$PLAN_ID" --query sku.name -o tsv)
+          if [ "$PLAN_SKU" != "Y1" ]; then
+            echo "::error::Expected Y1/Dynamic plan, got $PLAN_SKU. Aborting."
+            exit 1
+          fi
+          for setting in AzureWebJobsStorage WEBSITE_CONTENTSHARE WEBSITE_CONTENTAZUREFILECONNECTIONSTRING; do
+            val=$(az functionapp config appsettings list -g "$RESOURCE_GROUP" -n "$APP_NAME" \
+                  --query "[?name=='$setting'].value" -o tsv 2>/dev/null || echo "")
+            if [ -z "$val" ]; then
+              echo "::error::Missing required app setting: $setting"
+              exit 1
+            fi
+          done
+          echo "✓ Function app is Consumption-ready (Y1 plan, content-share settings present)"
       - name: Stage self-contained deploy package
         if: steps.deploy-mode.outputs.mode == 'oidc'
         # api/dist holds ONLY the esbuild bundle — the host also needs host.json,
         # a package.json whose main points at the bundle, and @azure/functions
         # (the one dep the bundle externalizes). Remote/Oryx build is off: it
-        # cannot resolve the workspace:* dep and Flex has no Kudu build anyway.
+        # cannot resolve the workspace:* dep.
         run: |
           set -euo pipefail
           rm -rf api/deploy-pkg && mkdir -p api/deploy-pkg
@@ -137,6 +150,21 @@ jobs:
             --allowed-origins "https://lemon-mud-06bc7fd03.7.azurestaticapps.net" "http://localhost:5173" 2>/dev/null || true
           az functionapp cors add --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" \
             --allowed-origins "https://lemon-mud-06bc7fd03.7.azurestaticapps.net" "http://localhost:5173"
+      - name: Verify all functions registered (sync triggers guard)
+        if: steps.deploy-mode.outputs.mode == 'oidc'
+        # Catches partial deploys where the host is up but trigger sync didn't
+        # register all functions. If count < 8, force a re-sync. (wishlist #39)
+        run: |
+          sleep 10
+          FN_COUNT=$(az functionapp function list -g "$RESOURCE_GROUP" -n "$APP_NAME" --query "length([])" -o tsv 2>/dev/null || echo "0")
+          if [ "$FN_COUNT" -lt 8 ]; then
+            echo "::warning::Only $FN_COUNT functions registered (expected ≥8). Re-syncing triggers..."
+            az functionapp config appsettings set -g "$RESOURCE_GROUP" -n "$APP_NAME" \
+              --settings "AZURE_FUNCTIONS_SYNC_TRIGGERS=$((RANDOM % 100000))" --output none
+            sleep 15
+          else
+            echo "✓ $FN_COUNT functions registered"
+          fi
       - name: Wait for warmup (cold start ~60s lesson)
         run: sleep 60
       - name: Smoke test (health endpoint with 90s retry tolerance)
