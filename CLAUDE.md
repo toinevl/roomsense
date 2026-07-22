@@ -101,8 +101,28 @@ internal ghost flag is deliberately not uploaded.
 
 A successful `git push` does not mean the deploy succeeded — check the run:
 `gh run list --workflow=<wf> --limit 1` then `gh run watch <id> --exit-status`.
-Smoke tests must tolerate ~60s Flex Consumption cold start. Confirm the
-resource group (`rgRoomSense`) and subscription before any `az` mutation.
+Smoke tests must tolerate ~60s cold start. Confirm the resource group
+(`rgRoomSense`) and subscription before any `az` mutation.
 Platform CORS for the SWA hostname is set via `az functionapp cors add` in the
 deploy workflow — it is NOT expressible in Bicep and NOT the same as
 app-level ALLOWED_ORIGINS.
+
+## API plan: Consumption (Y1/Dynamic), NOT Flex Consumption
+
+The API runs on a Consumption (Y1/Dynamic) plan (WestEuropeLinuxDynamicPlan),
+NOT Flex Consumption. Flex Consumption was the original plan (#19) but was
+migrated (#39) because its Kestrel front-end short-circuits browser CORS
+preflights (OPTIONS with Origin + ACRM headers) with an empty 204 before
+function code runs. This broke all cross-origin browser API calls requiring
+a preflight — including the presenter-mode /simulate/tick endpoint.
+
+**Deploy method:** `func azure functionapp publish` (func CLI). Do NOT use
+`Azure/functions-action@v1` — it uses Kudu zipdeploy internally, which
+produced 503 "Function host is not running" on Consumption Linux (host never
+started). The func CLI does a proper trigger sync that makes the host
+recognize all functions immediately.
+
+**Platform CORS:** On Consumption plan, platform CORS works correctly
+(returns proper Access-Control-Allow-* headers on preflight). This is the
+opposite of Flex Consumption, where platform CORS had to be cleared.
+
