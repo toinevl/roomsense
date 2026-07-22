@@ -1,5 +1,5 @@
 import './styles/main.css'
-import { apiClient } from './lib/api'
+import { apiClient, setApiClientMode } from './lib/api'
 import { config } from './config'
 import { dashboardPage } from './pages/dashboard'
 import { livePage } from './pages/live'
@@ -109,9 +109,30 @@ const TICK_INTERVAL_MS = 30_000
 
 const presenterToggle = document.getElementById('presenter-toggle') as HTMLButtonElement
 const presenterLabel = document.getElementById('presenter-label')!
+const modeToggle = document.getElementById('mode-toggle') as HTMLButtonElement
+const modeLabel = document.getElementById('mode-label')!
 
 let presenterActive = false
 let presenterHandle: ReturnType<typeof setInterval> | null = null
+
+function updateModeUI(): void {
+  const isMock = config.mock
+  modeLabel.textContent = isMock ? 'Mock' : 'Live'
+  modeToggle.setAttribute('data-mode', isMock ? 'mock' : 'live')
+  modeToggle.setAttribute('title', isMock
+    ? 'Currently using in-browser seed data. Click to switch to live Azure API.'
+    : 'Currently using the live Azure API. Click to switch to mock seed data.'
+  )
+}
+
+async function switchMode(): Promise<void> {
+  if (presenterActive) stopPresenterMode()
+  const nextMock = !config.mock
+  setApiClientMode(nextMock)
+  updateModeUI()
+  // Hard refresh so every page re-renders against the new client.
+  location.reload()
+}
 
 function setPresenterLabel(text: string): void {
   presenterLabel.textContent = text
@@ -169,3 +190,6 @@ presenterToggle.addEventListener('click', () => {
     void startPresenterMode()
   }
 })
+
+modeToggle.addEventListener('click', () => { void switchMode() })
+updateModeUI()

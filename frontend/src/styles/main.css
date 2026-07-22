@@ -154,19 +154,19 @@ table { border-collapse: collapse; width: 100%; }
 .primary-nav a:hover { color: var(--text-primary); background: var(--surface-card); }
 .primary-nav a.active { color: var(--text-primary); background: var(--surface-card); box-shadow: inset 0 -2px 0 var(--series-1); }
 
-.topbar-status {
-  display: flex; align-items: center; gap: 0.45rem;
-  font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted);
-}
-.status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted); flex: none; }
-.status-dot.ok { background: var(--status-good); }
-.status-dot.err { background: var(--status-critical); }
-
 .presenter-toggle {
-  display: flex; align-items: center; gap: 0.45rem;
-  font-family: var(--font-mono); font-size: 0.7rem; letter-spacing: 0.03em;
-  color: var(--text-secondary); background: transparent; border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm); padding: 0.35rem 0.7rem; cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.03em;
+  color: var(--text-secondary);
+  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.7rem;
+  cursor: pointer;
   transition: color 0.15s, border-color 0.15s;
 }
 .presenter-toggle:hover { color: var(--text-primary); border-color: var(--series-1); }
@@ -181,6 +181,28 @@ table { border-collapse: collapse; width: 100%; }
   0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--series-6) 55%, transparent); }
   70%  { box-shadow: 0 0 0 7px color-mix(in srgb, var(--series-6) 0%, transparent); }
   100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--series-6) 0%, transparent); }
+}
+
+.mode-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  background: var(--surface-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+.mode-toggle:hover { border-color: var(--series-1); }
+.mode-toggle[data-mode="mock"] {
+  background: color-mix(in srgb, var(--series-6) 12%, var(--surface-card));
+  border-color: var(--series-6);
 }
 
 /* ---------------------------------------------------------------------------

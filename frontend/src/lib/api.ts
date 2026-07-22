@@ -152,6 +152,11 @@ function makeMockClient(): ApiClient {
 
 export const apiClient: ApiClient = config.mock ? makeMockClient() : fetchClient
 
+export function setApiClientMode(mock: boolean): void {
+  ;(config as any).mock = mock
+  ;(apiClient as any) = mock ? makeMockClient() : fetchClient
+}
+
 /** Test-only escape hatch. */
 export function __resetMockTick(): void {
   mockTick = 0
