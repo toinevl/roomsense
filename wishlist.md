@@ -55,6 +55,12 @@
   - [x] Deployed to production (1bb2fa3 pushed to main) (@C)
   - [x] Monitoring setup docs (MONITORING_SETUP.md) (f67adf3) (@C)
   - [x] Deployment checklist (DEPLOY_CHECKLIST.md) (f67adf3) (@C)
+- [ ] (C) BUG: "Live" nav link appears twice on topbar +bug @C #37 — reported 2026-07-22
+  - [ ] Investigate: duplicate in index.html nav, or visual rendering issue (CSS, layout)
+  - [ ] Check main.ts routing for accidental duplicate registration
+  - [ ] Verify in browser: is it a real DOM duplicate or CSS duplication?
+  - [ ] Fix root cause (remove duplicate or fix rendering)
+  - [ ] Verify single "Live" link displays on production
 - [ ] (C) strategy 1 post-launch: verify deployment + monitoring (production validation) +extend @C @O #36b — in progress 2026-07-22
   - [ ] GitHub Actions workflow completion (CI/CD deploy status)
   - [ ] SWA + API smoke tests (HTTP 200, /health endpoint)
