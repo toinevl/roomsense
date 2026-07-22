@@ -53,7 +53,18 @@
   - [x] Performance baseline: LCP 2.0-2.2s on 3G (PERFORMANCE_BASELINE.md) (@C)
   - [x] Bundle optimization: 67KB minified, 20.7KB gzipped (@C)
   - [x] Deployed to production (1bb2fa3 pushed to main) (@C)
-  - [x] Monitoring setup (GA4, Sentry, Azure Insights) (f67adf3) (@C)
+  - [x] Monitoring setup docs (MONITORING_SETUP.md) (f67adf3) (@C)
+  - [x] Deployment checklist (DEPLOY_CHECKLIST.md) (f67adf3) (@C)
+- [ ] (C) strategy 1 post-launch: verify deployment + monitoring (production validation) +extend @C @O #36b — in progress 2026-07-22
+  - [ ] GitHub Actions workflow completion (CI/CD deploy status)
+  - [ ] SWA + API smoke tests (HTTP 200, /health endpoint)
+  - [ ] Manual browser test: booking flow on production
+  - [ ] Performance verification: LCP < 2.5s on real 3G throttle
+  - [ ] GA4 property created + Web Vitals tracking enabled
+  - [ ] Sentry project created + frontend instrumented (if needed)
+  - [ ] Azure Application Insights alerts configured
+  - [ ] Core Web Vitals dashboard created (Data Studio)
+  - [ ] 24-hour monitoring (error rate, LCP, booking completion)
 - [ ] (C) strategy 2: social presence & network effects (avatars, team awareness, reviews, notifications) +extend @C @H #37 dep:#35 — parallel phases
   - **Phase 2a: Backend Foundation (Hermes, blocks avatar stack)**
     - [ ] UserPresence table schema + presence state tracking (@H)
