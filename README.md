@@ -17,7 +17,7 @@ the API contract before real hardware is attached.
 | Tier | URL | Purpose |
 |---|---|---|
 | Frontend | https://lemon-mud-06bc7fd03.7.azurestaticapps.net | C-level dashboard + live telemetry |
-| API | https://roomsense-api.azurewebsites.net/api/health | JSON API; try `/api/rooms`, `/api/kpis` |
+| API | https://roomsense-api2.azurewebsites.net/api/health | JSON API; try `/api/rooms`, `/api/kpis` |
 | Wiki | [github.com/toinevl/roomsense/wiki](https://github.com/toinevl/roomsense/wiki) | Architecture, manual, security |
 
 ## Feature snapshot
