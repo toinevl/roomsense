@@ -196,13 +196,18 @@ Files changed for #29: wishlist.md (this entry). api/host.json had its empty `ex
 block removed (commit ebde3ae) — that change is benign and stays even though it didn't fix the
 bug, because empty-but-present config blocks are still a plausible footgun.
 
-- [ ] (A) Migrate API from Flex Consumption → Consumption (Linux) to fix CORS preflight +infra @O #39 dep:#29 — in progress 2026-07-22
+- [x] (A) Migrate API from Flex Consumption → Consumption (Linux) to fix CORS preflight +infra @O #39 dep:#29 — done 2026-07-22
   - Flex Consumption short-circuits browser preflights (OPTIONS) at the Kestrel front-end before
     function code runs, returning an empty 204 with zero CORS headers. Function-level cors.ts never
-    executes for real browser preflights. This blocks presenter-mode live ticks from the SWA origin.
-  - Plan: create new Consumption (Linux) plan + function app roomsense-api2, deploy code, configure
-    platform CORS, verify preflight returns CORS headers, cutover SWA ROOMSENSE_API_URL, update Bicep
-    + deploy workflow, tear down old Flex plan/app.
+    executes for real browser preflights. This blocked presenter-mode live ticks from the SWA origin.
+  - NEW: roomsense-api2 on Consumption (Y1/Dynamic) plan, WestEuropeLinuxDynamicPlan.
+  - Deploy method: `func azure functionapp publish` (func CLI), NOT Azure/functions-action@v1
+    (Kudu zipdeploy produced 503 "Function host is not running" on Consumption Linux).
+  - Platform CORS configured (works correctly on Consumption, unlike Flex where it broke preflights).
+  - Browser-verified from SWA origin: GET /health 200, GET /rooms 200, GET /kpis 200,
+    OPTIONS /simulate/tick preflight → 204 with ACAO/ACAM/ACAH, POST /simulate/tick → 200 {appended:30}.
+  - Commit: 9252f18. SWA frontend bundle confirmed referencing roomsense-api2.
+  - Old Flex app (roomsense-api) still running — teardown after grace period.
 
 ## Data reseed: real TU/e buildings, one week (2026-07-19)
 Requested by Toine: reseed against the real TU/e Atlas/Flux/Neuron buildings with a week of
