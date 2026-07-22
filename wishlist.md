@@ -118,12 +118,13 @@
 - [ ] (D) real IoT Hub ingestion adapter (post-demo) +future #28
 - [x] (B) OPTIONS preflight bypasses function code on Flex Consumption +bug @H #29 — root-caused 2026-07-19 (platform limitation; documented)
 - [x] (B) runtime mock/live toggle in UI so presenter mode can run without SIMULATOR_KEY / preflight CORS +frontend @H #30
-- [ ] (C) fix presenter-mode /simulate/tick for browser from live SWA domain +bug @H #31
+- [x] (C) fix presenter-mode /simulate/tick for browser from live SWA domain +bug @H #31 — done 2026-07-22 (resolved by #39: migrated to Consumption plan where CORS preflight works; browser-verified POST /simulate/tick → 200 {appended:30} from SWA origin)
 
 ## Next concrete path for #31
-1. Stop touching host.json/cors.ts for preflight — Flex Consumption short-circuits before function code.
-2. Allow the SWA-managed API route pattern and make the live frontend call the SWA proxy, not the Function hostname directly.
-3. If that route config is exposed in Bicep/runtime, wire it; otherwise emit a plain present contract spec against SWA and advance it to provider update.
+RESOLVED 2026-07-22 via #39 (Consumption plan migration). No SWA proxy needed — the
+Consumption plan handles CORS preflight correctly at the platform level. The original
+Flex Consumption plan short-circuited preflights before function code ran; that is no
+longer the case.
 
 ## API contract for #5-#12 (frozen — frontend mock mode builds against this)
 - GET /api/health → { status: "ok", buildSha, tables: boolean }
