@@ -43,15 +43,17 @@
 - [x] (B) semester-review report page for leadership (printable kpi one-pager) +flagship @C #32 dep:#22 — done 2026-07-21 (3 tests pass; print CSS; route #report)
 - [x] (B) roomsense-wrapped shareable card (fun stats, screenshots) +flagship @C #33 dep:#22 — done 2026-07-21 (1 test pass; route #wrapped)
 - [x] (B) trust & transparency faq page (privacy de-risk) +flagship @C #34 dep:#22 — done 2026-07-21 (1 test pass; route #trust; 7 Q&A)
-- [ ] (C) strategy 1: mobile-first tap-to-book (48px targets, animations, one-tap flow) +flagship @C #36 dep:#35 — in progress 2026-07-22
+- [x] (C) strategy 1: mobile-first tap-to-book (48px targets, animations, one-tap flow) +flagship @C #36 dep:#35 — done 2026-07-22
   - [x] CSS: 48px tap targets, flex layout, active/hover states (cb8a98d)
   - [x] CTA button placement (thumb zone, bottom of card)
   - [x] Dev guard + unit tests updated
-  - [x] Confirmation modal component (2e12dfc; 6 tests passing) (@C)
-  - [x] Success state page (2e12dfc; 8 tests passing) (@C)
+  - [x] Confirmation modal component (2f41ceb; 6 tests passing) (@C)
+  - [x] Success state page (2f41ceb; 8 tests passing) (@C)
   - [x] Route registration (#booking-success in main.ts) (@C)
   - [x] Performance baseline: LCP 2.0-2.2s on 3G (PERFORMANCE_BASELINE.md) (@C)
   - [x] Bundle optimization: 67KB minified, 20.7KB gzipped (@C)
+  - [x] Deployed to production (1bb2fa3 pushed to main) (@C)
+  - [x] Monitoring setup (GA4, Sentry, Azure Insights) (f67adf3) (@C)
 - [ ] (C) strategy 2: social presence & network effects (avatars, team awareness, reviews, notifications) +extend @C @H #37 dep:#35 — parallel phases
   - **Phase 2a: Backend Foundation (Hermes, blocks avatar stack)**
     - [ ] UserPresence table schema + presence state tracking (@H)
