@@ -92,10 +92,19 @@ jobs:
         # This prevents wasting a deploy cycle on a mis-provisioned app (wishlist #39).
         run: |
           set -euo pipefail
-          PLAN_ID=$(az functionapp show -g "$RESOURCE_GROUP" -n "$APP_NAME" --query appServicePlanId -o tsv)
-          PLAN_SKU=$(az appservice plan show --ids "$PLAN_ID" --query sku.name -o tsv)
+          # Use --ids with the full resource ID (more reliable across az CLI versions
+          # than property-name queries which differ between versions).
+          PLAN_SKU=$(az webapp show -g "$RESOURCE_GROUP" -n "$APP_NAME" \
+            --query "appServicePlanId" -o tsv 2>/dev/null \
+            | xargs -I{} az appservice plan show --ids "{}" --query "sku.name" -o tsv 2>/dev/null)
+          # Fallback: if appServicePlanId query returned empty, try serverFarmId
+          if [ -z "$PLAN_SKU" ]; then
+            PLAN_SKU=$(az resource show -g "$RESOURCE_GROUP" -n "$APP_NAME" \
+              --resource-type Microsoft.Web/sites --query "properties.serverFarmId" -o tsv 2>/dev/null \
+              | xargs -I{} az appservice plan show --ids "{}" --query "sku.name" -o tsv 2>/dev/null)
+          fi
           if [ "$PLAN_SKU" != "Y1" ]; then
-            echo "::error::Expected Y1/Dynamic plan, got $PLAN_SKU. Aborting."
+            echo "::error::Expected Y1/Dynamic plan, got '$PLAN_SKU'. Aborting."
             exit 1
           fi
           for setting in AzureWebJobsStorage WEBSITE_CONTENTSHARE WEBSITE_CONTENTAZUREFILECONNECTIONSTRING; do
