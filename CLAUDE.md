@@ -3,6 +3,36 @@
 Showcase app for Terabee room-occupancy sensor data. Full plan: `docs/plan.md`.
 Backlog + lane coordination: `wishlist.md` (single source of truth for progress).
 
+## ⚡ Wishlist-First Discipline (Mandatory Pre-Work)
+
+**Rule:** Every work item (code, docs, tests, infrastructure) MUST be on wishlist.md BEFORE work starts.
+
+**Why:** wishlist.md is the single source of truth for what's done/in-progress/blocked. Without it:
+- Progress is invisible to teammates
+- Lane coordination fails (Hermes doesn't know what Claude is doing)
+- Duplicates and conflicts emerge
+- Status queries require reading git history instead of the backlog
+
+**Process:**
+1. **Before starting:** Add item to wishlist with `[ ]` (unchecked)
+   - If complex, add sub-tasks immediately
+   - Reference lane owner (`@C`, `@H`, `@O`)
+2. **While working:** Commit message references the wishlist item: `feat(#36): add modal`
+3. **When complete:** Mark `[x]` and add commit SHA(s) in the wishlist line
+4. **Before reviewing:** Verify wishlist matches actual work in the commits
+
+**Bad pattern (don't do this):**
+```
+❌ Write code → Test code → Commit code → Remember to update wishlist → Add item late
+```
+
+**Good pattern (do this):**
+```
+✅ Add to wishlist → Write code → Test code → Commit (reference wishlist) → Mark [x]
+```
+
+**Guard:** If you create a file/doc without a corresponding wishlist entry, fix it immediately before pushing.
+
 ## Lane ownership (parallel Hermes/Claude work)
 
 `api/**` = Hermes. `frontend/**` = Claude. `infra/**` + `.github/workflows/**` = orchestrator.
