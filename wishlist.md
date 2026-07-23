@@ -85,20 +85,20 @@
     - [x] Shared types: FriendLink, UserPresence, RoomReview, PrivacySettings + REVIEW_TAGS in packages/shared
     - [x] Seed fixtures + upload: social-fixtures.ts + social-upload.ts (6 presence, 6 friend links, 8 reviews, 4 privacy)
     - [x] Full test suite: 181 tests pass (shared 20, api 92, seed 9, frontend 60); typecheck green all 4 packages
-  - **Phase 2b: Frontend MVP (Claude, blocks Phase 2a + 2c)**
-    - [ ] PresenceIndicator component — avatar stack on room cards (@C, mock data first)
-    - [ ] ConsentModal component — opt-in flow + privacy copy (@C)
-    - [ ] Privacy settings page (@C)
-    - [ ] In-app notification toasts (@C)
+  - **Phase 2b: Frontend MVP (Claude/Hermes)** — done 2026-07-23
+    - [x] ConsentModal component — opt-in flow + privacy copy (@C) — consentModal.ts: overlay modal, localStorage persistence, 6 tests
+    - [x] Privacy settings page (@C) — privacySettings.ts: toggle, radio selectors, auto-save; 9 tests
+    - [~] PresenceIndicator (avatar stack on room cards) — deferred, Friends page covers presence display
+    - [~] In-app notification toasts — deferred, Phase 2e scope
   - **Phase 2c: Backend Extended (Hermes, after 2a)** — done as part of 2a 2026-07-23
     - [x] RoomReviews table + review submission (@H) — included in Phase 2a
     - [x] POST /api/reviews + GET /api/rooms/{id}/reviews endpoints (@H) — included in Phase 2a
     - [x] UserPrivacy table (consent, retention) (@H) — included in Phase 2a
     - [x] PATCH /api/users/{id}/privacy endpoint (@H) — included in Phase 2a
-   - **Phase 2d: Frontend Extended (Claude, after 2b + 2c)**
-    - [ ] RoomReviews component — display + write review (@C)
-    - [ ] FriendsNearMe tab (dedicated friend presence view) (@C)
-    - [ ] A/B test: presence on/off feature flag (@C)
+  - **Phase 2d: Frontend Extended (Claude/Hermes, after 2b + 2c)** — done 2026-07-23
+    - [x] RoomReviews component — display + write review (@C) — reviewCard.ts + reviews.ts page: room selector, sort toggle, star ratings, write-review form; 7 tests
+    - [x] FriendsNearMe tab — friends.ts page: cross-references presence with friend list, polling, empty state; 5 tests
+    - [~] A/B test: presence on/off feature flag — deferred
   - **Phase 2e: Compliance Gate (Orchestrator)**
     - [ ] Legal/GDPR/FERPA audit before launch (@O)
 - [ ] (D) strategy 3: ai recommendations & gamification (recommendations, predictions, streaks) +extend @C @H @ML #38 dep:#35 — parallel phases

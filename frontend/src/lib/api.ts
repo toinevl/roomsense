@@ -11,15 +11,20 @@ import {
   findLatestActiveIndex,
 } from './mockDerivations'
 import { getSeedData } from './seedData'
+import { addMockReview, getMockFriends, getMockPresence, getMockPrivacy, getMockReviews } from './mockSocialData'
 import type {
+  FriendLink,
   HealthResponse,
   KpisResponse,
   OccupancySnapshot,
+  PrivacySettings,
   Reservation,
+  RoomReview,
   RoomWithOccupancy,
   SensorReading,
   SimulateTickResponse,
   SourceStatus,
+  UserPresence,
 } from './apiTypes'
 
 /**
@@ -44,6 +49,23 @@ export interface ApiClient {
    * simulate/tick endpoint for that purpose.
    */
   tickMockClock(): number
+
+  // ── Social features (Phase 2, #37) ──
+
+  getPresence(building?: string): Promise<UserPresence[]>
+  getFriends(userId: string): Promise<FriendLink[]>
+  getReviews(roomId: string, sort?: 'recent' | 'helpful'): Promise<RoomReview[]>
+  createReview(review: {
+    roomId: string
+    authorId: string
+    authorName: string
+    rating: number
+    title: string
+    body: string
+    tags: string[]
+  }): Promise<RoomReview>
+  getPrivacy(userId: string): Promise<PrivacySettings>
+  updatePrivacy(userId: string, settings: Partial<PrivacySettings>): Promise<PrivacySettings>
 }
 
 // ---------------------------------------------------------------------------
@@ -88,6 +110,25 @@ const fetchClient: ApiClient = {
   simulateTick: (key) =>
     request('/simulate/tick', { method: 'POST', headers: { 'x-sim-key': key } }),
   tickMockClock: () => 0,
+
+  // ── Social features (Phase 2, #37) ──
+  getPresence: (building) => request(`/presence${qs({ building })}`),
+  getFriends: (userId) => request(`/users/${encodeURIComponent(userId)}/friends`),
+  getReviews: (roomId, sort) =>
+    request(`/rooms/${encodeURIComponent(roomId)}/reviews${qs({ sort })}`),
+  createReview: (review) =>
+    request('/reviews', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(review),
+    }),
+  getPrivacy: (userId) => request(`/users/${encodeURIComponent(userId)}/privacy`),
+  updatePrivacy: (userId, settings) =>
+    request(`/users/${encodeURIComponent(userId)}/privacy`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(settings),
+    }),
 }
 
 // ---------------------------------------------------------------------------
@@ -146,6 +187,44 @@ function makeMockClient(): ApiClient {
     tickMockClock: () => {
       mockTick += 1
       return mockTick
+    },
+
+    // ── Social features (Phase 2, #37) ──
+    getPresence: async (building) => getMockPresence(building),
+    getFriends: async (userId) => getMockFriends(userId),
+    getReviews: async (roomId, sort = 'recent') => {
+      const reviews = getMockReviews(roomId)
+      if (sort === 'helpful') {
+        return [...reviews].sort((a, b) => b.helpfulCount - a.helpfulCount)
+      }
+      return [...reviews].sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    },
+    createReview: async (input) => addMockReview(input),
+    getPrivacy: async (userId) => {
+      const settings = getMockPrivacy(userId)
+      if (!settings) {
+        return {
+          userId,
+          locationSharingEnabled: false,
+          friendVisibility: 'friends-only' as const,
+          reviewAttributionDefault: 'anonymous' as const,
+          dataRetentionDays: 1,
+          lastUpdated: new Date().toISOString(),
+        }
+      }
+      return settings
+    },
+    updatePrivacy: async (userId, settings) => {
+      const current = getMockPrivacy(userId)
+      return {
+        userId,
+        locationSharingEnabled: current?.locationSharingEnabled ?? false,
+        friendVisibility: current?.friendVisibility ?? ('friends-only' as const),
+        reviewAttributionDefault: current?.reviewAttributionDefault ?? ('anonymous' as const),
+        dataRetentionDays: current?.dataRetentionDays ?? 1,
+        lastUpdated: new Date().toISOString(),
+        ...settings,
+      }
     },
   }
 }

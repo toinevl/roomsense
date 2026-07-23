@@ -67,3 +67,47 @@ export interface KpisQuery {
 
 /** Re-exported for convenience so callers only need one import. */
 export type { OccupancySnapshot, Reservation, Room, SensorReading }
+
+// ─── Social Feature Types (Phase 2, #37) ───
+
+export interface FriendLink {
+  userId: string
+  friendId: string
+  friendName: string
+  status: 'active' | 'pending'
+  canSeeLive: boolean
+  connectedAt: string
+}
+
+export interface UserPresence {
+  userId: string
+  displayName: string
+  building: string
+  roomId?: string
+  status: 'available' | 'busy' | 'offline'
+  lastSeenTs: string
+}
+
+export interface RoomReview {
+  reviewId: string
+  roomId: string
+  authorId: string
+  authorName: string
+  rating: number
+  title: string
+  body: string
+  tags: string[]
+  helpfulCount: number
+  status: 'active' | 'flagged' | 'deleted'
+  createdAt: string
+  updatedAt: string
+}
+
+export interface PrivacySettings {
+  userId: string
+  locationSharingEnabled: boolean
+  friendVisibility: 'friends-only' | 'campus' | 'public'
+  reviewAttributionDefault: 'anonymous' | 'named'
+  dataRetentionDays: number
+  lastUpdated: string
+}
