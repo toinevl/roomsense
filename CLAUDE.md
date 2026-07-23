@@ -126,3 +126,24 @@ recognize all functions immediately.
 (returns proper Access-Control-Allow-* headers on preflight). This is the
 opposite of Flex Consumption, where platform CORS had to be cleared.
 
+## API naming & custom domain CORS
+
+**API function app:** `roomsense-api2` (in resource group `rgRoomSense`)
+**Custom frontend domain:** `roomsense.van-vliet.eu`
+
+When deploying to a custom domain, the frontend will get "NetworkError when
+attempting to fetch resource" if platform CORS is not configured. Fix:
+
+```bash
+az functionapp cors add -g rgRoomSense -n roomsense-api2 \
+  --allowed-origins https://roomsense.van-vliet.eu
+```
+
+Verify preflight succeeds (~5-10s propagation):
+```bash
+curl -D - -X OPTIONS https://roomsense-api2.azurewebsites.net/api/health \
+  -H 'Origin: https://roomsense.van-vliet.eu' \
+  -H 'Access-Control-Request-Method: GET'
+```
+
+Should see `Access-Control-Allow-Origin: https://roomsense.van-vliet.eu` in headers.

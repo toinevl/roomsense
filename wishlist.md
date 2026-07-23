@@ -58,6 +58,13 @@
   - [x] Deployed to production (1bb2fa3 pushed to main) (@C)
   - [x] Monitoring setup docs (MONITORING_SETUP.md) (f67adf3) (@C)
   - [x] Deployment checklist (DEPLOY_CHECKLIST.md) (f67adf3) (@C)
+- [x] (C) BUG: "Live" nav link appears twice on topbar +bug @C #37 — reported 2026-07-22
+  - [x] Investigate: duplicate in index.html nav, or visual rendering issue (CSS, layout)
+  - [x] Check main.ts routing for accidental duplicate registration
+  - [x] Verify in browser: is it a real DOM duplicate or CSS duplication?
+  - [x] Root cause identified: Status label showed "live" (lowercase) next to "Live" nav link (title case)
+  - [x] Fix root cause: Changed status label from "live" to "connected" (33ae074)
+  - [x] Verify single "Live" link displays on production (status now shows "connected")
 - [x] (C) strategy 1 post-launch: verify deployment + monitoring (production validation) +extend @C @O #36b — done 2026-07-22
   - [x] GitHub Actions workflow completion (CI/CD deploy status) — ci, deploy-api, deploy-frontend all green on main
   - [x] SWA + API smoke tests (7/7: health 200, rooms 200, kpis 200, preflight 204+ACAO, simulate/tick 200, SWA 200, bundle API ref)

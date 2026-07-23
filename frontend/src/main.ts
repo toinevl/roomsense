@@ -85,7 +85,7 @@ apiClient
   .getHealth()
   .then((health) => {
     statusDot.classList.add('ok')
-    statusLabel.textContent = health.status === 'ok' ? 'live' : health.status
+    statusLabel.textContent = health.status === 'ok' ? 'connected' : health.status
   })
   .catch(() => {
     statusDot.classList.add('err')
