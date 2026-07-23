@@ -6,7 +6,6 @@
  * Timestamps are relative to "now" so data looks fresh on every seed.
  */
 
-import { randomUUID } from 'node:crypto'
 import type { Entity } from './social-upload'
 
 export interface SocialSeedData {
@@ -79,7 +78,7 @@ export function generateSocialSeed(): SocialSeedData {
       rating: r.rating,
       title: r.title,
       body: r.body,
-      tags: r.tags,
+      tags: JSON.stringify(r.tags), // Azure Tables: no arrays, serialize as JSON string
       helpfulCount: r.helpfulCount,
       status: 'active',
       createdAt,

@@ -86,7 +86,11 @@ async function listReviews(
 
   const reviews: RoomReview[] = entities
     .filter((e) => e.status === 'active')
-    .map(({ partitionKey: _pk, rowKey: _rk, ...fields }) => fields)
+    .map(({ partitionKey: _pk, rowKey: _rk, ...fields }) => ({
+      ...fields,
+      // Azure Table Storage doesn't support arrays — tags stored as JSON string.
+      tags: typeof fields.tags === 'string' ? safeParseTags(fields.tags) : (fields.tags ?? []),
+    }))
 
   if (sortBy === 'helpful') {
     reviews.sort((a, b) => b.helpfulCount - a.helpfulCount)
@@ -141,6 +145,7 @@ async function createReview(
     partitionKey: roomId,
     rowKey: reviewId,
     ...review,
+    tags: JSON.stringify(review.tags), // Azure Tables: no arrays
   })
 
   return withCors({ status: 201, jsonBody: review }, origin)
@@ -153,6 +158,16 @@ async function parseJsonBody(req: HttpRequest): Promise<unknown> {
     return JSON.parse(text)
   } catch {
     throw new Error('Malformed JSON body.')
+  }
+}
+
+/** Parse tags from JSON string (Azure Table Storage doesn't support arrays). */
+function safeParseTags(raw: string): string[] {
+  try {
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
   }
 }
 
