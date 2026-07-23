@@ -8,7 +8,9 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "seed:local": "tsx src/upload.ts",
-    "seed:azure": "tsx src/upload.ts"
+    "seed:azure": "tsx src/upload.ts",
+    "seed:social:local": "tsx src/social-upload.ts",
+    "seed:social:azure": "tsx src/social-upload.ts"
   },
   "dependencies": {
     "@azure/data-tables": "^13.3.0",

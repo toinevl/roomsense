@@ -73,22 +73,29 @@
   - [~] GA4 / Sentry / Core Web Vitals dashboard — deferred (demo project, no real traffic to measure)
   - [x] App Insights alerts: api-health-ping (standard webtest, 5-min from AMS+LON), api-error-rate-alert (sev 2, >10 failures/15min), api-response-time-alert (sev 3, >5s avg/15min)
 - [ ] (C) strategy 2: social presence & network effects (avatars, team awareness, reviews, notifications) +extend @C @H #37 dep:#35 — parallel phases
-  - **Phase 2a: Backend Foundation (Hermes, blocks avatar stack)**
-    - [ ] UserPresence table schema + presence state tracking (@H)
-    - [ ] GET /api/presence?building=X endpoint (@H)
-    - [ ] Friendships table + friend request workflow (@H)
-    - [ ] GET /api/users/{id}/friends endpoint (@H)
+  - **Phase 2a: Backend Foundation (Hermes, blocks avatar stack)** — done 2026-07-23
+    - [x] UserPresence table schema + presence state tracking (@H) — presence.ts: GET /api/presence?building=X with privacy gate
+    - [x] GET /api/presence?building=X endpoint (@H) — 8 tests, returns UserPresence[] filtered by locationSharingEnabled
+    - [x] FriendLinks table + friend request workflow (@H) — friends.ts: GET /api/users/{userId}/friends, POST/DELETE /api/friends
+    - [x] GET /api/users/{id}/friends endpoint (@H) — 9 tests, active-only, sorted by friendName
+    - [x] RoomReviews table + review submission (@H) — reviews.ts: GET /api/rooms/{roomId}/reviews?sort=recent|helpful, POST /api/reviews
+    - [x] POST /api/reviews + GET /api/rooms/{id}/reviews endpoints (@H) — 8 tests, active-only, validated with zod
+    - [x] UserPrivacy table (consent, retention) (@H) — privacy.ts: GET/PATCH /api/users/{userId}/privacy
+    - [x] PATCH /api/users/{id}/privacy endpoint (@H) — 5 tests, merge semantics, defaults when absent
+    - [x] Shared types: FriendLink, UserPresence, RoomReview, PrivacySettings + REVIEW_TAGS in packages/shared
+    - [x] Seed fixtures + upload: social-fixtures.ts + social-upload.ts (6 presence, 6 friend links, 8 reviews, 4 privacy)
+    - [x] Full test suite: 181 tests pass (shared 20, api 92, seed 9, frontend 60); typecheck green all 4 packages
   - **Phase 2b: Frontend MVP (Claude, blocks Phase 2a + 2c)**
     - [ ] PresenceIndicator component — avatar stack on room cards (@C, mock data first)
     - [ ] ConsentModal component — opt-in flow + privacy copy (@C)
     - [ ] Privacy settings page (@C)
     - [ ] In-app notification toasts (@C)
-  - **Phase 2c: Backend Extended (Hermes, after 2a)**
-    - [ ] RoomReviews table + review submission (@H)
-    - [ ] POST /api/reviews + GET /api/rooms/{id}/reviews endpoints (@H)
-    - [ ] UserPrivacySettings table (consent, retention) (@H)
-    - [ ] PATCH /api/users/{id}/privacy-settings endpoint (@H)
-  - **Phase 2d: Frontend Extended (Claude, after 2b + 2c)**
+  - **Phase 2c: Backend Extended (Hermes, after 2a)** — done as part of 2a 2026-07-23
+    - [x] RoomReviews table + review submission (@H) — included in Phase 2a
+    - [x] POST /api/reviews + GET /api/rooms/{id}/reviews endpoints (@H) — included in Phase 2a
+    - [x] UserPrivacy table (consent, retention) (@H) — included in Phase 2a
+    - [x] PATCH /api/users/{id}/privacy endpoint (@H) — included in Phase 2a
+   - **Phase 2d: Frontend Extended (Claude, after 2b + 2c)**
     - [ ] RoomReviews component — display + write review (@C)
     - [ ] FriendsNearMe tab (dedicated friend presence view) (@C)
     - [ ] A/B test: presence on/off feature flag (@C)
