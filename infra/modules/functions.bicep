@@ -65,6 +65,8 @@ resource scmBasicAuth 'Microsoft.Web/sites/basicPublishingCredentialsPolicies@20
   }
 }
 
+var storageConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageExisting.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
+
 resource appSettings 'Microsoft.Web/sites/config@2023-12-01' = {
   name: 'appsettings'
   parent: app
@@ -72,7 +74,15 @@ resource appSettings 'Microsoft.Web/sites/config@2023-12-01' = {
     // Consumption plan uses AzureWebJobsStorage as a connection string (not
     // identity-based like Flex Consumption). This is the runtime trigger/binding
     // storage — separate from the data tables connection string below.
-    AzureWebJobsStorage: 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageExisting.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
+    AzureWebJobsStorage: storageConnectionString
+    // Consumption (Y1/Dynamic) hosts function code on an Azure Files share.
+    // `az functionapp create` provisions this automatically; a raw ARM/bicep
+    // site resource does not — omitting these leaves the app permanently
+    // mis-provisioned (caught by deploy-api.yml's Consumption-readiness guard,
+    // wishlist #39). The share itself is created on first host start once
+    // these settings are present; nothing else needs to pre-create it.
+    WEBSITE_CONTENTAZUREFILECONNECTIONSTRING: storageConnectionString
+    WEBSITE_CONTENTSHARE: toLower(appName)
     TABLES_CONNECTION_STRING: tablesConnectionString
     APPLICATIONINSIGHTS_CONNECTION_STRING: appInsightsConnectionString
     ApplicationInsightsAgent_EXTENSION_VERSION: '~3'
