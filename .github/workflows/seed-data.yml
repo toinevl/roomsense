@@ -1,0 +1,65 @@
+name: seed-data
+
+# Manual only — never triggered by push. Seeding is a data-mutating operation
+# and re-seeding Reservations can double-book rooms if the table isn't cleared
+# first (content-derived row keys don't overwrite cleanly across different
+# `days` values — see wishlist.md's reseed notes). Default target is sandbox,
+# not production, so an accidental "just click run" doesn't touch live data.
+on:
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Environment to seed"
+        type: choice
+        options: [sandbox, production]
+        default: sandbox
+      days:
+        description: "Number of days of data to generate"
+        type: string
+        default: "7"
+      clear_reservations:
+        description: "Delete the Reservations table first (required when re-seeding with a different `days` value — its row keys are content-derived, not timestamp-derived, so a top-up run leaves stale rows alongside new ones)"
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  seed:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_env }}
+    env:
+      STORAGE_ACCOUNT: ${{ inputs.target_env == 'sandbox' && 'roomsensesandboxstorage' || 'roomsensestorage' }}
+      RESOURCE_GROUP: rgRoomSense
+      AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with: { version: 9.12.0 }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Az login (OIDC)
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Resolve Tables connection string
+        run: |
+          set -euo pipefail
+          KEY=$(az storage account keys list --account-name "$STORAGE_ACCOUNT" --resource-group "$RESOURCE_GROUP" --query "[0].value" -o tsv)
+          echo "::add-mask::$KEY"
+          echo "TABLES_CONNECTION_STRING=DefaultEndpointsProtocol=https;AccountName=${STORAGE_ACCOUNT};AccountKey=${KEY};EndpointSuffix=core.windows.net" >> "$GITHUB_ENV"
+      - name: Clear Reservations table
+        if: inputs.clear_reservations == 'true'
+        run: |
+          az storage table delete --name Reservations --account-name "$STORAGE_ACCOUNT" --auth-mode login
+      - name: Seed
+        env:
+          DAYS: ${{ inputs.days }}
+        run: pnpm --filter @roomsense/seed exec tsx src/upload.ts

@@ -2,6 +2,12 @@ name: deploy-frontend
 
 on:
   workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Deploy target"
+        type: choice
+        options: [production, sandbox]
+        default: production
   push:
     branches: [main]
     paths: ["frontend/**", "packages/shared/**"]
@@ -11,24 +17,25 @@ permissions:
   contents: read
 
 env:
-  # Required GitHub Actions secrets (set via Settings → Secrets and variables → Actions):
-  # - ROOMSENSE_SWA_DEPLOY_TOKEN: Static Web Apps deployment token (from Azure portal)
+  # Required GitHub Environment secrets (Settings → Environments → production/sandbox):
+  # - ROOMSENSE_SWA_DEPLOY_TOKEN: Static Web Apps deployment token (from Azure portal / az staticwebapp secrets list)
   # - AZURE_CLIENT_ID: app registration's application (client) ID
   # - AZURE_TENANT_ID: AAD tenant ID
   # - AZURE_SUBSCRIPTION_ID: subscription ID holding rgRoomSense
   #
-  # Required GitHub Actions repo variables:
-  # - ROOMSENSE_API_URL: deployed Function App URL (e.g. https://roomsense-api.azurewebsites.net)
-  # - ROOMSENSE_SWA_URL: deployed SWA URL (e.g. https://mango-coast-0abcdef1.westeurope.2.azurestaticapps.net)
-  #
   # Setup: see infra/RECOVERY.md for OIDC federated credential creation steps.
-  SWA_NAME: roomsense-swa
+  # push events carry no inputs, so this always resolves to production there.
+  TARGET_ENV: ${{ github.event.inputs.target_env || 'production' }}
   RESOURCE_GROUP: rgRoomSense
 
 jobs:
   build-deploy-smoke:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target_env || 'production' }}
     env:
+      # sandbox lives in a separate subscription/tenant (TU/e) — see wishlist.md.
+      API_URL: ${{ github.event.inputs.target_env == 'sandbox' && 'https://roomsense-sandbox-api2.azurewebsites.net' || 'https://roomsense-api2.azurewebsites.net' }}
+      SWA_URL: ${{ github.event.inputs.target_env == 'sandbox' && 'https://salmon-pebble-081616103.7.azurestaticapps.net' || vars.ROOMSENSE_SWA_URL }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -52,7 +59,7 @@ jobs:
           # The API host the built bundle calls. Must match any CSP `connect-src`
           # in frontend/public/staticwebapp.config.json and the Functions app
           # hostname. Without this, the production bundle will silently 404 API calls.
-          VITE_API_BASE_URL: ${{ vars.ROOMSENSE_API_URL || 'https://roomsense-api.azurewebsites.net' }}
+          VITE_API_BASE_URL: ${{ env.API_URL }}
       - name: Az login (OIDC)
         uses: azure/login@v2
         with:
@@ -69,7 +76,7 @@ jobs:
           skip_app_build: true
       - name: Smoke test frontend (up to 60s retry tolerance)
         run: |
-          FRONTEND_URL="${{ vars.ROOMSENSE_SWA_URL }}"
+          FRONTEND_URL="${{ env.SWA_URL }}"
           if [ -z "$FRONTEND_URL" ]; then
             echo "Warning: ROOMSENSE_SWA_URL not set, skipping frontend smoke test"
             exit 0
