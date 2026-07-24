@@ -2,6 +2,12 @@ name: deploy-api
 
 on:
   workflow_dispatch:
+    inputs:
+      target_env:
+        description: "Deploy target"
+        type: choice
+        options: [production, sandbox]
+        default: production
   push:
     branches: [main]
     paths: ["api/**", "packages/shared/**"]
@@ -11,14 +17,20 @@ permissions:
   contents: read
 
 env:
-  APP_NAME: roomsense-api2
+  # push events carry no inputs, so this always resolves to production there.
+  TARGET_ENV: ${{ github.event.inputs.target_env || 'production' }}
   RESOURCE_GROUP: rgRoomSense
   DEPLOY_MODE: ${{ vars.DEPLOY_MODE }}
 
 jobs:
   build-deploy-smoke:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.target_env || 'production' }}
     env:
+      # sandbox lives in a separate subscription/tenant (TU/e) provisioned on
+      # Consumption/Y1, same plan tier as prod post-#39 — see wishlist.md.
+      APP_NAME: ${{ github.event.inputs.target_env == 'sandbox' && 'roomsense-sandbox-api2' || 'roomsense-api2' }}
+      CORS_ORIGINS: ${{ github.event.inputs.target_env == 'sandbox' && 'http://localhost:5173' || 'https://lemon-mud-06bc7fd03.7.azurestaticapps.net,http://localhost:5173' }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
       AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
@@ -154,11 +166,12 @@ jobs:
         # preflight handling) and ALLOWED_ORIGINS app setting (for function-level
         # cors.ts on actual requests).
         run: |
-          # Set platform CORS origins
+          # Set platform CORS origins (comma-separated $CORS_ORIGINS -> arg list)
+          IFS=',' read -ra ORIGINS <<< "$CORS_ORIGINS"
           az functionapp cors remove --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" \
-            --allowed-origins "https://lemon-mud-06bc7fd03.7.azurestaticapps.net" "http://localhost:5173" 2>/dev/null || true
+            --allowed-origins "${ORIGINS[@]}" 2>/dev/null || true
           az functionapp cors add --resource-group "$RESOURCE_GROUP" --name "$APP_NAME" \
-            --allowed-origins "https://lemon-mud-06bc7fd03.7.azurestaticapps.net" "http://localhost:5173"
+            --allowed-origins "${ORIGINS[@]}"
       - name: Verify all functions registered (sync triggers guard)
         if: steps.deploy-mode.outputs.mode == 'oidc'
         # Catches partial deploys where the host is up but trigger sync didn't

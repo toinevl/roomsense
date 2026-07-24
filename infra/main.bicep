@@ -13,6 +13,8 @@ param swaRepositoryUrl string = ''
 @description('GitHub PAT with repo scope, for the SWA repo link (required when deploySwa=true). Pass via a secure parameter; not stored in outputs.')
 @secure()
 param swaRepositoryToken string = ''
+@description('Override the API app name (default "<base>-api"). Azure cannot move an existing Function App between hosting plans in place (e.g. Flex Consumption -> Consumption/Y1) — use this to stand up a fresh app under a new name, reusing the same storage account/App Insights, instead of recreating the whole stack.')
+param apiAppNameOverride string = ''
 
 // Confirm the resource group name before deploying. The deployment target is
 // rgRoomSense — create it first (az group create -n rgRoomSense -l westeurope), then
@@ -39,16 +41,21 @@ module appInsights 'modules/app-insights.bicep' = {
 // (not via module output) to avoid leaking keys to RG Readers via deployment history.
 resource storageExisting 'Microsoft.Storage/storageAccounts@2023-05-01' existing = {
   name: '${replace(base, '-', '')}storage'
+  dependsOn: [
+    storage
+  ]
 }
 
 // Compute Tables connection string at deploy scope to avoid leaking keys via module outputs
 var storageAccountName = '${replace(base, '-', '')}storage'
 var tablesConnectionString = 'DefaultEndpointsProtocol=https;AccountName=${storageAccountName};AccountKey=${storageExisting.listKeys().keys[0].value};EndpointSuffix=core.windows.net'
 
+var apiAppName = empty(apiAppNameOverride) ? '${base}-api' : apiAppNameOverride
+
 module functions 'modules/functions.bicep' = {
-  name: '${base}-api'
+  name: apiAppName
   params: {
-    appName: '${base}-api'
+    appName: apiAppName
     location: location
     storageAccountName: storageAccountName
     corsOrigins: corsOrigins
