@@ -5,7 +5,7 @@ Backlog + lane coordination: `wishlist.md` (single source of truth for progress)
 
 ## ⚡ Wishlist-First Discipline (Mandatory Pre-Work)
 
-**Rule:** Every work item (code, docs, tests, infrastructure) MUST be on wishlist.md BEFORE work starts.
+**Rule:** Every work item (code, docs, tests, infrastructure, wiki updates) MUST be on wishlist.md BEFORE work starts. This includes "pure deliverable" docs like architecture diagrams, ADRs, API contracts, and technical specs — if it produces a file or changes a wiki page, it's a work item.
 
 **Why:** wishlist.md is the single source of truth for what's done/in-progress/blocked. Without it:
 - Progress is invisible to teammates

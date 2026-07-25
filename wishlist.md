@@ -227,6 +227,8 @@ sensor + reservation data, instead of the fictional 30-day mock. Room fixtures w
 updated to real TU/e buildings/room numbers (commit e325790, `<floor>.<room>` IDs, `@tue.nl`
 addresses) before this ran.
 
+- [x] (B) Architecture docs: ADRs (3), API contract, technical spec, SVG diagram +docs @H #40 — done 2026-07-23 (commit 628e0ca; wiki updated: 2 new pages, 5 updated)
+- [x] (B) Wiki update: sync all pages to Phase 2 + Consumption migration + 9 tables + 12 endpoints +docs @H #40 — done 2026-07-23 (Architecture-Decision-Records + Technical-Spec pages added, 5 existing pages updated)
 - Ran `DAYS=7 TABLES_CONNECTION_STRING=<roomsensestorage> pnpm seed:azure` against live Azure.
 - Gotcha hit: SensorReadings/OccupancySnapshots row keys are timestamp-derived, so upsert cleanly
   overwrites on re-seed — but Reservations row keys are content-derived
