@@ -247,17 +247,22 @@ bug, because empty-but-present config blocks are still a plausible footgun.
   - Verified fixed: re-deployed sandbox, confirmed new bundle bakes .../api correctly, and
     Live/Find-a-Room/Wrapped pages now load real sandbox data end-to-end (browser-verified).
 
-- [ ] (H) sandbox /kpis endpoint 500s on any real date range +api @H #42
-  - Distinct from #41 (already fixed). Confirmed via curl and browser: sandbox API's /kpis,
-    /rooms/{id}/occupancy, and /rooms/{id}/reservations all return 500 "Internal server error"
-    when queried with a real (non-empty) from/to range — while /health and /rooms (no date range)
-    return 200 fine. Production's same endpoint with the identical query shape returns 200 with
-    real KPI data, so this is sandbox-specific — likely the sandbox Table Storage account is
-    missing seeded SensorReadings/OccupancySnapshots/Reservations rows (rooms exist with
-    occupancy:0, lastSeenTs:"" — metadata only, no telemetry), and the API throws on a query
-    that has structurally no matching rows rather than degrading gracefully. Blocks Dashboard
-    page in sandbox (Live/Finder/Wrapped/Trust all work fine). Not fixed — api/** is @H's lane;
-    flagged here rather than touched during #40/#41 frontend work.
+- [x] (C) sandbox /kpis endpoint 500s on any real date range +api @H #42 — done 2026-07-27
+  - Root cause confirmed via `az storage table list --account-name roomsensesandboxstorage`:
+    sandbox storage had ONLY Rooms + SensorReadings tables — OccupancySnapshots and Reservations
+    didn't exist at all (not just empty). kpis.ts (api/src/functions/kpis.ts) calls
+    listEntities() on OccupancySnapshots unconditionally; a nonexistent table throws, caught and
+    returned as generic 500. Same root cause for /rooms/{id}/occupancy and
+    /rooms/{id}/reservations. Production has all 5 tables (Rooms/SensorReadings/
+    OccupancySnapshots/Reservations/Sources) — sandbox was only ever partially seeded.
+  - Fix: dispatched the existing seed-data.yml workflow (target_env=sandbox, days=7,
+    clear_reservations=false — nothing to clear, tables didn't exist yet). Run succeeded;
+    `az storage table list` now shows all 5 tables. Re-verified /api/kpis returns 200 with real
+    data, and the Dashboard page (browser-screenshotted) fully renders KPI tiles, heatmap,
+    booked-vs-used chart, weather, and underused-rooms table with the new TU/e styling.
+  - Context: Toine approved crossing into api/** lane (normally @H's) since this blocked
+    verifying #40's dashboard styling, and approved running the seed workflow specifically
+    (a data-mutating operation) after being told exactly what it would do.
 
 ## Data reseed: real TU/e buildings, one week (2026-07-19)
 Requested by Toine: reseed against the real TU/e Atlas/Flux/Neuron buildings with a week of
