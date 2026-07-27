@@ -34,7 +34,7 @@ jobs:
     environment: ${{ github.event.inputs.target_env || 'production' }}
     env:
       # sandbox lives in a separate subscription/tenant (TU/e) — see wishlist.md.
-      API_URL: ${{ github.event.inputs.target_env == 'sandbox' && 'https://roomsense-sandbox-api2.azurewebsites.net' || 'https://roomsense-api2.azurewebsites.net' }}
+      API_URL: ${{ github.event.inputs.target_env == 'sandbox' && 'https://roomsense-sandbox-api2.azurewebsites.net/api' || 'https://roomsense-api2.azurewebsites.net/api' }}
       SWA_URL: ${{ github.event.inputs.target_env == 'sandbox' && 'https://salmon-pebble-081616103.7.azurestaticapps.net' || vars.ROOMSENSE_SWA_URL }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}

@@ -236,6 +236,15 @@ bug, because empty-but-present config blocks are still a plausible footgun.
   - Verified: 87/87 vitest tests pass (14 files), no regressions. frontend/public/og-image.png NOT
     yet re-exported from the updated SVG — manual follow-up (no build script generates it).
 
+- [x] (C) fix deploy-frontend.yml API_URL missing /api suffix +infra @O #41
+  - Found while sandbox-deploying #40: sandbox bundle baked apiBaseUrl without /api
+    (https://roomsense-sandbox-api2.azurewebsites.net instead of .../api), causing every
+    endpoint (/rooms, /health, /kpis...) to 404 in the browser. Production's live bundle still
+    works only because it predates this regression (likely introduced in f660aaf,
+    "sandbox-aware frontend deploy") — the next production deploy would hit the same bug.
+  - Context: Toine approved fixing this out-of-lane (.github/workflows/** is normally
+    orchestrator territory) since it blocks verifying #40 and would break the next prod deploy.
+
 ## Data reseed: real TU/e buildings, one week (2026-07-19)
 Requested by Toine: reseed against the real TU/e Atlas/Flux/Neuron buildings with a week of
 sensor + reservation data, instead of the fictional 30-day mock. Room fixtures were already
