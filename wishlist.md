@@ -221,6 +221,17 @@ bug, because empty-but-present config blocks are still a plausible footgun.
   - Commit: 9252f18. SWA frontend bundle confirmed referencing roomsense-api2.
   - Old Flex app (roomsense-api) still running — teardown after grace period.
 
+- [ ] (C) rebrand frontend visual identity to TU/e (best-effort, no official asset access) +ui @C #40
+  - [ ] main.css token overhaul: light-first palette, new --brand (TU/e red) token separate from
+    --status-critical and --series-1..8, Inter display font, drop grain overlay
+  - [ ] index.html: remove .grain div, swap Google Fonts link, recolor inline favicon SVG
+  - [ ] audit per-page injected <style> blocks + .wrapped-card for hardcoded colors/fonts bypassing tokens
+  - [ ] docs/og-image.svg recolor + flag manual og-image.png re-export as follow-up
+  - Context: official TU/e corporate-identity guide (SharePoint, SSO-gated) returned 403 when
+    fetched — user chose to proceed on a best-effort public-identity approximation (red/white/black,
+    per tue.nl) rather than exact Pantone/hex/typeface. Values isolated to a few CSS tokens so exact
+    values can be swapped in later. Plan: C:\Users\20240441\.claude\plans\validated-hugging-dragonfly.md
+
 ## Data reseed: real TU/e buildings, one week (2026-07-19)
 Requested by Toine: reseed against the real TU/e Atlas/Flux/Neuron buildings with a week of
 sensor + reservation data, instead of the fictional 30-day mock. Room fixtures were already

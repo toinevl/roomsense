@@ -91,7 +91,7 @@ const styles = `
   }
 
   .reviews-avg-stars {
-    color: var(--series-4, #c98500);
+    color: var(--series-4, #eda100);
     letter-spacing: 1px;
   }
 
@@ -192,7 +192,7 @@ const styles = `
     transition: color 0.1s;
   }
   .review-form-star-btn.filled {
-    color: var(--series-4, #c98500);
+    color: var(--series-4, #eda100);
   }
 
   .review-form-input {

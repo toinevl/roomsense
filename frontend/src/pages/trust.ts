@@ -5,7 +5,7 @@ const styles = `
     max-width: 800px;
     margin: 0 auto;
     padding: 2rem 1.5rem;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    font-family: var(--font-display);
     line-height: 1.6;
   }
 
@@ -17,12 +17,12 @@ const styles = `
   .trust-header h1 {
     margin: 0;
     font-size: 2rem;
-    color: #333;
+    color: var(--text-primary);
   }
 
   .subtitle {
     margin: 0.5rem 0 0;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 1.125rem;
   }
 
@@ -33,7 +33,7 @@ const styles = `
   .faq-item {
     margin-bottom: 2rem;
     padding-bottom: 2rem;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--border);
   }
 
   .faq-item:last-child {
@@ -43,17 +43,17 @@ const styles = `
   .faq-item h3 {
     margin: 0 0 1rem;
     font-size: 1.125rem;
-    color: #333;
+    color: var(--text-primary);
     font-weight: 600;
   }
 
   .faq-item p {
     margin: 0;
-    color: #555;
+    color: var(--text-secondary);
   }
 
   .faq-item a {
-    color: #0066cc;
+    color: var(--brand);
     text-decoration: none;
   }
 
@@ -64,19 +64,19 @@ const styles = `
   .trust-footer {
     text-align: center;
     padding: 2rem;
-    background: #f5f5f5;
+    background: var(--surface-card-2);
     border-radius: 8px;
   }
 
   .trust-footer h2 {
     margin-top: 0;
     font-size: 1.25rem;
-    color: #333;
+    color: var(--text-primary);
   }
 
   .trust-footer p {
     margin: 0;
-    color: #666;
+    color: var(--text-secondary);
   }
 `
 

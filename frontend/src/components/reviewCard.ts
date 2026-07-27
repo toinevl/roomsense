@@ -27,7 +27,7 @@ const styles = `
 
   .review-stars {
     font-size: 1rem;
-    color: var(--series-4, #c98500);
+    color: var(--series-4, #eda100);
     letter-spacing: 1px;
     flex: none;
   }
