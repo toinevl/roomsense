@@ -1,15 +1,20 @@
 /* =============================================================================
    RoomSense — TU/e-aligned light theme.
-   Light-first by design, matching TU/e's public identity (white/light-grey
-   surfaces, red brand accent, dark text) as seen on tue.nl. NOTE: --brand below
-   is a best-effort approximation, not the verified official TU/e hex/Pantone —
-   the official corporate-identity guide (SharePoint, SSO-gated) was unreachable.
-   Swap --brand / --brand-strong for the exact value once available; every other
-   token stays untouched. --series-1..8 / --seq-* remain the dataviz skill's
-   validated categorical/sequential chart palette (re-stepped for light here,
-   same as before) — deliberately NOT recolored to brand, so chart data doesn't
-   get visually confused with brand chrome. --status-critical is a separate red
-   from --brand on purpose, so alerts don't read as just another branded element.
+   Light-first by design, matching TU/e's public identity (white surfaces, red
+   brand accent, dark text, sharp corners) as seen on tue.nl. --brand/--brand-
+   strong are verified from tue.nl's own production CSS (--color-secondary /
+   --color-secondary-darker in TueStyling.min.css — the color actually used on
+   their logo wordmark, link hover, and primary buttons; their deeper
+   --color-primary #610301 is used more sparingly and isn't replicated here).
+   Corners are square (--radius/--radius-sm: 0) and cards are flat (no
+   shadow) to match — TU/e's site uses border-radius:0 far more than any
+   rounded value. --font-display is Lato (tue.nl's actual body font and
+   freely available; their heading font "Gilroy" is a commercial license, not
+   substituted here). --series-1..8 / --seq-* remain the dataviz skill's
+   validated categorical/sequential chart palette — deliberately NOT recolored
+   to brand, so chart data doesn't get visually confused with brand chrome.
+   --status-critical is a separate red from --brand on purpose, so alerts
+   don't read as just another branded element.
    ============================================================================= */
 
 :root {
@@ -23,15 +28,15 @@
   --border-strong:  rgba(11,11,11,0.18);
   --gridline:       #e1e0d9;
   --baseline:       #c3c2b7;
-  --shadow-card:    0 1px 2px rgba(11,11,11,0.05), 0 1px 8px rgba(11,11,11,0.04);
+  --shadow-card:    none;
 
   --text-primary:   #16130f;
   --text-secondary: #52514e;
   --text-muted:     #898781;
 
-  /* brand accent (TU/e red — approximate, see header comment) */
-  --brand:        #e4002b;
-  --brand-strong: #a8001f;
+  /* brand accent — verified from tue.nl (--color-secondary / -darker) */
+  --brand:        #c72125;
+  --brand-strong: #b31e21;
 
   /* categorical (light steps) — dataviz chart palette, not brand */
   --series-1: #2a78d6;
@@ -58,9 +63,9 @@
 
   --delta-good: #006300;
 
-  --radius: 8px;
-  --radius-sm: 4px;
-  --font-display: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --radius: 0;
+  --radius-sm: 0;
+  --font-display: 'Lato', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
 }
 
@@ -80,8 +85,8 @@
     --text-secondary: #c3c2b7;
     --text-muted:     #898781;
 
-    --brand:        #ff4d6d;
-    --brand-strong: #e4002b;
+    --brand:        #e5484d;
+    --brand-strong: #c72125;
 
     --series-1: #3987e5;
     --series-2: #008300;

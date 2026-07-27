@@ -22,7 +22,7 @@ const styles = `
   .consent-modal {
     background: var(--surface-card, #ffffff);
     border: 1px solid var(--border, rgba(11,11,11,0.10));
-    border-radius: var(--radius, 8px);
+    border-radius: var(--radius, 0);
     padding: 2rem;
     max-width: 440px;
     width: 90%;
@@ -90,7 +90,7 @@ const styles = `
     min-width: 120px;
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: var(--radius-sm, 4px);
+    border-radius: var(--radius-sm, 0);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;

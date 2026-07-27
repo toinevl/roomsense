@@ -65,7 +65,7 @@ const styles = `
     text-align: center;
     padding: 2rem;
     background: var(--surface-card-2);
-    border-radius: 8px;
+    border-radius: var(--radius);
   }
 
   .trust-footer h2 {

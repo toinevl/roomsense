@@ -46,7 +46,7 @@ const styles = `
     background: var(--surface-card-2);
     border-left: 4px solid var(--status-good);
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--radius);
     margin-bottom: 2rem;
     text-align: left;
   }
@@ -86,7 +86,7 @@ const styles = `
     min-width: 150px;
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;

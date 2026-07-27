@@ -235,6 +235,18 @@ bug, because empty-but-present config blocks are still a plausible footgun.
     values can be swapped in later. Plan: C:\Users\20240441\.claude\plans\validated-hugging-dragonfly.md
   - Verified: 87/87 vitest tests pass (14 files), no regressions. frontend/public/og-image.png NOT
     yet re-exported from the updated SVG — manual follow-up (no build script generates it).
+  - Correction (2026-07-27): Toine asked to verify against tue.nl directly rather than rely on
+    the earlier best-effort approximation. Fetched tue.nl's actual production CSS
+    (TueStyling.min.css, Style.min.css, TueMenu.min.css) + screenshots. Corrected: --brand
+    #e4002b→#c72125, --brand-strong #a8001f→#b31e21 (verified --color-secondary/-darker from
+    tue.nl's own :root block — the color actually used on their logo wordmark/link-hover/
+    buttons), --font-display Inter(guess)→Lato (tue.nl's real body font, confirmed
+    `body{font-family:Lato,...}`, freely available; their heading font "Gilroy" is commercial,
+    not substituted), --radius/--radius-sm 8px/4px→0 (tue.nl is almost entirely sharp-cornered —
+    border-radius:0 dominates their CSS, confirmed visually), --shadow-card→none (flat, no
+    elevation, matching tue.nl's flat color-block style). Also flattened remaining hardcoded
+    border-radius values in confirmationModal/consentModal/bookingSuccess/roomFinder/trust that
+    bypassed the token. 87/87 tests still pass.
 
 - [x] (C) fix deploy-frontend.yml API_URL missing /api suffix +infra @O #41 — done 2026-07-27 (5419f10)
   - Found while sandbox-deploying #40: sandbox bundle baked apiBaseUrl without /api

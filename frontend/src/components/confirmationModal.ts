@@ -28,7 +28,7 @@ const styles = `
 
   .confirmation-modal {
     background: var(--surface-card);
-    border-radius: 12px;
+    border-radius: var(--radius);
     padding: 2rem;
     max-width: 400px;
     width: 90%;
@@ -57,7 +57,7 @@ const styles = `
   .modal-room-info {
     background: var(--surface-card-2);
     padding: 1rem;
-    border-radius: 8px;
+    border-radius: var(--radius);
     margin-bottom: 1.5rem;
   }
 
@@ -92,7 +92,7 @@ const styles = `
     min-width: 120px;
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;

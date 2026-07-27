@@ -25,7 +25,7 @@ const styles = `
   .room-card {
     padding: 1.25rem;
     border: 1px solid var(--border-strong);
-    border-radius: 8px;
+    border-radius: var(--radius);
     cursor: pointer;
     transition: all 0.2s;
     background: var(--surface-card);
@@ -69,7 +69,7 @@ const styles = `
     background: var(--status-good);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
