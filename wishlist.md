@@ -236,7 +236,7 @@ bug, because empty-but-present config blocks are still a plausible footgun.
   - Verified: 87/87 vitest tests pass (14 files), no regressions. frontend/public/og-image.png NOT
     yet re-exported from the updated SVG — manual follow-up (no build script generates it).
 
-- [x] (C) fix deploy-frontend.yml API_URL missing /api suffix +infra @O #41
+- [x] (C) fix deploy-frontend.yml API_URL missing /api suffix +infra @O #41 — done 2026-07-27 (5419f10)
   - Found while sandbox-deploying #40: sandbox bundle baked apiBaseUrl without /api
     (https://roomsense-sandbox-api2.azurewebsites.net instead of .../api), causing every
     endpoint (/rooms, /health, /kpis...) to 404 in the browser. Production's live bundle still
@@ -244,6 +244,20 @@ bug, because empty-but-present config blocks are still a plausible footgun.
     "sandbox-aware frontend deploy") — the next production deploy would hit the same bug.
   - Context: Toine approved fixing this out-of-lane (.github/workflows/** is normally
     orchestrator territory) since it blocks verifying #40 and would break the next prod deploy.
+  - Verified fixed: re-deployed sandbox, confirmed new bundle bakes .../api correctly, and
+    Live/Find-a-Room/Wrapped pages now load real sandbox data end-to-end (browser-verified).
+
+- [ ] (H) sandbox /kpis endpoint 500s on any real date range +api @H #42
+  - Distinct from #41 (already fixed). Confirmed via curl and browser: sandbox API's /kpis,
+    /rooms/{id}/occupancy, and /rooms/{id}/reservations all return 500 "Internal server error"
+    when queried with a real (non-empty) from/to range — while /health and /rooms (no date range)
+    return 200 fine. Production's same endpoint with the identical query shape returns 200 with
+    real KPI data, so this is sandbox-specific — likely the sandbox Table Storage account is
+    missing seeded SensorReadings/OccupancySnapshots/Reservations rows (rooms exist with
+    occupancy:0, lastSeenTs:"" — metadata only, no telemetry), and the API throws on a query
+    that has structurally no matching rows rather than degrading gracefully. Blocks Dashboard
+    page in sandbox (Live/Finder/Wrapped/Trust all work fine). Not fixed — api/** is @H's lane;
+    flagged here rather than touched during #40/#41 frontend work.
 
 ## Data reseed: real TU/e buildings, one week (2026-07-19)
 Requested by Toine: reseed against the real TU/e Atlas/Flux/Neuron buildings with a week of
