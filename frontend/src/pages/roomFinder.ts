@@ -13,7 +13,7 @@ const styles = `
   }
   .room-finder .subtitle {
     margin: 0 0 1.5rem 0;
-    color: #666;
+    color: var(--text-secondary);
     font-size: 0.875rem;
   }
   .room-cards {
@@ -24,11 +24,12 @@ const styles = `
   }
   .room-card {
     padding: 1.25rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: var(--radius);
     cursor: pointer;
     transition: all 0.2s;
-    background: #f9f9f9;
+    background: var(--surface-card);
+    box-shadow: var(--shadow-card);
     min-height: 140px;
     display: flex;
     flex-direction: column;
@@ -38,11 +39,11 @@ const styles = `
     font-size: inherit;
   }
   .room-card:hover {
-    background: #e8f5e9;
-    border-color: #4caf50;
+    background: color-mix(in srgb, var(--status-good) 8%, var(--surface-card));
+    border-color: var(--status-good);
   }
   .room-card:active {
-    background: #d4edda;
+    background: color-mix(in srgb, var(--status-good) 16%, var(--surface-card));
     transform: scale(0.98);
   }
   .room-name {
@@ -52,12 +53,12 @@ const styles = `
   }
   .room-meta {
     font-size: 0.875rem;
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 0.5rem;
   }
   .occupancy {
     font-size: 0.875rem;
-    color: #4caf50;
+    color: var(--status-good);
     font-weight: 500;
     margin-bottom: 0.75rem;
   }
@@ -65,10 +66,10 @@ const styles = `
     min-height: 48px;
     min-width: 48px;
     padding: 0.75rem 1rem;
-    background: #4caf50;
+    background: var(--status-good);
     color: white;
     border: none;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
@@ -76,7 +77,7 @@ const styles = `
     align-self: flex-start;
   }
   .room-card-cta:hover {
-    background: #45a049;
+    background: color-mix(in srgb, var(--status-good) 85%, black);
   }
   .room-card-cta:active {
     transform: scale(0.95);

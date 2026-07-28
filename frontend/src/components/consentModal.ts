@@ -20,9 +20,9 @@ const styles = `
   }
 
   .consent-modal {
-    background: var(--surface-card, #1a1a19);
-    border: 1px solid var(--border, rgba(255,255,255,0.10));
-    border-radius: var(--radius, 8px);
+    background: var(--surface-card, #ffffff);
+    border: 1px solid var(--border, rgba(11,11,11,0.10));
+    border-radius: var(--radius, 0);
     padding: 2rem;
     max-width: 440px;
     width: 90%;
@@ -39,12 +39,12 @@ const styles = `
     font-size: 1.4rem;
     font-weight: 700;
     margin: 0 0 0.75rem 0;
-    color: var(--text-primary, #fff);
+    color: var(--text-primary, #16130f);
   }
 
   .consent-desc {
     font-size: 0.9rem;
-    color: var(--text-secondary, #c3c2b7);
+    color: var(--text-secondary, #52514e);
     margin: 0 0 1.25rem 0;
     line-height: 1.5;
   }
@@ -74,7 +74,7 @@ const styles = `
 
   .consent-checkbox-row label {
     font-size: 0.9rem;
-    color: var(--text-primary, #fff);
+    color: var(--text-primary, #16130f);
     cursor: pointer;
   }
 
@@ -90,7 +90,7 @@ const styles = `
     min-width: 120px;
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: var(--radius-sm, 4px);
+    border-radius: var(--radius-sm, 0);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -107,9 +107,9 @@ const styles = `
   .consent-btn-enable:hover { opacity: 0.88; }
 
   .consent-btn-skip {
-    background: var(--surface-card-2, #201f1c);
-    color: var(--text-secondary, #c3c2b7);
-    border: 1px solid var(--border-strong, rgba(255,255,255,0.18));
+    background: var(--surface-card-2, #f0efec);
+    color: var(--text-secondary, #52514e);
+    border: 1px solid var(--border-strong, rgba(11,11,11,0.18));
   }
   .consent-btn-skip:hover { opacity: 0.88; }
 `

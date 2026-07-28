@@ -33,20 +33,20 @@ const styles = `
     font-size: 2rem;
     font-weight: 600;
     margin: 0 0 0.5rem 0;
-    color: #4caf50;
+    color: var(--status-good);
   }
 
   .success-subheading {
     font-size: 1rem;
-    color: #666;
+    color: var(--text-secondary);
     margin: 0 0 2rem 0;
   }
 
   .booking-details {
-    background: #f5f5f5;
-    border-left: 4px solid #4caf50;
+    background: var(--surface-card-2);
+    border-left: 4px solid var(--status-good);
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: var(--radius);
     margin-bottom: 2rem;
     text-align: left;
   }
@@ -59,18 +59,18 @@ const styles = `
   }
 
   .detail-label {
-    color: #666;
+    color: var(--text-secondary);
     font-weight: 500;
   }
 
   .detail-value {
-    color: #000;
+    color: var(--text-primary);
     font-weight: 600;
   }
 
   .auto-redirect-timer {
     font-size: 0.875rem;
-    color: #999;
+    color: var(--text-muted);
     margin-top: 1rem;
   }
 
@@ -86,7 +86,7 @@ const styles = `
     min-width: 150px;
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -94,12 +94,12 @@ const styles = `
   }
 
   .success-btn-primary {
-    background: #4caf50;
+    background: var(--status-good);
     color: white;
   }
 
   .success-btn-primary:hover {
-    background: #45a049;
+    background: color-mix(in srgb, var(--status-good) 85%, black);
   }
 
   .success-btn-primary:active {
@@ -107,13 +107,13 @@ const styles = `
   }
 
   .success-btn-secondary {
-    background: #f0f0f0;
-    color: #333;
-    border: 1px solid #ddd;
+    background: var(--surface-card-2);
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
   }
 
   .success-btn-secondary:hover {
-    background: #e8e8e8;
+    background: var(--border);
   }
 
   .success-btn-secondary:active {
@@ -155,7 +155,7 @@ export const bookingSuccessPage: Page = {
     const bookingTime = sessionStorage.getItem('roomsense.bookingTime')
 
     if (!selectedRoomId || !bookingTime) {
-      container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #666;">No booking found. Redirecting...</div>'
+      container.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-secondary);">No booking found. Redirecting...</div>'
       setTimeout(() => {
         window.location.hash = '#finder'
       }, 2000)
@@ -167,7 +167,7 @@ export const bookingSuccessPage: Page = {
     const bookedRoom = rooms.find((r) => r.roomId === selectedRoomId)
 
     if (!bookedRoom) {
-      container.innerHTML = '<div style="padding: 2rem; text-align: center; color: #666;">Room not found. Redirecting...</div>'
+      container.innerHTML = '<div style="padding: 2rem; text-align: center; color: var(--text-secondary);">Room not found. Redirecting...</div>'
       setTimeout(() => {
         window.location.hash = '#finder'
       }, 2000)

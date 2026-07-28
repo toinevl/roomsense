@@ -221,6 +221,90 @@ bug, because empty-but-present config blocks are still a plausible footgun.
   - Commit: 9252f18. SWA frontend bundle confirmed referencing roomsense-api2.
   - Old Flex app (roomsense-api) still running — teardown after grace period.
 
+- [x] (C) rebrand frontend visual identity to TU/e (best-effort, no official asset access) +ui @C #43 — done 2026-07-27 (6fb7939)
+  - [x] main.css token overhaul: light-first palette, new --brand (TU/e red) token separate from
+    --status-critical and --series-1..8, Inter display font, drop grain overlay
+  - [x] index.html: remove .grain div, swap Google Fonts link, recolor inline favicon SVG
+  - [x] audit per-page injected <style> blocks + .wrapped-card for hardcoded colors/fonts bypassing tokens
+    (also found + fixed trust.ts, confirmationModal.ts, bookingSuccess.ts, roomFinder.ts, which bypassed
+    tokens entirely with their own ad-hoc hex palette — not caught by the initial exploration pass)
+  - [x] docs/og-image.svg recolor + flag manual og-image.png re-export as follow-up
+  - Context: official TU/e corporate-identity guide (SharePoint, SSO-gated) returned 403 when
+    fetched — user chose to proceed on a best-effort public-identity approximation (red/white/black,
+    per tue.nl) rather than exact Pantone/hex/typeface. Values isolated to a few CSS tokens so exact
+    values can be swapped in later. Plan: C:\Users\20240441\.claude\plans\validated-hugging-dragonfly.md
+  - Verified: 87/87 vitest tests pass (14 files), no regressions. frontend/public/og-image.png NOT
+    yet re-exported from the updated SVG — manual follow-up (no build script generates it).
+  - Correction (2026-07-27): Toine asked to verify against tue.nl directly rather than rely on
+    the earlier best-effort approximation. Fetched tue.nl's actual production CSS
+    (TueStyling.min.css, Style.min.css, TueMenu.min.css) + screenshots. Corrected: --brand
+    #e4002b→#c72125, --brand-strong #a8001f→#b31e21 (verified --color-secondary/-darker from
+    tue.nl's own :root block — the color actually used on their logo wordmark/link-hover/
+    buttons), --font-display Inter(guess)→Lato (tue.nl's real body font, confirmed
+    `body{font-family:Lato,...}`, freely available; their heading font "Gilroy" is commercial,
+    not substituted), --radius/--radius-sm 8px/4px→0 (tue.nl is almost entirely sharp-cornered —
+    border-radius:0 dominates their CSS, confirmed visually), --shadow-card→none (flat, no
+    elevation, matching tue.nl's flat color-block style). Also flattened remaining hardcoded
+    border-radius values in confirmationModal/consentModal/bookingSuccess/roomFinder/trust that
+    bypassed the token. 87/87 tests still pass.
+
+- [x] (C) fix deploy-frontend.yml API_URL missing /api suffix +infra @O #44 — done 2026-07-27 (5419f10)
+  - Found while sandbox-deploying #43: sandbox bundle baked apiBaseUrl without /api
+    (https://roomsense-sandbox-api2.azurewebsites.net instead of .../api), causing every
+    endpoint (/rooms, /health, /kpis...) to 404 in the browser. Production's live bundle still
+    works only because it predates this regression (likely introduced in f660aaf,
+    "sandbox-aware frontend deploy") — the next production deploy would hit the same bug.
+  - Context: Toine approved fixing this out-of-lane (.github/workflows/** is normally
+    orchestrator territory) since it blocks verifying #43 and would break the next prod deploy.
+  - Verified fixed: re-deployed sandbox, confirmed new bundle bakes .../api correctly, and
+    Live/Find-a-Room/Wrapped pages now load real sandbox data end-to-end (browser-verified).
+
+- [x] (C) sandbox /kpis endpoint 500s on any real date range +api @H #45 — done 2026-07-27
+  - Root cause confirmed via `az storage table list --account-name roomsensesandboxstorage`:
+    sandbox storage had ONLY Rooms + SensorReadings tables — OccupancySnapshots and Reservations
+    didn't exist at all (not just empty). kpis.ts (api/src/functions/kpis.ts) calls
+    listEntities() on OccupancySnapshots unconditionally; a nonexistent table throws, caught and
+    returned as generic 500. Same root cause for /rooms/{id}/occupancy and
+    /rooms/{id}/reservations. Production has all 5 tables (Rooms/SensorReadings/
+    OccupancySnapshots/Reservations/Sources) — sandbox was only ever partially seeded.
+  - Fix: dispatched the existing seed-data.yml workflow (target_env=sandbox, days=7,
+    clear_reservations=false — nothing to clear, tables didn't exist yet). Run succeeded;
+    `az storage table list` now shows all 5 tables. Re-verified /api/kpis returns 200 with real
+    data, and the Dashboard page (browser-screenshotted) fully renders KPI tiles, heatmap,
+    booked-vs-used chart, weather, and underused-rooms table with the new TU/e styling.
+  - Context: Toine approved crossing into api/** lane (normally @H's) since this blocked
+    verifying #43's dashboard styling, and approved running the seed workflow specifically
+    (a data-mutating operation) after being told exactly what it would do.
+
+- [x] (C) GET /rooms latest-occupancy: anchor to office-hours snapshot server-side +api @H #46 — done 2026-07-28 (d19c31b)
+  - All sandbox rooms showed 0% occupancy regardless of when viewed. Root cause (documented
+    2026-07-19, never actually fixed server-side): rooms.ts's latestSnapshotForRoom took the
+    literal newest row per room (RowKey inverted-ticks, maxPageSize:1) — always a
+    dead-of-night/midnight-reset reading with ~0%, since seed windows always end there.
+    Seed data itself is fine (verified real daytime occupancy exists, e.g. 5 people/6.3% util
+    at 14:00-16:00 UTC on 2026-07-24) — this was purely a "which row counts as latest" bug.
+    The frontend mock client already anchors to the most recent office-hours (weekday,
+    08:00-18:00 UTC) snapshot (mockDerivations.ts's findLatestActiveIndex) — this brings the
+    real API to the same semantics so live and mock modes agree.
+  - Context: Toine approved crossing into api/** lane for this (same pattern as #44/#45).
+  - Verified on sandbox: 94/94 api tests pass (2 new: office-hours match wins over a more
+    recent off-hours row, and fallback to literal-latest when none exists). Deployed via
+    deploy-api.yml (target_env=sandbox); /api/rooms lastSeenTs now anchors to
+    2026-07-24T17:45:00.000Z (Friday, office hours) instead of the Sunday-midnight literal
+    latest, and occupancy varies realistically per room (e.g. Boardroom Hèlmholtz 19%,
+    Auditorium Faraday 4%) instead of a flat 0% everywhere (browser-screenshotted).
+
+- [x] (C) add real TU/e logo to header +ui @C #43 — done 2026-07-28 (4cec3e1)
+  - Per Toine's request, fetched the actual TU/e wordmark from tue.nl's live sprite SVG
+    (/typo3conf/ext/tue_menu/Resources/Public/Sprite/sprite.*.svg#tueLogo) rather than
+    recreating it from memory or approximating with text — verified visually against a
+    render of the extracted path before integrating. Replaces the custom ring+dot mark
+    (its "live" pulse was redundant with the separate #status-dot connection indicator).
+    Lockup reads "TU/e | RoomSense" (divider between marks) to keep RoomSense's own
+    identity distinct from TU/e's, rather than implying official endorsement.
+  - Deployed to sandbox via deploy-frontend.yml; browser-verified the logo renders
+    correctly on Live and Dashboard pages.
+
 ## Data reseed: real TU/e buildings, one week (2026-07-19)
 Requested by Toine: reseed against the real TU/e Atlas/Flux/Neuron buildings with a week of
 sensor + reservation data, instead of the fictional 30-day mock. Room fixtures were already

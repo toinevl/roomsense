@@ -27,8 +27,8 @@ const styles = `
   }
 
   .confirmation-modal {
-    background: white;
-    border-radius: 12px;
+    background: var(--surface-card);
+    border-radius: var(--radius);
     padding: 2rem;
     max-width: 400px;
     width: 90%;
@@ -51,13 +51,13 @@ const styles = `
     font-size: 1.5rem;
     font-weight: 600;
     margin: 0 0 1.5rem 0;
-    color: #000;
+    color: var(--text-primary);
   }
 
   .modal-room-info {
-    background: #f5f5f5;
+    background: var(--surface-card-2);
     padding: 1rem;
-    border-radius: 8px;
+    border-radius: var(--radius);
     margin-bottom: 1.5rem;
   }
 
@@ -65,18 +65,18 @@ const styles = `
     font-size: 1.125rem;
     font-weight: 600;
     margin: 0 0 0.5rem 0;
-    color: #000;
+    color: var(--text-primary);
   }
 
   .modal-room-detail {
     font-size: 0.875rem;
-    color: #666;
+    color: var(--text-secondary);
     margin: 0.25rem 0;
   }
 
   .modal-occupancy {
     font-size: 1rem;
-    color: #4caf50;
+    color: var(--status-good);
     font-weight: 500;
     margin-top: 0.75rem;
   }
@@ -92,7 +92,7 @@ const styles = `
     min-width: 120px;
     padding: 0.75rem 1.5rem;
     border: none;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 0.95rem;
     font-weight: 600;
     cursor: pointer;
@@ -100,12 +100,12 @@ const styles = `
   }
 
   .modal-btn-confirm {
-    background: #4caf50;
+    background: var(--status-good);
     color: white;
   }
 
   .modal-btn-confirm:hover {
-    background: #45a049;
+    background: color-mix(in srgb, var(--status-good) 85%, black);
   }
 
   .modal-btn-confirm:active {
@@ -113,13 +113,13 @@ const styles = `
   }
 
   .modal-btn-cancel {
-    background: #f0f0f0;
-    color: #333;
-    border: 1px solid #ddd;
+    background: var(--surface-card-2);
+    color: var(--text-primary);
+    border: 1px solid var(--border-strong);
   }
 
   .modal-btn-cancel:hover {
-    background: #e8e8e8;
+    background: var(--border);
   }
 
   .modal-btn-cancel:active {
