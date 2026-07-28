@@ -84,6 +84,10 @@ const ROOMS_FIXTURE = [
 
 // Snapshots stored RowKey-ASC = newest-first. For test purposes we model the
 // listEntities-byPage contract: first row returned = latest.
+//
+// 2026-07-19 (used by atlas-2-210 / flux-2-207 below) is a SUNDAY — these
+// fixtures predate the office-hours anchor and deliberately have no weekday
+// match at all, so they exercise the "fall back to literal latest" path.
 const SNAPSHOTS_FIXTURE: Record<string, any[]> = {
   'atlas-2-210': [
     { partitionKey: 'atlas-2-210', rowKey: '0000000001', ts: '2026-07-19T10:15:00.000Z', occupancy: 5, utilizationPct: 62.5, intervalMinutes: 15 },
@@ -93,6 +97,25 @@ const SNAPSHOTS_FIXTURE: Record<string, any[]> = {
     { partitionKey: 'flux-2-207', rowKey: '0000000001', ts: '2026-07-19T10:15:00.000Z', occupancy: 1, utilizationPct: 50, intervalMinutes: 15 },
   ],
   // atlas-4-410 and atlas-2-215 deliberately have NO snapshots.
+}
+
+// Office-hours anchor fixtures. 2026-07-24 is a Friday, 2026-07-25/26 are the
+// following Sat/Sun.
+const OFFICE_HOURS_SNAPSHOTS_FIXTURE: Record<string, any[]> = {
+  // Newest-first: a dead-of-night Sunday reading, then a Friday-afternoon
+  // office-hours reading further back. Expect the Friday one to win.
+  'atlas-2-210': [
+    { partitionKey: 'atlas-2-210', rowKey: '0000000001', ts: '2026-07-26T23:45:00.000Z', occupancy: 0, utilizationPct: 0, intervalMinutes: 15 },
+    { partitionKey: 'atlas-2-210', rowKey: '0000000002', ts: '2026-07-26T02:00:00.000Z', occupancy: 0, utilizationPct: 0, intervalMinutes: 15 },
+    { partitionKey: 'atlas-2-210', rowKey: '0000000003', ts: '2026-07-25T13:00:00.000Z', occupancy: 0, utilizationPct: 0, intervalMinutes: 15 }, // Saturday
+    { partitionKey: 'atlas-2-210', rowKey: '0000000004', ts: '2026-07-24T15:30:00.000Z', occupancy: 5, utilizationPct: 62.5, intervalMinutes: 15 }, // Friday 15:30 UTC — office hours
+    { partitionKey: 'atlas-2-210', rowKey: '0000000005', ts: '2026-07-24T07:00:00.000Z', occupancy: 1, utilizationPct: 12.5, intervalMinutes: 15 }, // Friday 07:00 UTC — before 08:00, not office hours
+  ],
+  // Weekday but outside 08:00-18:00 (19:00) — should NOT count; only a
+  // literal-latest fallback exists (no office-hours row anywhere).
+  'atlas-2-215': [
+    { partitionKey: 'atlas-2-215', rowKey: '0000000001', ts: '2026-07-24T19:00:00.000Z', occupancy: 2, utilizationPct: 25, intervalMinutes: 15 },
+  ],
 }
 
 function setState(rooms: any[], snapshots: Record<string, any[]>) {
@@ -171,6 +194,33 @@ describe('GET /api/rooms', () => {
     expect(byRoom.get('atlas-2-210')!.name).toBe('Vergaderzaal Höganäs')
     expect(byRoom.get('atlas-2-215')!.name).toBe('Zaal Curaçao')
     expect(byRoom.get('flux-2-207')!.name).toBe('Focus Booth Åse')
+  })
+
+  it('anchors to the most recent office-hours snapshot, not the literal latest row', async () => {
+    setState(ROOMS_FIXTURE, OFFICE_HOURS_SNAPSHOTS_FIXTURE)
+    const res = await roomsHandler(buildRequest('GET'), ctx)
+    const body = res.jsonBody as any[]
+    const byRoom = new Map(body.map((r) => [r.roomId, r]))
+
+    // Literal latest is Sunday 23:45 (occupancy 0); the most recent
+    // office-hours row is Friday 15:30 UTC (occupancy 5) — that one should win.
+    const a = byRoom.get('atlas-2-210')!
+    expect(a.lastSeenTs).toBe('2026-07-24T15:30:00.000Z')
+    expect(a.occupancy).toBe(5)
+    expect(a.utilizationPct).toBe(62.5)
+  })
+
+  it('falls back to the literal latest row when no office-hours snapshot exists', async () => {
+    setState(ROOMS_FIXTURE, OFFICE_HOURS_SNAPSHOTS_FIXTURE)
+    const res = await roomsHandler(buildRequest('GET'), ctx)
+    const body = res.jsonBody as any[]
+    const byRoom = new Map(body.map((r) => [r.roomId, r]))
+
+    // Only row is a weekday but 19:00 UTC (outside 08:00-18:00) — no
+    // office-hours match anywhere, so the literal latest row is used as-is.
+    const b = byRoom.get('atlas-2-215')!
+    expect(b.lastSeenTs).toBe('2026-07-24T19:00:00.000Z')
+    expect(b.occupancy).toBe(2)
   })
 
   it('returns 200 with [] when the rooms table is empty', async () => {

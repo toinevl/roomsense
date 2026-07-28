@@ -276,6 +276,18 @@ bug, because empty-but-present config blocks are still a plausible footgun.
     verifying #43's dashboard styling, and approved running the seed workflow specifically
     (a data-mutating operation) after being told exactly what it would do.
 
+- [ ] (C) GET /rooms latest-occupancy: anchor to office-hours snapshot server-side +api @H #46
+  - All sandbox rooms showed 0% occupancy regardless of when viewed. Root cause (documented
+    2026-07-19, never actually fixed server-side): rooms.ts's latestSnapshotForRoom took the
+    literal newest row per room (RowKey inverted-ticks, maxPageSize:1) — always a
+    dead-of-night/midnight-reset reading with ~0%, since seed windows always end there.
+    Seed data itself is fine (verified real daytime occupancy exists, e.g. 5 people/6.3% util
+    at 14:00-16:00 UTC on 2026-07-24) — this was purely a "which row counts as latest" bug.
+    The frontend mock client already anchors to the most recent office-hours (weekday,
+    08:00-18:00 UTC) snapshot (mockDerivations.ts's findLatestActiveIndex) — this brings the
+    real API to the same semantics so live and mock modes agree.
+  - Context: Toine approved crossing into api/** lane for this (same pattern as #44/#45).
+
 ## Data reseed: real TU/e buildings, one week (2026-07-19)
 Requested by Toine: reseed against the real TU/e Atlas/Flux/Neuron buildings with a week of
 sensor + reservation data, instead of the fictional 30-day mock. Room fixtures were already
