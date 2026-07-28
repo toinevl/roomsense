@@ -134,22 +134,9 @@ table { border-collapse: collapse; width: 100%; }
   border-bottom: 1px solid var(--border);
 }
 .brand { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
-.brand-mark { position: relative; width: 22px; height: 22px; display: inline-block; }
-.brand-ring {
-  position: absolute; inset: 0; border-radius: 50%;
-  border: 2px solid var(--brand);
-}
-.brand-dot {
-  position: absolute; top: 50%; left: 50%; width: 7px; height: 7px;
-  transform: translate(-50%, -50%); border-radius: 50%;
-  background: var(--status-good);
-  box-shadow: 0 0 0 0 rgba(12,163,12,0.6);
-  animation: brand-pulse 2.4s ease-out infinite;
-}
-@keyframes brand-pulse {
-  0%   { box-shadow: 0 0 0 0 rgba(12,163,12,0.55); }
-  70%  { box-shadow: 0 0 0 8px rgba(12,163,12,0); }
-  100% { box-shadow: 0 0 0 0 rgba(12,163,12,0); }
+.tue-logo { width: 46px; height: auto; color: var(--brand); flex: none; }
+.brand-divider {
+  width: 1px; height: 22px; background: var(--border-strong); flex: none;
 }
 .brand-word {
   font-weight: 800; font-size: 1.05rem; letter-spacing: -0.01em;
