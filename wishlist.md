@@ -221,7 +221,7 @@ bug, because empty-but-present config blocks are still a plausible footgun.
   - Commit: 9252f18. SWA frontend bundle confirmed referencing roomsense-api2.
   - Old Flex app (roomsense-api) still running — teardown after grace period.
 
-- [x] (C) rebrand frontend visual identity to TU/e (best-effort, no official asset access) +ui @C #40 — done 2026-07-27 (6fb7939)
+- [x] (C) rebrand frontend visual identity to TU/e (best-effort, no official asset access) +ui @C #43 — done 2026-07-27 (6fb7939)
   - [x] main.css token overhaul: light-first palette, new --brand (TU/e red) token separate from
     --status-critical and --series-1..8, Inter display font, drop grain overlay
   - [x] index.html: remove .grain div, swap Google Fonts link, recolor inline favicon SVG
@@ -248,18 +248,18 @@ bug, because empty-but-present config blocks are still a plausible footgun.
     border-radius values in confirmationModal/consentModal/bookingSuccess/roomFinder/trust that
     bypassed the token. 87/87 tests still pass.
 
-- [x] (C) fix deploy-frontend.yml API_URL missing /api suffix +infra @O #41 — done 2026-07-27 (5419f10)
-  - Found while sandbox-deploying #40: sandbox bundle baked apiBaseUrl without /api
+- [x] (C) fix deploy-frontend.yml API_URL missing /api suffix +infra @O #44 — done 2026-07-27 (5419f10)
+  - Found while sandbox-deploying #43: sandbox bundle baked apiBaseUrl without /api
     (https://roomsense-sandbox-api2.azurewebsites.net instead of .../api), causing every
     endpoint (/rooms, /health, /kpis...) to 404 in the browser. Production's live bundle still
     works only because it predates this regression (likely introduced in f660aaf,
     "sandbox-aware frontend deploy") — the next production deploy would hit the same bug.
   - Context: Toine approved fixing this out-of-lane (.github/workflows/** is normally
-    orchestrator territory) since it blocks verifying #40 and would break the next prod deploy.
+    orchestrator territory) since it blocks verifying #43 and would break the next prod deploy.
   - Verified fixed: re-deployed sandbox, confirmed new bundle bakes .../api correctly, and
     Live/Find-a-Room/Wrapped pages now load real sandbox data end-to-end (browser-verified).
 
-- [x] (C) sandbox /kpis endpoint 500s on any real date range +api @H #42 — done 2026-07-27
+- [x] (C) sandbox /kpis endpoint 500s on any real date range +api @H #45 — done 2026-07-27
   - Root cause confirmed via `az storage table list --account-name roomsensesandboxstorage`:
     sandbox storage had ONLY Rooms + SensorReadings tables — OccupancySnapshots and Reservations
     didn't exist at all (not just empty). kpis.ts (api/src/functions/kpis.ts) calls
@@ -273,7 +273,7 @@ bug, because empty-but-present config blocks are still a plausible footgun.
     data, and the Dashboard page (browser-screenshotted) fully renders KPI tiles, heatmap,
     booked-vs-used chart, weather, and underused-rooms table with the new TU/e styling.
   - Context: Toine approved crossing into api/** lane (normally @H's) since this blocked
-    verifying #40's dashboard styling, and approved running the seed workflow specifically
+    verifying #43's dashboard styling, and approved running the seed workflow specifically
     (a data-mutating operation) after being told exactly what it would do.
 
 ## Data reseed: real TU/e buildings, one week (2026-07-19)
