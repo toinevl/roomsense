@@ -276,7 +276,7 @@ bug, because empty-but-present config blocks are still a plausible footgun.
     verifying #43's dashboard styling, and approved running the seed workflow specifically
     (a data-mutating operation) after being told exactly what it would do.
 
-- [ ] (C) GET /rooms latest-occupancy: anchor to office-hours snapshot server-side +api @H #46
+- [x] (C) GET /rooms latest-occupancy: anchor to office-hours snapshot server-side +api @H #46 — done 2026-07-28 (d19c31b)
   - All sandbox rooms showed 0% occupancy regardless of when viewed. Root cause (documented
     2026-07-19, never actually fixed server-side): rooms.ts's latestSnapshotForRoom took the
     literal newest row per room (RowKey inverted-ticks, maxPageSize:1) — always a
@@ -287,6 +287,23 @@ bug, because empty-but-present config blocks are still a plausible footgun.
     08:00-18:00 UTC) snapshot (mockDerivations.ts's findLatestActiveIndex) — this brings the
     real API to the same semantics so live and mock modes agree.
   - Context: Toine approved crossing into api/** lane for this (same pattern as #44/#45).
+  - Verified on sandbox: 94/94 api tests pass (2 new: office-hours match wins over a more
+    recent off-hours row, and fallback to literal-latest when none exists). Deployed via
+    deploy-api.yml (target_env=sandbox); /api/rooms lastSeenTs now anchors to
+    2026-07-24T17:45:00.000Z (Friday, office hours) instead of the Sunday-midnight literal
+    latest, and occupancy varies realistically per room (e.g. Boardroom Hèlmholtz 19%,
+    Auditorium Faraday 4%) instead of a flat 0% everywhere (browser-screenshotted).
+
+- [x] (C) add real TU/e logo to header +ui @C #43 — done 2026-07-28 (4cec3e1)
+  - Per Toine's request, fetched the actual TU/e wordmark from tue.nl's live sprite SVG
+    (/typo3conf/ext/tue_menu/Resources/Public/Sprite/sprite.*.svg#tueLogo) rather than
+    recreating it from memory or approximating with text — verified visually against a
+    render of the extracted path before integrating. Replaces the custom ring+dot mark
+    (its "live" pulse was redundant with the separate #status-dot connection indicator).
+    Lockup reads "TU/e | RoomSense" (divider between marks) to keep RoomSense's own
+    identity distinct from TU/e's, rather than implying official endorsement.
+  - Deployed to sandbox via deploy-frontend.yml; browser-verified the logo renders
+    correctly on Live and Dashboard pages.
 
 ## Data reseed: real TU/e buildings, one week (2026-07-19)
 Requested by Toine: reseed against the real TU/e Atlas/Flux/Neuron buildings with a week of
