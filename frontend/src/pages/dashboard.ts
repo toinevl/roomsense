@@ -106,7 +106,6 @@ function renderSkeleton(): string {
     </div>
     <div class="kpi-row" id="kpi-row" aria-busy="true"></div>
     <section class="chart-card" id="heatmap-card"></section>
-    <section class="chart-card" id="weather-card"></section>
     <section class="chart-card" id="booked-used-card"></section>
     <section class="chart-card" id="ghost-table-card"></section>
   `
@@ -147,9 +146,9 @@ function renderKpiTiles(container: HTMLElement, kpis: KpisResponse, roomCount: n
       ghostAccent,
     ),
     kpiTile(
-      'Wasted floor cost',
-      `${formatEur(kpis.wastedEur)}<span class="kpi-unit">/mo</span>`,
-      'Indicatief — modeled from ghost-hours × capacity × €/desk-hour',
+      'Wasted hours',
+      `${Math.round(kpis.wastedHours ?? 0)}<span class="kpi-unit">h</span>`,
+      `≈ ${formatEur(kpis.wastedEur ?? 0)} indicative (€4/desk/hour)`,
     ),
     kpiTile('Busiest building', buildingLabel(kpis.busiestBuilding), 'By average utilization this period'),
   )
@@ -463,6 +462,11 @@ function renderGhostTable(container: HTMLElement, kpis: KpisResponse): void {
   const tbody = document.createElement('tbody')
   for (const room of kpis.underusedRooms) {
     const tr = document.createElement('tr')
+    tr.style.cursor = 'pointer'
+    tr.addEventListener('click', () => {
+      sessionStorage.setItem('roomsense.selectedRoomId', room.roomId)
+      window.location.hash = '#live'
+    })
     const tdName = document.createElement('td')
     tdName.textContent = room.name
     const tdPct = document.createElement('td')
@@ -492,100 +496,6 @@ function renderGhostTable(container: HTMLElement, kpis: KpisResponse): void {
   card.appendChild(table)
 }
 
-// ---------------------------------------------------------------------------
-// Fake weather mock-up — no external API. Deterministic, no key, no network.
-// ---------------------------------------------------------------------------
-
-import { buildWeatherState } from '../lib/weather'
-import type { FakeWeatherReading } from '../lib/weatherMock'
-
-const WEATHER_ICON: Record<string, string> = {
-  clear: '☀️',
-  cloudy: '☁️',
-  rain: '🌧️',
-  wind: '🌬️',
-}
-
-function weatherIcon(reading: FakeWeatherReading): string {
-  if (reading.rainMm >= 1.5) return WEATHER_ICON.rain
-  if (reading.windKph >= 35) return WEATHER_ICON.wind
-  return WEATHER_ICON.clear
-}
-
-function weatherLabel(reading: FakeWeatherReading): string {
-  if (reading.rainMm >= 1.5) return 'Rain'
-  if (reading.windKph >= 35) return 'Windy'
-  return 'Clear'
-}
-
-function weatherClass(reading: FakeWeatherReading): string {
-  if (reading.rainMm >= 1.5) return 'weather-rain'
-  if (reading.windKph >= 35) return 'weather-wind'
-  return 'weather-clear'
-}
-
-const WIND_DIRECTIONS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
-
-function windLabel(windKph: number): string {
-  let deg = windKph >= 35 ? 90 : windKph >= 20 ? 45 : windKph >= 10 ? 135 : 0
-  deg = ((deg %= 360) < 0 ? deg + 360 : deg)
-  const idx = Math.round(deg / 45) % 8
-  return WIND_DIRECTIONS[idx]
-}
-
-function formatUpdatedAt(iso: string): string {
-  const date = new Date(iso)
-  if (Number.isNaN(date.getTime())) return iso
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-}
-
-function renderWeather(container: HTMLElement): void {
-  const card = container.querySelector('#weather-card')!
-  let state
-  try {
-    state = buildWeatherState()
-  } catch (err) {
-    card.innerHTML = `
-      <div class="chart-card-head">
-        <div>
-          <div class="chart-title">Weather</div>
-          <div class="chart-caption">${err instanceof Error ? err.message.replace(/[<>]/g, '') : 'Unknown error'}</div>
-        </div>
-      </div>
-    `
-    return
-  }
-
-  const readings = state.readings
-  const updatedAt = formatUpdatedAt(state.updatedAt)
-
-  card.innerHTML = `
-    <div class="chart-card-head">
-      <div>
-        <div class="chart-title">Weather</div>
-        <div class="chart-caption">Fake demo data — no external weather API.</div>
-      </div>
-      <div class="weather-meta">
-        <span class="weather-pill" aria-label="mock weather">MOCK</span>
-        <span class="mono weather-meta-time">Updated ${updatedAt}</span>
-      </div>
-    </div>
-    <div class="weather-grid">
-      ${readings.map((reading) => `
-        <div class="weather-card ${weatherClass(reading)}">
-          <div class="weather-building">${buildingLabel(reading.building)}</div>
-          <div class="weather-icon" aria-label="${weatherLabel(reading)}">${weatherIcon(reading)}</div>
-          <div class="weather-temp mono">${reading.temperatureC.toFixed(1)}°C</div>
-          <div class="weather-row">
-            <span class="weather-rain">💧 ${reading.rainMm.toFixed(1)} mm</span>
-            <span class="weather-wind">💨 ${reading.windKph.toFixed(1)} km/h ${windLabel(reading.windKph)}</span>
-          </div>
-        </div>
-      `).join('')}
-    </div>
-  `
-}
-
 function renderError(container: HTMLElement, err: unknown): void {
   container.innerHTML = `
     <div class="chart-card">
@@ -602,7 +512,6 @@ export const dashboardPage: Page = {
       const [rooms, kpis] = await Promise.all([apiClient.getRooms(), apiClient.getKpis()])
       renderKpiTiles(container, kpis, rooms.length)
       renderHeatmap(container, rooms)
-      renderWeather(container)
       const { date, usage } = await loadBookedVsUsed(rooms)
       renderBookedVsUsed(container, date, usage)
       renderGhostTable(container, kpis)

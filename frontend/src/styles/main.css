@@ -446,40 +446,26 @@ table { border-collapse: collapse; width: 100%; }
   color: var(--text-primary);
 }
 
-.report-co2 {
-  background: color-mix(in srgb, var(--series-2) 16%, var(--surface-card));
-  padding: 1rem;
-  border-radius: var(--radius-sm);
-  margin-bottom: 2rem;
-  border: 1px solid var(--series-2);
-}
+/* --------------------------------------------------------------------------- */
 
-.report-co2 h2 {
-  margin-top: 0;
-  font-size: 1.125rem;
-}
+.report-act { margin-bottom: 2rem; page-break-inside: avoid; }
+.report-act h2 { border-bottom: 2px solid var(--brand); padding-bottom: 0.5rem; margin-bottom: 1rem; font-size: 1.25rem; }
+.report-metrics { grid-template-columns: repeat(3, 1fr); }
+.metric-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; }
+.report-portfolio { margin-bottom: 1rem; }
+.portfolio-headline { font-size: 1.1rem; line-height: 1.6; }
+.report-capacity-table { width: 100%; border-collapse: collapse; margin-top: 1rem; font-size: 0.9rem; }
+.report-capacity-table th { text-align: left; padding: 0.5rem; border-bottom: 2px solid var(--border-strong); }
+.report-capacity-table td { padding: 0.5rem; border-bottom: 1px solid var(--gridline); }
+.report-capacity-table .num { text-align: right; font-family: var(--font-mono); }
+.report-source { font-size: 0.8rem; color: var(--text-muted); margin-top: 0.25rem; }
+.report-recommendations { margin-bottom: 2rem; }
+.report-recommendations h2 { font-size: 1.25rem; margin-bottom: 1rem; }
+.report-recommendations ol { padding-left: 1.5rem; line-height: 1.8; }
 
-.report-co2 small {
-  display: block;
-  margin-top: 0.5rem;
-  color: var(--text-muted);
-}
-
-.report-underused {
-  margin-bottom: 2rem;
-}
-
-.report-underused h2 {
-  font-size: 1.125rem;
-  margin-bottom: 1rem;
-}
-
-.report-underused ul {
-  padding-left: 1.5rem;
-}
-
-.report-underused li {
-  margin-bottom: 0.5rem;
+@media print {
+  .report-capacity-table { font-size: 10pt; }
+  .report-act { page-break-inside: avoid; }
 }
 
 .report-footer {

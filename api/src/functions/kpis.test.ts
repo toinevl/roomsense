@@ -169,6 +169,18 @@ function buildRequest(
 const FROM = '2026-07-19T10:00:00.000Z'
 const TO = '2026-07-19T11:00:00.000Z'
 
+/** Convenience: call the handler and return the parsed jsonBody. */
+async function callKpis(
+  opts: { from?: string; to?: string } = {},
+): Promise<any> {
+  const ctx = { error: vi.fn(), log: vi.fn() } as unknown as InvocationContext
+  const res = await kpisHandler(
+    buildRequest('GET', { from: opts.from ?? FROM, to: opts.to ?? TO }),
+    ctx,
+  )
+  return res.jsonBody as any
+}
+
 describe('GET /api/kpis', () => {
   let ctx: InvocationContext
 
@@ -210,6 +222,48 @@ describe('GET /api/kpis', () => {
     const res = await kpisHandler(buildRequest('GET', { from: FROM, to: TO }), ctx)
     const body = res.jsonBody as any
     expect(body.busiestBuilding).toBe('flux')
+  })
+
+  it('k) wastedHours = ghostHours = 0.25 (the clipped ghost reservation duration)', async () => {
+    const body = await callKpis()
+    expect(body.wastedHours).toBe(0.25)
+  })
+
+  it('l) totalCapacity = 8 + 12 + 2 = 22', async () => {
+    const body = await callKpis()
+    expect(body.totalCapacity).toBe(22)
+  })
+
+  it('m) peakConcurrentOccupancy = max concurrent occupancy across all rooms at any timestamp = 12', async () => {
+    // Snapshots at 10:00: atlas-2-210 occ=4, atlas-2-215 occ=0, flux-2-207 occ=2 → sum=6
+    // Snapshots at 10:15: atlas-2-210 occ=8 → sum=8
+    // Snapshots at 10:30: atlas-2-210 occ=6, atlas-2-215 occ=6 → sum=12
+    const body = await callKpis()
+    expect(body.peakConcurrentOccupancy).toBe(12)
+  })
+
+  it('n) roomBreakdown has all 3 rooms sorted by capacity desc, with capacity and avgBookedOccupancy', async () => {
+    const body = await callKpis()
+    expect(body.roomBreakdown).toHaveLength(3)
+    // Sorted by capacity descending: atlas-2-215(12), atlas-2-210(8), flux-2-207(2)
+    expect(body.roomBreakdown.map((r: any) => r.roomId)).toEqual([
+      'atlas-2-215',
+      'atlas-2-210',
+      'flux-2-207',
+    ])
+    const zaal = body.roomBreakdown.find((r: any) => r.roomId === 'atlas-2-215')
+    expect(zaal.capacity).toBe(12)
+    // atlas-2-215 reservations: 10:00→10:15 (ghost, max occ=0, 0.25h), 10:30→11:00 (max occ=6, 0.5h)
+    // avgBookedOccupancy = (0*0.25 + 6*0.5) / 0.75 = 3 / 0.75 = 4
+    expect(zaal.avgBookedOccupancy).toBe(4)
+    // atlas-2-210: 10:00→10:30 (max occ=8, 0.5h) → avgBookedOccupancy = 8
+    const hoganas = body.roomBreakdown.find((r: any) => r.roomId === 'atlas-2-210')
+    expect(hoganas.capacity).toBe(8)
+    expect(hoganas.avgBookedOccupancy).toBe(8)
+    // flux-2-207: 10:00→11:00 (max occ=2, 1h) → avgBookedOccupancy = 2
+    const ase = body.roomBreakdown.find((r: any) => r.roomId === 'flux-2-207')
+    expect(ase.capacity).toBe(2)
+    expect(ase.avgBookedOccupancy).toBe(2)
   })
 
   it('f) underusedRooms = 3 rooms, lowest-util first (length <= 5)', async () => {

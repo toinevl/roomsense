@@ -263,27 +263,11 @@ function renderContent(): string {
       generator that models office-hours traffic, ~20% ghost meetings, and daily 04:00 counter resets to
       match Terabee's real cumulative-counter behaviour — realistic in shape, not in origin.
     </div>
-    <div class="arch-note limitation-callout">
-      <strong>Verified limitation — Presenter mode's live tick:</strong> reading data works normally — it's plain
-      <code>GET</code> requests, which browsers never preflight. But <a href="#live">Presenter mode</a>'s
-      <code>POST /api/simulate/tick</code> currently fails in the browser with a CORS error, even with a correct key.
-      Verified inside the live Azure environment:
-      <ul>
-        <li><code>GET /health</code> with <code>Origin</code> → full CORS headers.</li>
-        <li><code>POST /simulate/tick</code> without preflight → <code>401</code> + full CORS headers.</li>
-        <li>Real browser <code>OPTIONS</code> preflight against the Function host → empty <code>204</code> with no CORS headers; browser rejects before function code runs.</li>
-        <li>Current live app is served from <strong>lemon-mud-06bc7fd03.7.azurestaticapps.net</strong>; the Function's
-            <code>apiConfig</code> is <code>null</code>, so SWA is not proxying API calls today.</li>
-      </ul>
-      Fix options, in order of preference:
-      <ol>
-        <li>Migrate the API off Flex Consumption to Consumption/Premium (platform CORS works there).</li>
-        <li>Enable SWA's managed API integration so same-origin UI calls never preflight.</li>
-        <li>Front with Azure Front Door or API Management and configure CORS there.</li>
-      </ol>
-      Until one of these is applied, presenter mode is reliably available in this SPA's
-      <strong>mock mode</strong> (same-origin deterministic demo data). In the real live API,
-      key-controlled presenter mode surfaces a clear "Blocked — see Architecture" state instead of silently failing.
+    <div class="arch-note">
+      <strong>Presenter mode:</strong> The live tick (<code>POST /api/simulate/tick</code>)
+      works in the browser. The API runs on a Consumption (Y1) plan where platform CORS
+      handles preflight correctly. The simulator key is intentionally exposed for demo
+      use — this is an anonymous demo API with no production data.
     </div>
   `
 }

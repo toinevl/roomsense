@@ -3,8 +3,10 @@ import type { KpisResponse } from '../lib/apiTypes'
 import type { Page } from './types'
 
 /**
- * Semester in Review — one-page printable report for leadership.
- * Fetches KPIs and displays metrics in a print-friendly format.
+ * RoomSense Occupancy Analysis — two-act leave-behind for TU/e budget holders.
+ * Act 1: Hours Wasted (ghost meetings)
+ * Act 2: Seats Over-Provisioned (capacity mismatch)
+ * Self-sufficient: framing metadata, recommended actions, print-friendly.
  */
 
 function renderSkeleton(): string {
@@ -25,59 +27,99 @@ function renderError(container: HTMLElement, err: unknown): void {
   `
 }
 
+function buildingLabel(building: string): string {
+  return building.charAt(0).toUpperCase() + building.slice(1)
+}
+
 function renderReport(container: HTMLElement, kpis: KpisResponse): void {
   const content = container.querySelector('#report-content')!
   content.setAttribute('aria-busy', 'false')
 
-  // Illustrative CO2 estimate: 1 wasted euro ≈ 0.5 kg CO2 (placeholder)
-  const co2Estimate = (kpis.wastedEur ?? 0) * 0.5
+  const reportDate = new Date().toLocaleDateString('en-GB', {
+    year: 'numeric', month: 'long', day: 'numeric'
+  })
+
+  const peakPct = kpis.totalCapacity > 0
+    ? Math.round((kpis.peakConcurrentOccupancy / kpis.totalCapacity) * 100)
+    : 0
 
   content.innerHTML = `
     <div class="report-header">
-      <h1>Semester in Review</h1>
-      <p class="date-range">Last 30 days</p>
+      <h1>RoomSense Occupancy Analysis</h1>
+      <p class="date-range">Last 30 days · Generated ${reportDate}</p>
+      <p class="report-source">TU/e campus — Atlas, Flux, Neuron | Data source: Terabee people-counting sensors (simulated; production path via IoT Hub → Databricks)</p>
     </div>
 
-    <section class="report-metrics">
-      <div class="metric">
-        <div class="metric-label">Average Utilization</div>
-        <div class="metric-value">${(kpis.avgUtilizationPct ?? 0).toFixed(1)}%</div>
-      </div>
-      <div class="metric">
-        <div class="metric-label">Peak Utilization</div>
-        <div class="metric-value">${(kpis.peakUtilizationPct ?? 0).toFixed(1)}%</div>
-      </div>
-      <div class="metric">
-        <div class="metric-label">Ghost Meetings</div>
-        <div class="metric-value">${(kpis.ghostRatePct ?? 0).toFixed(1)}%</div>
-      </div>
-      <div class="metric">
-        <div class="metric-label">Wasted Space Cost</div>
-        <div class="metric-value">€${(kpis.wastedEur ?? 0).toFixed(0)}</div>
+    <section class="report-act">
+      <h2>Act 1: Hours Wasted</h2>
+      <div class="report-metrics">
+        <div class="metric">
+          <div class="metric-label">Wasted Hours</div>
+          <div class="metric-value">${Math.round(kpis.wastedHours ?? 0)}h</div>
+          <div class="metric-note">Booked-but-empty meeting time</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Ghost Rate</div>
+          <div class="metric-value">${(kpis.ghostRatePct ?? 0).toFixed(1)}%</div>
+          <div class="metric-note">Of all booked hours</div>
+        </div>
+        <div class="metric">
+          <div class="metric-label">Indicative Cost</div>
+          <div class="metric-value">€${(kpis.wastedEur ?? 0).toFixed(0)}</div>
+          <div class="metric-note">Estimated at €4/desk/hour</div>
+        </div>
       </div>
     </section>
 
-    <section class="report-co2">
-      <h2>Environmental Impact (Illustrative)</h2>
-      <p>${co2Estimate.toFixed(1)} kg CO₂ from unused HVAC/lighting</p>
-      <small>Estimate based on energy costs; not independently audited.</small>
+    <section class="report-act">
+      <h2>Act 2: Seats Over-Provisioned</h2>
+      <div class="report-portfolio">
+        <p class="portfolio-headline">
+          <strong>${kpis.totalCapacity ?? 0}</strong> total seats across campus.
+          Peak concurrent usage: <strong>${kpis.peakConcurrentOccupancy ?? 0}</strong> people.
+          That's ${peakPct}% of capacity at peak.
+        </p>
+      </div>
+      <table class="report-capacity-table">
+        <thead>
+          <tr>
+            <th>Room</th>
+            <th>Building</th>
+            <th class="num">Capacity</th>
+            <th class="num">Avg During Booked Hours</th>
+            <th class="num">Efficiency</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(kpis.roomBreakdown ?? []).map((room) => {
+            const efficiency = room.capacity > 0
+              ? Math.round((room.avgBookedOccupancy / room.capacity) * 100)
+              : 0
+            return `
+              <tr>
+                <td>${room.name}</td>
+                <td>${buildingLabel(room.building)}</td>
+                <td class="num">${room.capacity}</td>
+                <td class="num">${room.avgBookedOccupancy.toFixed(1)}</td>
+                <td class="num">${efficiency}%</td>
+              </tr>
+            `
+          }).join('')}
+        </tbody>
+      </table>
     </section>
 
-    <section class="report-underused">
-      <h2>Top Underused Rooms</h2>
-      ${
-        kpis.underusedRooms && kpis.underusedRooms.length > 0
-          ? `
-      <ul>
-        ${kpis.underusedRooms.map((room) => `<li>${room.name}: ${room.utilizationPct.toFixed(1)}% utilization</li>`).join('')}
-      </ul>
-      `
-          : '<p>No underused rooms data</p>'
-      }
+    <section class="report-recommendations">
+      <h2>Recommended Actions</h2>
+      <ol>
+        <li>Audit repeat ghost bookings — ${Math.round(kpis.wastedHours ?? 0)} hours/month of booked-but-empty time is recoverable through booking discipline.</li>
+        <li>Assess whether large rooms (80+ seats) are right-sized for typical demand. Average occupancy during booked hours indicates actual need.</li>
+        <li>Consider reallocating underused large spaces into smaller focus pods where peak demand suggests higher small-room utilization.</li>
+      </ol>
     </section>
 
     <footer class="report-footer">
-      <p>Print or export this page to share with your team.</p>
+      <p>Generated by RoomSense for TU/e campus operations review.</p>
     </footer>
   `
 }

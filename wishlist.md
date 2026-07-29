@@ -332,3 +332,14 @@ addresses) before this ran.
 - If reseeding again with a different `days` value in future: always clear Reservations first:
   `az storage table delete --name Reservations --account-name roomsensestorage --auth-mode login`
   then re-run `pnpm seed:azure`. SensorReadings/OccupancySnapshots don't need this.
+
+## Budget-Holder Demo (#47–#55)
+- [ ] (O) Pre-demo re-seed runbook +docs @H #47
+- [ ] (A) Expose wastedHours in /kpis response +api @H #48
+- [ ] (A) Add capacity metrics (totalCapacity, peakConcurrentOccupancy, roomBreakdown) to /kpis +api @H #49
+- [ ] (B) Sync frontend KPI types (apiTypes.ts + mockDerivations.ts) with new fields +frontend @H #50
+- [ ] (C) Dashboard: swap wasted-EUR tile for wasted-hours, cut weather widget +frontend @H #51
+- [ ] (C) Dashboard: click-to-drill on underused rooms table → live page +frontend @H #52
+- [ ] (C) Report page: restructure into two-act capacity story with CFO framing, cut CO2 +frontend @H #53
+- [ ] (C) Architecture page: remove stale CORS limitation callout +frontend @H #54
+- [ ] (O) Deploy API + frontend, verify end-to-end, push +deploy @H #55

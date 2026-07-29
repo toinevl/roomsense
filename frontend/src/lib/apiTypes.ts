@@ -25,13 +25,25 @@ export interface UnderusedRoom {
   utilizationPct: number
 }
 
+export interface RoomBreakdownEntry {
+  roomId: string
+  name: string
+  building: string
+  capacity: number
+  avgBookedOccupancy: number
+}
+
 export interface KpisResponse {
   avgUtilizationPct: number
   peakUtilizationPct: number
   ghostRatePct: number
+  wastedHours: number
   wastedEur: number
   busiestBuilding: string
   underusedRooms: UnderusedRoom[]
+  totalCapacity: number
+  peakConcurrentOccupancy: number
+  roomBreakdown: RoomBreakdownEntry[]
 }
 
 export interface SourceStatus {

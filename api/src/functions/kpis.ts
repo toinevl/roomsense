@@ -8,12 +8,18 @@ import { getTableClient, TABLE_NAMES } from '../lib/tables'
  * GET /api/kpis?from=ISO&to=ISO → portfolio-wide KPIs over the window.
  *
  * Returns:
- *   avgUtilizationPct  — mean of utilizationPct across all snapshots in window
- *   peakUtilizationPct — max of (occupancy/capacity*100) across all snapshots
- *   ghostRatePct       — ghost-reservation-hours / total-reservation-hours * 100
- *   wastedEur          — sum over ghost reservations of (clippedHours * room.capacity * COST_PER_DESK_HOUR_EUR)
- *   busiestBuilding    — building with highest avg utilization (ties → alphabetical)
- *   underusedRooms     — 5 rooms with lowest avg utilization (roomId, name, utilizationPct)
+ *   avgUtilizationPct       — mean of utilizationPct across all snapshots in window
+ *   peakUtilizationPct      — max of (occupancy/capacity*100) across all snapshots
+ *   ghostRatePct            — ghost-reservation-hours / total-reservation-hours * 100
+ *   wastedHours             — total ghost-reservation hours clipped to window
+ *   wastedEur               — sum over ghost reservations of (clippedHours * room.capacity * COST_PER_DESK_HOUR_EUR)
+ *   busiestBuilding         — building with highest avg utilization (ties → alphabetical)
+ *   underusedRooms          — 5 rooms with lowest avg utilization (roomId, name, utilizationPct)
+ *   totalCapacity           — sum of capacities across all rooms
+ *   peakConcurrentOccupancy — max concurrent occupancy across all rooms at any single timestamp
+ *   roomBreakdown           — per-room { roomId, name, building, capacity, avgBookedOccupancy },
+ *                             sorted by capacity descending; avgBookedOccupancy is the
+ *                             hours-weighted average of max occupancy during each reservation slot
  *
  * A reservation is a GHOST if the maximum occupancy across that room's
  * snapshots whose ts falls in [res.startTs, res.endTs) is 0. Both reservation
@@ -200,6 +206,7 @@ export async function kpisHandler(
     const ghostRatePct =
       totalHours === 0 ? 0 : round2((ghostHours / totalHours) * 100)
     const wastedEur = round2(wastedRaw)
+    const wastedHours = round2(ghostHours)
 
     // busiestBuilding = building with highest avg utilization across its rooms'
     // snapshots (pooled mean of utilizationPct). Ties → first alphabetical.
@@ -240,6 +247,61 @@ export async function kpisHandler(
     })
     const underusedRooms = roomAvg.slice(0, 5)
 
+    // totalCapacity = sum of all room capacities.
+    const totalCapacity = [...rooms.values()].reduce((sum, r) => sum + r.capacity, 0)
+
+    // peakConcurrentOccupancy = max(sum of occupancy across all rooms at the same timestamp).
+    // Group snapshots by timestamp, sum occupancy per timestamp, take max.
+    const occByTimestamp = new Map<number, number>()
+    for (const s of snapshots) {
+      occByTimestamp.set(s.tsMs, (occByTimestamp.get(s.tsMs) ?? 0) + s.occupancy)
+    }
+    let peakConcurrentOccupancy = 0
+    for (const total of occByTimestamp.values()) {
+      if (total > peakConcurrentOccupancy) peakConcurrentOccupancy = total
+    }
+
+    // roomBreakdown = all rooms with capacity and avg occupancy during booked hours.
+    // For each room: find all reservations, for each reservation find the max occupancy
+    // during its slot, average those maxima weighted by reservation hours.
+    const roomBreakdown = [] as Array<{
+      roomId: string
+      name: string
+      building: string
+      capacity: number
+      avgBookedOccupancy: number
+    }>
+    for (const [roomId, room] of rooms) {
+      const roomReservations = reservations.filter((r) => r.roomId === roomId)
+      const roomSnaps = snapsByRoom.get(roomId) ?? []
+      let weightedOccSum = 0
+      let totalBookedHours = 0
+      for (const r of roomReservations) {
+        const clipStart = Math.max(r.startMs, fromMs)
+        const clipEnd = Math.min(r.endMs, toMs)
+        const hours = (clipEnd - clipStart) / (60 * 60 * 1000)
+        if (hours <= 0) continue
+        let maxOcc = 0
+        for (const s of roomSnaps) {
+          if (s.tsMs >= r.startMs && s.tsMs < r.endMs && s.occupancy > maxOcc) {
+            maxOcc = s.occupancy
+          }
+        }
+        weightedOccSum += maxOcc * hours
+        totalBookedHours += hours
+      }
+      const avgBookedOccupancy = totalBookedHours > 0 ? round2(weightedOccSum / totalBookedHours) : 0
+      roomBreakdown.push({
+        roomId,
+        name: room.name,
+        building: room.building,
+        capacity: room.capacity,
+        avgBookedOccupancy,
+      })
+    }
+    // Sort by capacity descending (biggest rooms first — the right-sizing targets)
+    roomBreakdown.sort((a, b) => b.capacity - a.capacity)
+
     return withCors(
       {
         status: 200,
@@ -247,9 +309,13 @@ export async function kpisHandler(
           avgUtilizationPct,
           peakUtilizationPct,
           ghostRatePct,
+          wastedHours,
           wastedEur,
           busiestBuilding,
           underusedRooms,
+          totalCapacity,
+          peakConcurrentOccupancy,
+          roomBreakdown,
         },
       },
       origin,

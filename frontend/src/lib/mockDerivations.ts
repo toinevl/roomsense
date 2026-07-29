@@ -1,6 +1,6 @@
 import type { SeedOutput } from '@roomsense/seed'
 import type { OccupancySnapshot, Reservation, Room, SensorReading } from '@roomsense/shared'
-import type { HealthResponse, KpisResponse, RoomWithOccupancy, SourceStatus, UnderusedRoom } from './apiTypes'
+import type { HealthResponse, KpisResponse, RoomBreakdownEntry, RoomWithOccupancy, SourceStatus, UnderusedRoom } from './apiTypes'
 
 /** Matches the API's `COST_PER_DESK_HOUR_EUR` env default (wishlist.md contract). */
 export const COST_PER_DESK_HOUR_EUR = 4
@@ -185,12 +185,14 @@ export function deriveKpis(seed: SeedOutput, index: SeedIndex, from?: string, to
   })
   let ghostCount = 0
   let wastedEur = 0
+  let ghostHours = 0
   for (const reservation of reservationsInRange) {
     if (!isGhostReservation(index, reservation)) continue
     ghostCount += 1
     const room = index.roomsById.get(reservation.roomId)
     if (!room) continue
     const hours = (Date.parse(reservation.endTs) - Date.parse(reservation.startTs)) / 3_600_000
+    ghostHours += hours
     wastedEur += hours * room.capacity * COST_PER_DESK_HOUR_EUR
   }
   const ghostRatePct = reservationsInRange.length ? round1((ghostCount / reservationsInRange.length) * 100) : 0
@@ -229,13 +231,59 @@ export function deriveKpis(seed: SeedOutput, index: SeedIndex, from?: string, to
     .sort((a, b) => a.utilizationPct - b.utilizationPct)
     .slice(0, 5)
 
+  // totalCapacity = sum of all room capacities
+  const totalCapacity = seed.rooms.reduce((sum, r) => sum + r.capacity, 0)
+
+  // peakConcurrentOccupancy = max(sum occupancy across all rooms at same timestamp)
+  const occByTimestamp = new Map<number, number>()
+  for (const snap of inRange) {
+    const tsMs = Date.parse(snap.ts)
+    occByTimestamp.set(tsMs, (occByTimestamp.get(tsMs) ?? 0) + snap.occupancy)
+  }
+  let peakConcurrentOccupancy = 0
+  for (const total of occByTimestamp.values()) {
+    if (total > peakConcurrentOccupancy) peakConcurrentOccupancy = total
+  }
+
+  // roomBreakdown = per-room capacity + avg occupancy during booked hours
+  const roomBreakdown: RoomBreakdownEntry[] = seed.rooms.map((room) => {
+    const roomReservations = reservationsInRange.filter((r) => r.roomId === room.roomId)
+    const roomSnaps = index.snapshotsByRoom.get(room.roomId) ?? []
+    let weightedOccSum = 0
+    let totalBookedHours = 0
+    for (const res of roomReservations) {
+      const hours = (Date.parse(res.endTs) - Date.parse(res.startTs)) / 3_600_000
+      if (hours <= 0) continue
+      let maxOcc = 0
+      for (const snap of roomSnaps) {
+        const ts = Date.parse(snap.ts)
+        if (ts >= Date.parse(res.startTs) && ts < Date.parse(res.endTs) && snap.occupancy > maxOcc) {
+          maxOcc = snap.occupancy
+        }
+      }
+      weightedOccSum += maxOcc * hours
+      totalBookedHours += hours
+    }
+    return {
+      roomId: room.roomId,
+      name: room.name,
+      building: room.building,
+      capacity: room.capacity,
+      avgBookedOccupancy: totalBookedHours > 0 ? round1(weightedOccSum / totalBookedHours) : 0,
+    }
+  }).sort((a, b) => b.capacity - a.capacity)
+
   return {
     avgUtilizationPct,
     peakUtilizationPct,
     ghostRatePct,
+    wastedHours: round1(ghostHours),
     wastedEur: Math.round(wastedEur),
     busiestBuilding,
     underusedRooms,
+    totalCapacity,
+    peakConcurrentOccupancy,
+    roomBreakdown,
   }
 }
 
