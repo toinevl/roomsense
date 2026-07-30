@@ -369,21 +369,42 @@ addresses) before this ran.
     unchanged (byte-identical CSS, just relocated). 106/106 frontend vitest tests pass, no
     regressions.
 
-- [ ] (C) topbar nav reorg: group Reports/About dropdowns + admin link + mobile hamburger +ui @C #59 — in progress 2026-07-30
+- [x] (C) topbar nav reorg: group Reports/About dropdowns + admin link + mobile hamburger +ui @C #59 — done 2026-07-30
   - Toine's ask: primary nav mixes features (Dashboard/Live/Find a Room/Friends/Reviews/
     Privacy) with reports (Semester Report/Wrapped) and docs (Architecture/Trust) as 10 flat
     links, plus wants a link to /admin from the student app.
   - Spec: docs/superpowers/specs/2026-07-30-topbar-nav-reorg-design.md — full design
     (dropdown ARIA pattern per W3C WAI-ARIA APG Disclosure Navigation Menu, mobile hamburger
     collapse replacing the existing 760px flex-wrap reflow).
-  - [ ] frontend/index.html: Reports ▾ / About ▾ dropdown markup, Admin link, hamburger
-    button + mobile panel markup
-  - [ ] frontend/src/main.ts: dropdown/hamburger controller (aria-expanded sync, Escape +
-    outside-click/focus-out close, aria-current + trigger active-state propagation)
-  - [ ] frontend/src/styles/main.css: dropdown + hamburger + mobile panel styles
-  - [ ] Unit tests for the controller (desktop dropdowns + mobile hamburger)
-  - [ ] Update frontend/e2e smoke spec for new nav structure (desktop + mobile viewport)
-  - [ ] Browser-verify both breakpoints, all routes still reachable, admin link works
+  - [x] frontend/src/lib/navDisclosures.ts + navDisclosures.test.ts: generic disclosure-toggle
+    module (Escape/outside-click close, aria-expanded sync) backing both dropdowns and the
+    hamburger — commit 7a32716
+  - [x] frontend/index.html: Reports ▾ / About ▾ dropdown markup, Admin link, hamburger
+    button + mobile panel markup; frontend/src/main.ts: dropdown/hamburger controller
+    (aria-expanded sync, Escape + outside-click/focus-out close, aria-current + trigger
+    active-state propagation) — commit fad5779
+  - [x] frontend/src/styles/main.css: replaced the 760px flex-wrap reflow with hamburger
+    collapse for the mobile nav panel — commit b0adbaf
+  - [x] Unit tests for the controller (desktop dropdowns + mobile hamburger) — covered by
+    navDisclosures.test.ts in commit 7a32716; 112/112 frontend vitest tests pass
+  - [x] Update frontend/e2e smoke spec for new nav structure (desktop + mobile viewport) —
+    4 new e2e tests (Reports dropdown, About dropdown, Admin link, mobile hamburger) —
+    commit de27765
+  - [x] Browser-verify both breakpoints, all routes still reachable, admin link works —
+    Task 5 close-out 2026-07-30: `pnpm typecheck` clean; `pnpm test` 112/112 passed;
+    `pnpm test:e2e` 23/24 passed (only failure was the pre-existing, unrelated
+    `'report page loads and displays metrics'` test — see note below). Manually drove a
+    real browser (Playwright MCP) against the mock-mode dev server at both 1440×900 and
+    390×844: all 10 routes reachable (6 flat links + Semester Report/Wrapped in Reports ▾ +
+    Architecture/Trust in About ▾), Admin link href confirmed `/admin/index.html` and the
+    admin app itself still renders correctly, dropdowns/hamburger open+close via
+    click/outside-click/Escape on both breakpoints, 0 new console errors on any page.
+  - Note (pre-existing, unrelated bug — NOT introduced or fixed by #59): the e2e test
+    `'report page loads and displays metrics'` expects heading "Semester in Review" but the
+    report page now renders "RoomSense Occupancy Analysis", caused by commit b779719 (a
+    report-page restructure from the day before this branch started). Confirmed via git
+    commit-ancestry analysis during Task 4's review and reconfirmed on Task 5's full e2e
+    run. Worth its own future wishlist item; out of scope here.
 
 - [x] (C) admin facility-manager view: Overview + Rooms, own Vite entry +ui @C #57 — done 2026-07-30
   - [x] frontend/admin/index.html + admin/src/main.ts: own topbar/nav, own tiny hash router
