@@ -349,3 +349,45 @@ addresses) before this ran.
 - [x] (C) Report page: restructure into two-act capacity story with CFO framing, cut CO2 +frontend @H #53 — done 2026-07-28
 - [x] (C) Architecture page: remove stale CORS limitation callout +frontend @H #54 — done 2026-07-28
 - [x] (O) Deploy API + frontend, verify end-to-end, push +deploy @H #55 — done 2026-07-28
+
+- [x] (C) admin facility-manager view: Overview + Rooms, own Vite entry +ui @C #57 — done 2026-07-30
+  - [x] frontend/admin/index.html + admin/src/main.ts: own topbar/nav, own tiny hash router
+    (#overview default, #rooms) — deliberately NOT wired into the student SPA's nav or
+    route table (documented exception to CLAUDE.md's "three places" rule).
+  - [x] vite.config.ts: multi-entry build (rollupOptions.input: main + admin); tsconfig.json:
+    include admin/src. Verified `vite build` emits both dist/index.html and dist/admin/index.html.
+  - [x] Overview page (overview.ts, lib/roomStatus.ts): KPI header (free-right-now,
+    utilization-today w/ sparkline, ghost-meetings-7d, wasted-room-hours) derived from /rooms +
+    /rooms/{id}/reservations + /rooms/{id}/occupancy + /kpis, referenceTs-anchored (never
+    Date.now(), matches dashboard.ts/live.ts convention). "Live rooms" card grid
+    (Free/In-use/Ghost/Offline dot, free/in-use-until text, mini bar strip, "N people
+    [· N booked]" footer — no CO2, field doesn't exist in schema).
+  - [x] "Reclaim now" panel (lib/reclaim.ts): ghost-meeting / oversized-room / offline-sensor
+    candidate cards with real <button> actions (Release room, Notify owner, Suggest swap,
+    Create ticket). No backend mutation endpoint exists (api/** is a different lane) — real
+    behavior is local dismiss + toast + session-scoped audit log, explicitly honest that no
+    external system was contacted. Browser-verified fix: when the ghost slot falls back to a
+    past (already-ended) ghost reservation because no room is ghosting *right now*, the card
+    is labeled "PAST GHOST" with past-tense copy and only offers "Notify owner" — the initial
+    version wrongly offered "Release room" for a meeting that had already ended and whose room
+    was already free again, caught via manual screenshot review.
+  - [x] Rooms page (rooms.ts, mirrors mockup option 1d): search + availability/capacity/
+    building/floor filters, pure client-side over the already-fetched /rooms list; row list
+    with a real deep link to the main app's #live page (reuses
+    sessionStorage.roomsense.selectedRoomId).
+  - [x] Visual: reuses frontend/src/styles/main.css tokens as-is (TU/e scarlet #c72125, Lato,
+    flat/square) — not the mockup bundle's Avenir/#c81919/rounded/shadow styling.
+  - [x] Unit tests: roomStatus.test.ts (9), overview.test.ts (4), rooms.test.ts (6) — 19 new
+    tests, 106/106 total frontend vitest pass (no regressions). e2e/admin-smoke.spec.ts (6
+    tests, all pass): KPI tiles + 15 room cards, 3-slot reclaim panel invariant, reclaim
+    dismiss + audit log, rooms search/filter, cross-app deep link to #live, nav switching.
+  - Toolchain note: this machine had no Node.js/pnpm on PATH at all; installed Node LTS via
+    `winget install OpenJS.NodeJS.LTS` (user-approved) and ran pnpm via `npx pnpm@latest`
+    (corepack's own global shim hit EPERM writing to Program Files). A first `pnpm install`
+    attempt left `packages/shared/node_modules` half-linked (EACCES mid-install); fixed by
+    deleting all `node_modules/` dirs (gitignored, confirmed via `git status`/`git check-ignore`
+    before deleting) and reinstalling clean.
+  - Pre-existing, unrelated: e2e `#sources-strip` test (live.ts's `.status-dot` pill) fails
+    because `.status-dot` has no CSS rule anywhere in frontend/src/styles/main.css (confirmed
+    via `git diff` — none of the files it touches were changed by this work). Not fixed here;
+    out of scope for #57.

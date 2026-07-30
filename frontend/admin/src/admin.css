@@ -1,0 +1,125 @@
+/* =============================================================================
+   RoomSense Admin — additions layered on top of the shared main.css tokens
+   (frontend/src/styles/main.css: --brand, --font-display, --radius, surfaces,
+   status colors). No new color tokens are introduced here.
+   ============================================================================= */
+
+.admin-wordmark-tag {
+  font-size: 0.62em;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-left: 0.35rem;
+  vertical-align: middle;
+}
+
+/* Topbar health indicator (shared markup with the student app, but that app
+   never styled it either — this scopes a fix to the admin bundle only). */
+.topbar-status { display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; font-size: 0.78rem; color: var(--text-muted); }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); flex: none; }
+.status-dot.ok { background: var(--status-good); }
+.status-dot.err { background: var(--status-critical); }
+
+/* ---------------------------------------------------------------------------
+   Overview layout
+   --------------------------------------------------------------------------- */
+.admin-overview-grid { display: grid; grid-template-columns: 1fr 360px; gap: 1.25rem; align-items: start; }
+@media (max-width: 900px) { .admin-overview-grid { grid-template-columns: 1fr; } }
+
+.admin-status-legend { display: flex; gap: 0.9rem; flex-wrap: wrap; font-size: 0.72rem; color: var(--text-secondary); }
+.admin-status-legend span { display: inline-flex; align-items: center; gap: 0.35rem; }
+.admin-status-legend .legend-swatch { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+
+.admin-room-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+@media (max-width: 1100px) { .admin-room-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px) { .admin-room-grid { grid-template-columns: 1fr; } }
+
+.admin-room-card {
+  background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 0.85rem 0.9rem; display: flex; flex-direction: column; gap: 0.55rem;
+}
+.admin-room-card[data-status="ghost"] { background: color-mix(in srgb, var(--status-critical) 6%, var(--surface-card)); }
+.admin-room-card-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+.admin-room-name { font-size: 0.9rem; font-weight: 700; line-height: 1.25; }
+.admin-room-meta { font-size: 0.68rem; color: var(--text-muted); margin-top: 0.15rem; }
+.admin-room-dot { width: 10px; height: 10px; border-radius: 50%; flex: none; margin-top: 0.15rem; }
+.admin-room-dot--inline { width: 8px; height: 8px; display: inline-block; margin: 0 0.35rem 0 0; vertical-align: middle; }
+.admin-room-status { font-size: 0.78rem; font-weight: 600; }
+.admin-room-status--free { color: var(--status-good); }
+.admin-room-status--in-use { color: var(--status-warning); }
+.admin-room-status--ghost { color: var(--status-critical); }
+.admin-room-status--offline { color: var(--text-muted); }
+.admin-room-footer { font-size: 0.7rem; color: var(--text-muted); }
+
+.bar-strip { display: flex; gap: 2px; height: 12px; align-items: flex-end; }
+.bar-strip-bar { flex: 1; height: 100%; border-radius: 1px; }
+
+/* ---------------------------------------------------------------------------
+   Reclaim now panel
+   --------------------------------------------------------------------------- */
+.reclaim-panel { display: flex; flex-direction: column; gap: 0.75rem; }
+.reclaim-card {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  padding: 0.75rem 0.85rem; background: var(--surface-card-2);
+}
+.reclaim-card-head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.35rem; }
+.reclaim-title { font-size: 0.86rem; font-weight: 700; }
+.reclaim-badge { font-size: 0.62rem; letter-spacing: 0.06em; padding: 0.15rem 0.4rem; border-radius: var(--radius-sm); }
+.reclaim-badge--critical { background: color-mix(in srgb, var(--status-critical) 18%, transparent); color: var(--status-critical); }
+.reclaim-badge--warning { background: color-mix(in srgb, var(--status-warning) 22%, transparent); color: var(--brand-strong); }
+.reclaim-badge--muted { background: var(--surface-card); color: var(--text-muted); border: 1px solid var(--border-strong); }
+.reclaim-body { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.45; }
+.reclaim-card-actions { display: flex; gap: 0.5rem; margin-top: 0.6rem; flex-wrap: wrap; }
+.reclaim-action {
+  font-family: var(--font-display); font-size: 0.74rem; font-weight: 600;
+  color: #fff; background: var(--brand); border: none; border-radius: var(--radius-sm);
+  padding: 0.4rem 0.7rem; cursor: pointer;
+}
+.reclaim-action:hover { background: var(--brand-strong); }
+.reclaim-action:disabled { opacity: 0.5; cursor: default; }
+.reclaim-empty { font-size: 0.78rem; color: var(--text-muted); padding: 0.75rem 0.1rem; }
+
+.toast {
+  position: fixed; bottom: 1.5rem; left: 50%; transform: translate(-50%, 12px);
+  background: var(--surface-card-2); color: var(--text-primary);
+  border: 1px solid var(--border-strong); border-radius: var(--radius);
+  padding: 0.7rem 1rem; font-size: 0.82rem; max-width: 420px; text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  opacity: 0; pointer-events: none; transition: opacity 0.15s, transform 0.15s;
+  z-index: 200;
+}
+.toast.visible { opacity: 1; transform: translate(-50%, 0); }
+
+.audit-log { list-style: none; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border); font-size: 0.72rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 0.3rem; }
+.audit-log-entry .mono { color: var(--text-secondary); margin-right: 0.2rem; }
+
+/* ---------------------------------------------------------------------------
+   Rooms page
+   --------------------------------------------------------------------------- */
+.admin-rooms-layout { display: grid; grid-template-columns: 240px 1fr; gap: 1.25rem; align-items: start; }
+@media (max-width: 900px) { .admin-rooms-layout { grid-template-columns: 1fr; } }
+
+.filter-sidebar {
+  background: var(--surface-card); border: 1px solid var(--border); border-radius: var(--radius);
+  box-shadow: var(--shadow-card);
+  padding: 1.1rem 1rem; display: flex; flex-direction: column; gap: 1.1rem;
+}
+.filter-sidebar-title { font-size: 0.95rem; font-weight: 700; }
+.filter-search {
+  width: 100%; padding: 0.5rem 0.65rem; font-family: var(--font-display); font-size: 0.82rem;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-0);
+  color: var(--text-primary);
+}
+.filter-group-label { font-family: var(--font-mono); font-size: 0.65rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.5rem; }
+.filter-checkbox-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; padding: 0.2rem 0; cursor: pointer; }
+.capacity-chip-row { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.capacity-chip {
+  font-family: var(--font-mono); font-size: 0.72rem; padding: 0.3rem 0.55rem;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm); background: var(--surface-0);
+  color: var(--text-primary); cursor: pointer;
+}
+.capacity-chip.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+
+.rooms-list-scroll { overflow-x: auto; }

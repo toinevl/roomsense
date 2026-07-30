@@ -2,3 +2,6 @@ packages:
   - frontend
   - api
   - packages/*
+allowBuilds:
+  azure-functions-core-tools: true
+  esbuild: true
