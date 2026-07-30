@@ -540,11 +540,19 @@ table { border-collapse: collapse; width: 100%; }
 @media (max-width: 760px) {
   .topbar { flex-wrap: wrap; gap: 0.75rem; }
   .nav-hamburger { display: flex; }
-  .primary-nav {
-    display: none; order: 3; width: 100%;
+  /* Admin app's nav (no hamburger, no id="primary-nav") just reflows in place —
+     same behavior it had before this feature branch touched this file. */
+  .primary-nav { order: 3; width: 100%; }
+  /* Student app's nav only (unique #primary-nav id, see frontend/index.html) —
+     layers the hide/hamburger-reveal behavior on top of the class rule above.
+     Scoped by id, not class, so it never hides the admin app's nav, which
+     shares the .primary-nav class but has no hamburger to ever reveal it
+     again (see #59 final-review finding 1). */
+  #primary-nav {
+    display: none;
     flex-direction: column; align-items: stretch; gap: 0.15rem;
   }
-  .primary-nav.nav-open { display: flex; }
+  #primary-nav.nav-open { display: flex; }
   .nav-dropdown { position: static; }
   .nav-dropdown-menu {
     position: static; box-shadow: none; border: none;

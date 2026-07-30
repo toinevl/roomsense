@@ -91,4 +91,23 @@ test.describe('RoomSense Admin smoke (mock mode)', () => {
     await page.goto('/#dashboard')
     await expect(page.getByRole('link', { name: 'Overview', exact: true })).toHaveCount(0)
   })
+
+  test('admin nav stays visible and reachable on a narrow (mobile) viewport (#59 regression)', async ({ page }) => {
+    // Regression guard: frontend/src/styles/main.css is shared between the
+    // student app and the admin app. The student app's mobile-collapse rule
+    // must be scoped to #primary-nav (student-only id) and never hide the
+    // admin app's own `.primary-nav`, which has no hamburger to reveal it
+    // again (final-review finding 1, #59).
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/admin/')
+
+    const nav = page.locator('.primary-nav')
+    await expect(nav).toBeVisible()
+
+    const roomsLink = page.getByRole('link', { name: 'Rooms', exact: true })
+    await expect(roomsLink).toBeVisible()
+    await roomsLink.click()
+    await expect(page).toHaveURL(/\/admin\/#rooms$/)
+    await expect(page.getByRole('heading', { name: 'Rooms' })).toBeVisible()
+  })
 })
