@@ -39,6 +39,28 @@ Backlog + lane coordination: `wishlist.md` (single source of truth for progress)
 `packages/shared` is frozen after Phase 0 — changes only via orchestrator coordination commit.
 Always `git status`/`git log` before assuming tree state; commit with explicit paths, never `git add -A`.
 
+## Shared CSS/markup lives in main.css — not an app-specific stylesheet
+
+`frontend/admin/` and the student SPA are two separate Vite entries that both import
+`frontend/src/styles/main.css` for markup they share (topbar, brand, nav, status
+indicator). `admin.css` (or any future app-specific stylesheet) should only hold rules
+for markup that ONLY that app has.
+
+**What happened:** #57 (admin build, 2026-07-23) added `.topbar-status`/`.status-dot`
+rules to `admin.css` — correctly noticing the markup was shared with the student app,
+but scoping the CSS fix to admin.css only, with a comment admitting "the student app
+never styled it either." That left the student app's connectivity dot invisible (0×0,
+no color, no spacing) for a week, until Toine noticed the visual difference between the
+two topbars and asked for it directly (#58).
+
+**Guard:** Before adding a CSS rule for anything defined in BOTH `index.html` and
+`admin/index.html` (topbar, brand, nav, status dot, footer, etc.), check whether it
+belongs in `main.css` instead of the app-specific file. If you're scoped to one app
+(e.g. "build the admin view") but the gap you're fixing lives in shared markup, either
+fix it in `main.css` directly, or — if genuinely out of scope right now — add a `+bug`
+wishlist item on the spot. **A code comment admitting a bug in a sibling app is not
+sufficient tracking; it must go on wishlist.md or get fixed immediately.**
+
 ## New frontend pages MUST be in THREE places
 
 When adding a new page to the frontend, **three files must change** or the page
