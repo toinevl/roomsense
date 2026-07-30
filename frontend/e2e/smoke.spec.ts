@@ -124,6 +124,43 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(page.locator('.primary-nav a.active')).toHaveText('Live')
   })
 
+  test('Reports dropdown opens, navigates, and shows active state on the trigger (#59)', async ({ page }) => {
+    await page.goto('/#dashboard')
+    const reportsToggle = page.getByRole('button', { name: 'Reports' })
+    await reportsToggle.click()
+    await expect(page.locator('#nav-reports-menu')).toBeVisible()
+
+    await page.getByRole('link', { name: 'Semester Report' }).click()
+    await expect(page).toHaveURL(/#report$/)
+    await expect(page.locator('#nav-reports-menu')).toBeHidden()
+    await expect(reportsToggle).toHaveClass(/active/)
+  })
+
+  test('About dropdown opens and navigates to Trust (#59)', async ({ page }) => {
+    await page.goto('/#dashboard')
+    await page.getByRole('button', { name: 'About' }).click()
+    await expect(page.locator('#nav-about-menu')).toBeVisible()
+    await page.getByRole('link', { name: 'Trust' }).click()
+    await expect(page).toHaveURL(/#trust$/)
+  })
+
+  test('Admin link points to the admin console (#59)', async ({ page }) => {
+    await page.goto('/#dashboard')
+    await expect(page.getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin/index.html')
+  })
+
+  test('mobile hamburger opens the nav and navigates (#59)', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 })
+    await page.goto('/#dashboard')
+    await expect(page.locator('#primary-nav')).toBeHidden()
+
+    await page.getByRole('button', { name: 'Menu' }).click()
+    await expect(page.locator('#primary-nav')).toBeVisible()
+
+    await page.getByRole('link', { name: 'Live' }).click()
+    await expect(page).toHaveURL(/#live$/)
+  })
+
   test('room finder page loads and shows available rooms', async ({ page }) => {
     await page.goto('/#finder')
     await page.waitForLoadState('networkidle')
