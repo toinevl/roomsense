@@ -331,7 +331,7 @@ addresses) before this ran.
   `az storage table delete --name Reservations --account-name roomsensestorage --auth-mode login`
   then re-run `pnpm seed:azure`. SensorReadings/OccupancySnapshots don't need this.
 
-- [x] (C) admin facility-manager view: Overview + Rooms, own Vite entry +ui @C #47 — done 2026-07-30
+- [x] (C) admin facility-manager view: Overview + Rooms, own Vite entry +ui @C #57 — done 2026-07-30
   - [x] frontend/admin/index.html + admin/src/main.ts: own topbar/nav, own tiny hash router
     (#overview default, #rooms) — deliberately NOT wired into the student SPA's nav or
     route table (documented exception to CLAUDE.md's "three places" rule).
@@ -371,4 +371,4 @@ addresses) before this ran.
   - Pre-existing, unrelated: e2e `#sources-strip` test (live.ts's `.status-dot` pill) fails
     because `.status-dot` has no CSS rule anywhere in frontend/src/styles/main.css (confirmed
     via `git diff` — none of the files it touches were changed by this work). Not fixed here;
-    out of scope for #47.
+    out of scope for #57.
