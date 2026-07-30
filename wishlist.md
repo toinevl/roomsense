@@ -369,6 +369,22 @@ addresses) before this ran.
     unchanged (byte-identical CSS, just relocated). 106/106 frontend vitest tests pass, no
     regressions.
 
+- [ ] (C) topbar nav reorg: group Reports/About dropdowns + admin link + mobile hamburger +ui @C #59 — in progress 2026-07-30
+  - Toine's ask: primary nav mixes features (Dashboard/Live/Find a Room/Friends/Reviews/
+    Privacy) with reports (Semester Report/Wrapped) and docs (Architecture/Trust) as 10 flat
+    links, plus wants a link to /admin from the student app.
+  - Spec: docs/superpowers/specs/2026-07-30-topbar-nav-reorg-design.md — full design
+    (dropdown ARIA pattern per W3C WAI-ARIA APG Disclosure Navigation Menu, mobile hamburger
+    collapse replacing the existing 760px flex-wrap reflow).
+  - [ ] frontend/index.html: Reports ▾ / About ▾ dropdown markup, Admin link, hamburger
+    button + mobile panel markup
+  - [ ] frontend/src/main.ts: dropdown/hamburger controller (aria-expanded sync, Escape +
+    outside-click/focus-out close, aria-current + trigger active-state propagation)
+  - [ ] frontend/src/styles/main.css: dropdown + hamburger + mobile panel styles
+  - [ ] Unit tests for the controller (desktop dropdowns + mobile hamburger)
+  - [ ] Update frontend/e2e smoke spec for new nav structure (desktop + mobile viewport)
+  - [ ] Browser-verify both breakpoints, all routes still reachable, admin link works
+
 - [x] (C) admin facility-manager view: Overview + Rooms, own Vite entry +ui @C #57 — done 2026-07-30
   - [x] frontend/admin/index.html + admin/src/main.ts: own topbar/nav, own tiny hash router
     (#overview default, #rooms) — deliberately NOT wired into the student SPA's nav or
