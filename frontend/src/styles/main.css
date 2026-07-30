@@ -539,7 +539,17 @@ table { border-collapse: collapse; width: 100%; }
 /* responsive */
 @media (max-width: 760px) {
   .topbar { flex-wrap: wrap; gap: 0.75rem; }
-  .primary-nav { order: 3; width: 100%; }
+  .nav-hamburger { display: flex; }
+  .primary-nav {
+    display: none; order: 3; width: 100%;
+    flex-direction: column; align-items: stretch; gap: 0.15rem;
+  }
+  .primary-nav.nav-open { display: flex; }
+  .nav-dropdown { position: static; }
+  .nav-dropdown-menu {
+    position: static; box-shadow: none; border: none;
+    background: transparent; padding: 0 0 0.4rem 0.75rem;
+  }
   .heatmap-grid { min-width: 420px; }
   .report-metrics { grid-template-columns: 1fr; }
 }
