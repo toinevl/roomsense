@@ -79,6 +79,19 @@ describe('initDisclosure (hidden-attribute mode)', () => {
 
     expect(panel.hidden).toBe(true)
   })
+
+  it('closes when focus moves outside the button and panel', () => {
+    const { button, panel } = buildHiddenAttrFixture()
+    initDisclosure(button, panel)
+    button.click()
+    expect(panel.hidden).toBe(false)
+
+    const outside = document.createElement('button')
+    document.body.appendChild(outside)
+    panel.dispatchEvent(new FocusEvent('focusout', { relatedTarget: outside, bubbles: true }))
+
+    expect(panel.hidden).toBe(true)
+  })
 })
 
 describe('initDisclosure (openClass mode)', () => {

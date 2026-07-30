@@ -132,6 +132,10 @@ test.describe('RoomSense smoke (mock mode)', () => {
 
     await page.getByRole('link', { name: 'Semester Report' }).click()
     await expect(page).toHaveURL(/#report$/)
+    // Menu closes on link click (see below), which drops the link out of the
+    // accessibility tree — use a plain CSS locator (not getByRole) so this
+    // still finds it and can assert aria-current regardless of visibility.
+    await expect(page.locator('a[data-route="report"]')).toHaveAttribute('aria-current', 'page')
     await expect(page.locator('#nav-reports-menu')).toBeHidden()
     await expect(reportsToggle).toHaveClass(/active/)
   })
@@ -159,6 +163,20 @@ test.describe('RoomSense smoke (mock mode)', () => {
 
     await page.getByRole('link', { name: 'Live' }).click()
     await expect(page).toHaveURL(/#live$/)
+
+    // Reopen the mobile panel and exercise a dropdown from within it — the
+    // one interaction spanning both the mobile-collapse CSS (Task 3) and the
+    // dropdown disclosure mechanism (Tasks 1-2).
+    await page.getByRole('button', { name: 'Menu' }).click()
+    await expect(page.locator('#primary-nav')).toBeVisible()
+
+    await page.getByRole('button', { name: 'Reports' }).click()
+    await expect(page.locator('#nav-reports-menu')).toBeVisible()
+
+    await page.getByRole('link', { name: 'Semester Report' }).click()
+    await expect(page).toHaveURL(/#report$/)
+    // The dropdown-link click closes the whole mobile panel, not just the submenu.
+    await expect(page.locator('#primary-nav')).toBeHidden()
   })
 
   test('room finder page loads and shows available rooms', async ({ page }) => {
