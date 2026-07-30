@@ -14,13 +14,6 @@
   vertical-align: middle;
 }
 
-/* Topbar health indicator (shared markup with the student app, but that app
-   never styled it either — this scopes a fix to the admin bundle only). */
-.topbar-status { display: flex; align-items: center; gap: 0.4rem; margin-left: 0.5rem; font-size: 0.78rem; color: var(--text-muted); }
-.status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--text-muted); flex: none; }
-.status-dot.ok { background: var(--status-good); }
-.status-dot.err { background: var(--status-critical); }
-
 /* ---------------------------------------------------------------------------
    Overview layout
    --------------------------------------------------------------------------- */

@@ -350,6 +350,22 @@ addresses) before this ran.
 - [x] (C) Architecture page: remove stale CORS limitation callout +frontend @H #54 — done 2026-07-28
 - [x] (O) Deploy API + frontend, verify end-to-end, push +deploy @H #55 — done 2026-07-28
 
+- [x] (C) student-app topbar: match admin's cleaner nav layout +ui @C #58 — done 2026-07-30
+  - Toine's ask: the green connectivity dot in admin's topbar looks better than the student
+    app's. Live-screenshotted both (localhost:5199 / and /admin/index.html) before touching
+    CSS to pin down the actual delta.
+  - Root cause: `.topbar-status`/`.status-dot`/`.status-dot.ok`/`.status-dot.err` were only
+    ever defined in frontend/admin/src/admin.css (with a comment admitting "the student app
+    never styled it either"). frontend/src/styles/main.css — the stylesheet BOTH apps import
+    — never had these rules, so the student topbar's status dot rendered as an unstyled 0x0
+    span: invisible, no color, no spacing before the "connected"/"offline" label.
+  - Fix: moved the four rules into the shared main.css (right after .mode-toggle) and deleted
+    the duplicate block from admin.css, so there's one source of truth instead of a fork.
+  - Verified: browser screenshots of both apps at 1440x900 show the dot now rendering
+    identically (red/offline in this dev environment, no API running); admin's rendering is
+    unchanged (byte-identical CSS, just relocated). 106/106 frontend vitest tests pass, no
+    regressions.
+
 - [x] (C) admin facility-manager view: Overview + Rooms, own Vite entry +ui @C #57 — done 2026-07-30
   - [x] frontend/admin/index.html + admin/src/main.ts: own topbar/nav, own tiny hash router
     (#overview default, #rooms) — deliberately NOT wired into the student SPA's nav or
