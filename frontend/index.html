@@ -43,17 +43,55 @@
         <span class="brand-divider" aria-hidden="true"></span>
         <span class="brand-word">RoomSense</span>
       </a>
-      <nav class="primary-nav" aria-label="Primary">
+      <button
+        type="button"
+        id="nav-hamburger"
+        class="nav-hamburger"
+        aria-expanded="false"
+        aria-controls="primary-nav"
+        aria-label="Menu"
+      >
+        <span class="nav-hamburger-bar"></span>
+        <span class="nav-hamburger-bar"></span>
+        <span class="nav-hamburger-bar"></span>
+      </button>
+      <nav class="primary-nav" id="primary-nav" aria-label="Primary">
         <a href="#dashboard" data-route="dashboard">Dashboard</a>
         <a href="#live" data-route="live">Live</a>
-        <a href="#architecture" data-route="architecture">Architecture</a>
         <a href="#finder" data-route="finder">Find a Room</a>
-        <a href="#report" data-route="report">Semester Report</a>
-        <a href="#wrapped" data-route="wrapped">Wrapped</a>
-        <a href="#trust" data-route="trust">Trust</a>
         <a href="#friends" data-route="friends">Friends</a>
         <a href="#reviews" data-route="reviews">Reviews</a>
         <a href="#privacy" data-route="privacy">Privacy</a>
+
+        <div class="nav-dropdown">
+          <button
+            type="button"
+            class="nav-dropdown-toggle"
+            id="nav-reports-toggle"
+            aria-expanded="false"
+            aria-controls="nav-reports-menu"
+          >Reports</button>
+          <ul class="nav-dropdown-menu" id="nav-reports-menu" hidden>
+            <li><a href="#report" data-route="report">Semester Report</a></li>
+            <li><a href="#wrapped" data-route="wrapped">Wrapped</a></li>
+          </ul>
+        </div>
+
+        <div class="nav-dropdown">
+          <button
+            type="button"
+            class="nav-dropdown-toggle"
+            id="nav-about-toggle"
+            aria-expanded="false"
+            aria-controls="nav-about-menu"
+          >About</button>
+          <ul class="nav-dropdown-menu" id="nav-about-menu" hidden>
+            <li><a href="#architecture" data-route="architecture">Architecture</a></li>
+            <li><a href="#trust" data-route="trust">Trust</a></li>
+          </ul>
+        </div>
+
+        <a class="nav-admin-link" href="/admin/index.html">Admin<span class="nav-external-icon" aria-hidden="true">↗</span></a>
       </nav>
       <button
         type="button"

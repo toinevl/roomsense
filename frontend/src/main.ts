@@ -1,4 +1,5 @@
 import './styles/main.css'
+import { initDisclosure } from './lib/navDisclosures'
 import { apiClient, setApiClientMode } from './lib/api'
 import { config } from './config'
 import { dashboardPage } from './pages/dashboard'
@@ -46,6 +47,20 @@ if (import.meta.env.DEV) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Nav dropdowns + mobile hamburger (#59) — see frontend/src/lib/navDisclosures.ts
+// ---------------------------------------------------------------------------
+const reportsToggle = document.getElementById('nav-reports-toggle') as HTMLButtonElement
+const reportsMenu = document.getElementById('nav-reports-menu') as HTMLElement
+const aboutToggle = document.getElementById('nav-about-toggle') as HTMLButtonElement
+const aboutMenu = document.getElementById('nav-about-menu') as HTMLElement
+const navHamburger = document.getElementById('nav-hamburger') as HTMLButtonElement
+const primaryNav = document.getElementById('primary-nav') as HTMLElement
+
+initDisclosure(reportsToggle, reportsMenu)
+initDisclosure(aboutToggle, aboutMenu)
+initDisclosure(navHamburger, primaryNav, { openClass: 'nav-open' })
+
 let activePage: Page | null = null
 
 function routeFromHash(): string {
@@ -61,8 +76,15 @@ async function render(): Promise<void> {
   appEl.innerHTML = ''
 
   for (const link of navLinks) {
-    link.classList.toggle('active', link.dataset.route === routeKey)
+    const isActive = link.dataset.route === routeKey
+    link.classList.toggle('active', isActive)
+    if (isActive) link.setAttribute('aria-current', 'page')
+    else link.removeAttribute('aria-current')
   }
+  document.querySelectorAll<HTMLElement>('.nav-dropdown').forEach((dropdown) => {
+    const toggle = dropdown.querySelector<HTMLButtonElement>('.nav-dropdown-toggle')
+    toggle?.classList.toggle('active', dropdown.querySelector('a.active') !== null)
+  })
   document.title = `${route.title} — RoomSense`
 
   activePage = route.page

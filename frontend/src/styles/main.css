@@ -152,6 +152,54 @@ table { border-collapse: collapse; width: 100%; }
 .primary-nav a:hover { color: var(--text-primary); background: var(--surface-card); }
 .primary-nav a.active { color: var(--text-primary); background: var(--surface-card); box-shadow: inset 0 -2px 0 var(--brand); }
 
+.nav-dropdown { position: relative; }
+.nav-dropdown-toggle {
+  font-family: var(--font-display); font-size: 0.86rem; font-weight: 600;
+  color: var(--text-secondary); background: transparent; border: none;
+  padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);
+  cursor: pointer; display: inline-flex; align-items: center; gap: 0.3rem;
+  transition: color 0.15s, background 0.15s;
+}
+.nav-dropdown-toggle:hover { color: var(--text-primary); background: var(--surface-card); }
+.nav-dropdown-toggle.active { color: var(--text-primary); background: var(--surface-card); box-shadow: inset 0 -2px 0 var(--brand); }
+.nav-dropdown-toggle::after {
+  content: ''; width: 6px; height: 6px; flex: none; margin-top: -3px;
+  border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+  transform: rotate(45deg); transition: transform 0.15s;
+}
+.nav-dropdown-toggle[aria-expanded="true"]::after { transform: rotate(225deg); margin-top: 3px; }
+
+.nav-dropdown-menu {
+  list-style: none; margin: 0; padding: 0.4rem;
+  position: absolute; top: calc(100% + 4px); left: 0; min-width: 160px;
+  background: var(--surface-card-2); border: 1px solid var(--border-strong);
+  border-radius: var(--radius); box-shadow: var(--shadow-card);
+  z-index: 110;
+}
+.nav-dropdown-menu a {
+  display: block; font-family: var(--font-display); font-size: 0.86rem; font-weight: 600;
+  color: var(--text-secondary); text-decoration: none;
+  padding: 0.5rem 0.7rem; border-radius: var(--radius-sm);
+}
+.nav-dropdown-menu a:hover { color: var(--text-primary); background: var(--surface-card); }
+.nav-dropdown-menu a.active { color: var(--text-primary); background: var(--surface-card); }
+
+.nav-admin-link {
+  font-family: var(--font-display); font-size: 0.86rem; font-weight: 600;
+  color: var(--text-secondary); text-decoration: none;
+  padding: 0.5rem 0.75rem; border-radius: var(--radius-sm);
+  transition: color 0.15s, background 0.15s;
+}
+.nav-admin-link:hover { color: var(--text-primary); background: var(--surface-card); }
+.nav-external-icon { margin-left: 0.2rem; font-size: 0.8em; }
+
+.nav-hamburger {
+  display: none; flex-direction: column; justify-content: center; gap: 4px;
+  width: 34px; height: 34px; background: transparent; border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm); cursor: pointer; flex: none;
+}
+.nav-hamburger-bar { width: 16px; height: 2px; background: var(--text-primary); margin: 0 auto; }
+
 .presenter-toggle {
   display: flex;
   align-items: center;
