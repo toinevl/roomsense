@@ -14,3 +14,5 @@ infra/main.json
 create_sp.sh
 # Local deploy build staging (regenerated fresh by .github/workflows/deploy-api.yml)
 api/deploy-pkg/
+# Local git-worktree scratch space (superpowers:using-git-worktrees)
+.worktrees/
