@@ -90,8 +90,10 @@ new dropdown triggers + Admin link added on top.
 
 - A hamburger `<button aria-expanded aria-controls="mobile-nav-panel">` replaces the
   visible flat nav below 760px.
-- Toggling it reveals an off-canvas panel containing the SAME nav content, restructured for
-  vertical stacking: flat links first, then Reports and About render as nested disclosure
+- Toggling it reveals an in-flow vertical panel — the nav becomes a full-width vertical
+  block in normal document flow directly under the topbar (not a sliding/overlay
+  off-canvas panel) — containing the SAME nav content, restructured for vertical
+  stacking: flat links first, then Reports and About render as nested disclosure
   sections (accordion) — this is literally the APG's own nested top-level-links example
   (https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/examples/disclosure-navigation-hybrid/),
   applied one level deeper — then Admin at the bottom.
