@@ -1,0 +1,703 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "hermes-agent",
+  "elements": [
+    {
+      "type": "text",
+      "id": "t1",
+      "x": 280,
+      "y": 10,
+      "fontSize": 22,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Cloud Room-Calendar Integration \u2014 Reference Pattern",
+      "originalText": "Cloud Room-Calendar Integration \u2014 Reference Pattern",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t1b",
+      "x": 280,
+      "y": 38,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#757575",
+      "text": "Platform-neutral pattern for meeting-room dashboards",
+      "originalText": "Platform-neutral pattern for meeting-room dashboards",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "z1",
+      "x": 30,
+      "y": 65,
+      "width": 180,
+      "height": 210,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#dbe4ff",
+      "fillStyle": "solid",
+      "opacity": 35,
+      "strokeWidth": 1
+    },
+    {
+      "type": "text",
+      "id": "t_z1",
+      "x": 40,
+      "y": 72,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Enterprise / Booking System",
+      "originalText": "Enterprise / Booking System",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_erp",
+      "x": 50,
+      "y": 100,
+      "width": 140,
+      "height": 55,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_erp",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_erp",
+      "x": 56,
+      "y": 112,
+      "fontSize": 15,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "ERP / Booking Mgmt",
+      "originalText": "ERP / Booking Mgmt",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_erp2",
+      "x": 55,
+      "y": 132,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "Oracle, Salesforce, etc.",
+      "originalText": "Oracle, Salesforce, etc.",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_email",
+      "x": 50,
+      "y": 170,
+      "width": 140,
+      "height": 55,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_email",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_email",
+      "x": 56,
+      "y": 182,
+      "fontSize": 15,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Enterprise Email / Calendar",
+      "originalText": "Enterprise Email / Calendar",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_email2",
+      "x": 55,
+      "y": 202,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "Outlook, Exchange, G Suite",
+      "originalText": "Outlook, Exchange, G Suite",
+      "autoResize": true
+    },
+    {
+      "type": "ellipse",
+      "id": "e_api",
+      "x": 60,
+      "y": 240,
+      "width": 120,
+      "height": 28,
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_eapi",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_eapi",
+      "x": 66,
+      "y": 244,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Public API / Webhook",
+      "originalText": "Public API / Webhook",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "z2",
+      "x": 260,
+      "y": 65,
+      "width": 220,
+      "height": 210,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#e5dbff",
+      "fillStyle": "solid",
+      "opacity": 35,
+      "strokeWidth": 1
+    },
+    {
+      "type": "text",
+      "id": "t_z2",
+      "x": 270,
+      "y": 72,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Dashboard Application Backend",
+      "originalText": "Dashboard Application Backend",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_ingest",
+      "x": 275,
+      "y": 100,
+      "width": 190,
+      "height": 55,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_ingest",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_ingest",
+      "x": 280,
+      "y": 112,
+      "fontSize": 15,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Ingestion / Adapter Layer",
+      "originalText": "Ingestion / Adapter Layer",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_ingest2",
+      "x": 280,
+      "y": 132,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "Polls APIs, syncs webhooks, normalises",
+      "originalText": "Polls APIs, syncs webhooks, normalises",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_transform",
+      "x": 275,
+      "y": 170,
+      "width": 190,
+      "height": 55,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_xform",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_xform",
+      "x": 280,
+      "y": 182,
+      "fontSize": 15,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Normalisation + Enrichment",
+      "originalText": "Normalisation + Enrichment",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_xform2",
+      "x": 280,
+      "y": 202,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "Maps to canonical Room Reservation schema",
+      "originalText": "Maps to canonical Room Reservation schema",
+      "autoResize": true
+    },
+    {
+      "type": "ellipse",
+      "id": "e_sched",
+      "x": 275,
+      "y": 240,
+      "width": 190,
+      "height": 28,
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_sched",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_sched",
+      "x": 280,
+      "y": 244,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Scheduler: polling cadence / webhook renewal",
+      "originalText": "Scheduler: polling cadence / webhook renewal",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "z3",
+      "x": 530,
+      "y": 65,
+      "width": 180,
+      "height": 130,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "opacity": 35,
+      "strokeWidth": 1
+    },
+    {
+      "type": "text",
+      "id": "t_z3",
+      "x": 540,
+      "y": 72,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Intermediate Data Store",
+      "originalText": "Intermediate Data Store",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_store",
+      "x": 545,
+      "y": 100,
+      "width": 150,
+      "height": 65,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_store",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_store",
+      "x": 552,
+      "y": 112,
+      "fontSize": 15,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Append-Only Reservations",
+      "originalText": "Append-Only Reservations",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_store2",
+      "x": 552,
+      "y": 132,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "Table / Document store, historic + live",
+      "originalText": "Table / Document store, historic + live",
+      "autoResize": true
+    },
+    {
+      "type": "ellipse",
+      "id": "e_delta",
+      "x": 560,
+      "y": 180,
+      "width": 120,
+      "height": 24,
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_delta",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_delta",
+      "x": 566,
+      "y": 184,
+      "fontSize": 12,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Delta-sync / backfill",
+      "originalText": "Delta-sync / backfill",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "z4",
+      "x": 530,
+      "y": 220,
+      "width": 180,
+      "height": 55,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#dbe4ff",
+      "fillStyle": "solid",
+      "opacity": 35,
+      "strokeWidth": 1
+    },
+    {
+      "type": "text",
+      "id": "t_z4",
+      "x": 540,
+      "y": 226,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Dashboard UI",
+      "originalText": "Dashboard UI",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_ui",
+      "x": 545,
+      "y": 242,
+      "width": 150,
+      "height": 28,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_ui",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_ui",
+      "x": 548,
+      "y": 246,
+      "fontSize": 12,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Availability Board / KPI Charts",
+      "originalText": "Availability Board / KPI Charts",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a1",
+      "x": 190,
+      "y": 177,
+      "width": 70,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          70,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e"
+    },
+    {
+      "type": "text",
+      "id": "ta1",
+      "x": 210,
+      "y": 170,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "1. Query / event",
+      "originalText": "1. Query / event",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a2",
+      "x": 480,
+      "y": 127,
+      "width": 60,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          60,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e"
+    },
+    {
+      "type": "text",
+      "id": "ta2",
+      "x": 490,
+      "y": 120,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "2. Canonical write",
+      "originalText": "2. Canonical write",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a3",
+      "x": 620,
+      "y": 195,
+      "width": 0,
+      "height": 45,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          45
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e"
+    },
+    {
+      "type": "text",
+      "id": "ta3",
+      "x": 635,
+      "y": 212,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "3. Read",
+      "originalText": "3. Read",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a4",
+      "x": 340,
+      "y": 275,
+      "width": 140,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -140,
+          0
+        ]
+      ],
+      "endArrowhead": "dot",
+      "strokeColor": "#374151",
+      "strokeStyle": "dashed"
+    },
+    {
+      "type": "text",
+      "id": "ta4",
+      "x": 360,
+      "y": 268,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "5. Gap recovery if webhook missed",
+      "originalText": "5. Gap recovery if webhook missed",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a5",
+      "x": 370,
+      "y": 215,
+      "width": 0,
+      "height": 55,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -55
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e"
+    },
+    {
+      "type": "text",
+      "id": "ta5",
+      "x": 378,
+      "y": 233,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "4. Periodic poll",
+      "originalText": "4. Periodic poll",
+      "autoResize": true
+    },
+    {
+      "type": "diamond",
+      "id": "d1",
+      "x": 400,
+      "y": 305,
+      "width": 210,
+      "height": 50,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_d1",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_d1",
+      "x": 408,
+      "y": 313,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Webhook or Polling strategy?",
+      "originalText": "Webhook or Polling strategy?",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_d1a",
+      "x": 410,
+      "y": 338,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "\u2192 Polling always required as fallback anyway",
+      "originalText": "\u2192 Polling always required as fallback anyway",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a6",
+      "x": 465,
+      "y": 305,
+      "width": 0,
+      "height": 30,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          -30
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e"
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff"
+  }
+}

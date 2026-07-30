@@ -1,0 +1,819 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "hermes-agent",
+  "elements": [
+    {
+      "type": "text",
+      "id": "t1",
+      "x": 200,
+      "y": 8,
+      "fontSize": 22,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "RoomSense \u2014 Concrete Solution Architecture",
+      "originalText": "RoomSense \u2014 Concrete Solution Architecture",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t1b",
+      "x": 200,
+      "y": 32,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#757575",
+      "text": "Outlook 365 polling adapter path, one-layer abstraction above reference pattern",
+      "originalText": "Outlook 365 polling adapter path, one-layer abstraction above reference pattern",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "z1",
+      "x": 30,
+      "y": 60,
+      "width": 160,
+      "height": 190,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#dbe4ff",
+      "fillStyle": "solid",
+      "opacity": 35,
+      "strokeWidth": 1
+    },
+    {
+      "type": "text",
+      "id": "t_z1",
+      "x": 38,
+      "y": 68,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Microsoft 365",
+      "originalText": "Microsoft 365",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_exo",
+      "x": 40,
+      "y": 95,
+      "width": 140,
+      "height": 52,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_exo",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_exo",
+      "x": 46,
+      "y": 106,
+      "fontSize": 15,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Exchange Online",
+      "originalText": "Exchange Online",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_exo2",
+      "x": 46,
+      "y": 124,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "Room mailboxes, calendars",
+      "originalText": "Room mailboxes, calendars",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_entra",
+      "x": 40,
+      "y": 155,
+      "width": 140,
+      "height": 52,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_entra",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_entra",
+      "x": 46,
+      "y": 166,
+      "fontSize": 15,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Entra ID App Registration",
+      "originalText": "Entra ID App Registration",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_entra2",
+      "x": 46,
+      "y": 184,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "Calendars.Read app-only perm",
+      "originalText": "Calendars.Read app-only perm",
+      "autoResize": true
+    },
+    {
+      "type": "ellipse",
+      "id": "e_graph",
+      "x": 55,
+      "y": 220,
+      "width": 110,
+      "height": 24,
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_graph",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_graph",
+      "x": 60,
+      "y": 224,
+      "fontSize": 12,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Microsoft Graph API",
+      "originalText": "Microsoft Graph API",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "z2",
+      "x": 240,
+      "y": 60,
+      "width": 200,
+      "height": 190,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#e5dbff",
+      "fillStyle": "solid",
+      "opacity": 35,
+      "strokeWidth": 1
+    },
+    {
+      "type": "text",
+      "id": "t_z2",
+      "x": 250,
+      "y": 68,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Azure Function Backend",
+      "originalText": "Azure Function Backend",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_adapter",
+      "x": 250,
+      "y": 95,
+      "width": 180,
+      "height": 52,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_adapter",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_adapter",
+      "x": 256,
+      "y": 106,
+      "fontSize": 15,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "outlook-graph Adapter",
+      "originalText": "outlook-graph Adapter",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_adapter2",
+      "x": 256,
+      "y": 124,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "Polls Graph every 5\u201310 min, writes rows",
+      "originalText": "Polls Graph every 5\u201310 min, writes rows",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_api",
+      "x": 250,
+      "y": 155,
+      "width": 180,
+      "height": 52,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d0bfff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_api",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_api",
+      "x": 256,
+      "y": 166,
+      "fontSize": 15,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "API Handlers",
+      "originalText": "API Handlers",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_api2",
+      "x": 256,
+      "y": 184,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "/rooms, /kpis, /reservations, /presence\u2026",
+      "originalText": "/rooms, /kpis, /reservations, /presence\u2026",
+      "autoResize": true
+    },
+    {
+      "type": "ellipse",
+      "id": "e_sched",
+      "x": 270,
+      "y": 220,
+      "width": 140,
+      "height": 22,
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_sched",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_sched",
+      "x": 276,
+      "y": 224,
+      "fontSize": 12,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Timer trigger: polling cadence",
+      "originalText": "Timer trigger: polling cadence",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "z3",
+      "x": 490,
+      "y": 60,
+      "width": 170,
+      "height": 130,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#d3f9d8",
+      "fillStyle": "solid",
+      "opacity": 35,
+      "strokeWidth": 1
+    },
+    {
+      "type": "text",
+      "id": "t_z3",
+      "x": 500,
+      "y": 68,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Azure Table Storage",
+      "originalText": "Azure Table Storage",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_rooms",
+      "x": 500,
+      "y": 95,
+      "width": 150,
+      "height": 26,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_rooms",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_rooms",
+      "x": 505,
+      "y": 99,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Rooms",
+      "originalText": "Rooms",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_res",
+      "x": 500,
+      "y": 126,
+      "width": 150,
+      "height": 26,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_res",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_res",
+      "x": 505,
+      "y": 130,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Reservations",
+      "originalText": "Reservations",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_occ",
+      "x": 500,
+      "y": 157,
+      "width": 150,
+      "height": 26,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#c3fae8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_occ",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_occ",
+      "x": 505,
+      "y": 161,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "OccupancySnapshots",
+      "originalText": "OccupancySnapshots",
+      "autoResize": true
+    },
+    {
+      "type": "ellipse",
+      "id": "e_source",
+      "x": 535,
+      "y": 192,
+      "width": 80,
+      "height": 22,
+      "backgroundColor": "#ffd8a8",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_source",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_source",
+      "x": 541,
+      "y": 196,
+      "fontSize": 12,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Sources table",
+      "originalText": "Sources table",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "z4",
+      "x": 490,
+      "y": 220,
+      "width": 170,
+      "height": 30,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#dbe4ff",
+      "fillStyle": "solid",
+      "opacity": 35,
+      "strokeWidth": 1
+    },
+    {
+      "type": "text",
+      "id": "t_z4",
+      "x": 500,
+      "y": 224,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Azure Static Web App (Frontend)",
+      "originalText": "Azure Static Web App (Frontend)",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_swa",
+      "x": 500,
+      "y": 242,
+      "width": 150,
+      "height": 26,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#a5d8ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_swa",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_swa",
+      "x": 508,
+      "y": 246,
+      "fontSize": 12,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Vite SPA \u2014 hash-router",
+      "originalText": "Vite SPA \u2014 hash-router",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a1",
+      "x": 190,
+      "y": 125,
+      "width": 55,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          55,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e"
+    },
+    {
+      "type": "text",
+      "id": "ta1",
+      "x": 195,
+      "y": 118,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "token",
+      "originalText": "token",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a2",
+      "x": 440,
+      "y": 125,
+      "width": 55,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          55,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e"
+    },
+    {
+      "type": "text",
+      "id": "ta2",
+      "x": 448,
+      "y": 118,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "Reservations[]",
+      "originalText": "Reservations[]",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a3",
+      "x": 340,
+      "y": 255,
+      "width": 150,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          150,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e"
+    },
+    {
+      "type": "text",
+      "id": "ta3",
+      "x": 390,
+      "y": 248,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "READ \u2014 same tables",
+      "originalText": "READ \u2014 same tables",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a4",
+      "x": 620,
+      "y": 205,
+      "width": 0,
+      "height": 50,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          50
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e"
+    },
+    {
+      "type": "arrow",
+      "id": "a5",
+      "x": 165,
+      "y": 125,
+      "width": 75,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -75,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e",
+      "strokeStyle": "dashed"
+    },
+    {
+      "type": "text",
+      "id": "ta5",
+      "x": 90,
+      "y": 118,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "HTTPS poll",
+      "originalText": "HTTPS poll",
+      "autoResize": true
+    },
+    {
+      "type": "rectangle",
+      "id": "r_sensor",
+      "x": 650,
+      "y": 125,
+      "width": 120,
+      "height": 42,
+      "roundness": {
+        "type": 3
+      },
+      "backgroundColor": "#b2f2bb",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_sensor",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_sensor",
+      "x": 656,
+      "y": 133,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Terabee / IoT Hub",
+      "originalText": "Terabee / IoT Hub",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_sensor2",
+      "x": 656,
+      "y": 150,
+      "fontSize": 10,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "or another DataSource adapter",
+      "originalText": "or another DataSource adapter",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a6",
+      "x": 490,
+      "y": 147,
+      "width": 160,
+      "height": 0,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          160,
+          0
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e"
+    },
+    {
+      "type": "text",
+      "id": "ta6",
+      "x": 570,
+      "y": 140,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "writes readings",
+      "originalText": "writes readings",
+      "autoResize": true
+    },
+    {
+      "type": "diamond",
+      "id": "d1",
+      "x": 270,
+      "y": 295,
+      "width": 200,
+      "height": 42,
+      "backgroundColor": "#fff3bf",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "boundElements": [
+        {
+          "id": "t_d1",
+          "type": "text"
+        }
+      ]
+    },
+    {
+      "type": "text",
+      "id": "t_d1",
+      "x": 275,
+      "y": 302,
+      "fontSize": 13,
+      "fontFamily": 1,
+      "strokeColor": "#1e1e1e",
+      "text": "Use the same /rooms endpoint?",
+      "originalText": "Use the same /rooms endpoint?",
+      "autoResize": true
+    },
+    {
+      "type": "text",
+      "id": "t_d1b",
+      "x": 275,
+      "y": 322,
+      "fontSize": 11,
+      "fontFamily": 1,
+      "strokeColor": "#374151",
+      "text": "Yes \u2014 adapter is replacable; frontend never knows",
+      "originalText": "Yes \u2014 adapter is replacable; frontend never knows",
+      "autoResize": true
+    },
+    {
+      "type": "arrow",
+      "id": "a7",
+      "x": 370,
+      "y": 255,
+      "width": 0,
+      "height": 40,
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          0,
+          40
+        ]
+      ],
+      "endArrowhead": "arrow",
+      "strokeColor": "#1e1e1e"
+    }
+  ],
+  "appState": {
+    "viewBackgroundColor": "#ffffff"
+  }
+}
