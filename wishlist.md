@@ -73,6 +73,9 @@
   - [~] GA4 / Sentry / Core Web Vitals dashboard — deferred (demo project, no real traffic to measure)
   - [x] App Insights alerts: api-health-ping (standard webtest, 5-min from AMS+LON), api-error-rate-alert (sev 2, >10 failures/15min), api-response-time-alert (sev 3, >5s avg/15min)
 - [ ] (C) strategy 2: social presence & network effects (avatars, team awareness, reviews, notifications) +extend @C @H #37 dep:#35 — parallel phases
+  - docs/SOCIAL_PRESENCE_DESIGN.md (the UX design spec Phases 2a-2d were built from — presence
+    tiers, privacy model, review UX, research questions for #35) had been sitting untracked
+    since it was written; committed 2026-07-30 so the design rationale isn't lost.
   - **Phase 2a: Backend Foundation (Hermes, blocks avatar stack)** — done 2026-07-23
     - [x] UserPresence table schema + presence state tracking (@H) — presence.ts: GET /api/presence?building=X with privacy gate
     - [x] GET /api/presence?building=X endpoint (@H) — 8 tests, returns UserPresence[] filtered by locationSharingEnabled

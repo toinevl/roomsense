@@ -12,3 +12,5 @@ __tablestorage__/
 infra/main.json
 # Local-only setup scripts containing subscription IDs / SP credentials
 create_sp.sh
+# Local deploy build staging (regenerated fresh by .github/workflows/deploy-api.yml)
+api/deploy-pkg/
