@@ -88,10 +88,9 @@ function setState(rooms: any[], bookings: any[] = [], throwOnList = false) {
   ;(globalThis as any).__RECS_TEST_STATE__ = { rooms, bookings, throwOnList }
 }
 
-function makeReq(userId: string, now: string): HttpRequest {
+function makeReq(userId: string): HttpRequest {
   const url = new URL('http://localhost/api/recommendations')
   url.searchParams.set('userId', userId)
-  url.searchParams.set('now', now)
   return { method: 'GET', url: url.toString(), headers: new Headers(), query: url.searchParams, params: {} } as unknown as HttpRequest
 }
 
@@ -105,7 +104,7 @@ describe('GET /api/recommendations', () => {
       { roomId: 'r1', building: 'atlas', floor: 0, occupancy: 0, utilizationPct: 80, name: 'Free Room' },
       { roomId: 'r2', building: 'atlas', floor: 0, occupancy: 3, utilizationPct: 90, name: 'Busy Room' },
     ])
-    const res = await recommendationsHandler(makeReq('user-1', '2026-08-04T10:00:00.000Z'), ctx)
+    const res = await recommendationsHandler(makeReq('user-1'), ctx)
     expect(res.status).toBe(200)
     const body = res.jsonBody as any
     expect(body.hero.roomId).toBe('r1')
@@ -114,7 +113,7 @@ describe('GET /api/recommendations', () => {
 
   it('returns 500 on storage error', async () => {
     setState([], [], true)
-    const res = await recommendationsHandler(makeReq('user-1', '2026-08-04T10:00:00.000Z'), ctx)
+    const res = await recommendationsHandler(makeReq('user-1'), ctx)
     expect(res.status).toBe(500)
   })
 })

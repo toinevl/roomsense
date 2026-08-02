@@ -6,7 +6,7 @@ import { getTableClient, TABLE_NAMES } from '../lib/tables'
 import { listRoomsWithOccupancy, type RoomForScoring } from './rooms'
 
 /**
- * Phase 3 #38 — GET /api/recommendations?userId=&now= → top 3 free rooms by
+ * Phase 3 #38 — GET /api/recommendations?userId= → top 3 free rooms by
  * score. Weighting: repeat 50% + popularity 30% + distance 20% (see spec).
  */
 
@@ -45,7 +45,6 @@ export async function recommendationsHandler(
     if (!userId) {
       return withCors({ status: 400, jsonBody: { error: 'Missing userId query parameter.' } }, origin)
     }
-    const now = req.query.get('now') ?? new Date().toISOString()
 
     const rooms = await listRoomsWithOccupancy()
     const freeRooms = rooms.filter((r) => r.occupancy === 0)
