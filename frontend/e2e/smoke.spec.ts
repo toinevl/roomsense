@@ -148,9 +148,12 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(page).toHaveURL(/#trust$/)
   })
 
-  test('Admin link points to the admin console (#59)', async ({ page }) => {
+  test('Admin link points to the admin console and opens in a new tab (#59, #61)', async ({ page }) => {
     await page.goto('/#dashboard')
-    await expect(page.getByRole('link', { name: 'Admin' })).toHaveAttribute('href', '/admin/index.html')
+    const adminLink = page.getByRole('link', { name: 'Admin' })
+    await expect(adminLink).toHaveAttribute('href', '/admin/index.html')
+    await expect(adminLink).toHaveAttribute('target', '_blank')
+    await expect(adminLink).toHaveAttribute('rel', 'noopener')
   })
 
   test('mobile hamburger opens the nav and navigates (#59)', async ({ page }) => {

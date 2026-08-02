@@ -447,3 +447,47 @@ addresses) before this ran.
     because `.status-dot` has no CSS rule anywhere in frontend/src/styles/main.css (confirmed
     via `git diff` — none of the files it touches were changed by this work). Not fixed here;
     out of scope for #57.
+
+- [x] (C) BUG: admin Overview room cards show doubled status text +bug @C #60 — done 2026-08-02
+  - Toine's report: on the live admin Overview page (roomsense.van-vliet.eu/admin/index.html#overview),
+    room card status lines read e.g. "Free · Free for the rest of the day" — the status word
+    is duplicated.
+  - Reproduced live: 13 of 15 rooms affected (every room that's free-with-no-next-booking, or
+    in-use-but-unbooked). The 2 rooms with an active booked reservation (e.g. Auditorium
+    Faraday: "In use · Until 18:00") render clean — no duplication.
+  - Root cause identified: `frontend/admin/src/lib/roomStatus.ts` builds `untilText` as a
+    full standalone phrase that already restates the status word in two of its three
+    branches — line 107 `'In use — not booked'` and line 117
+    `next ? \`Free until ${...}\` : 'Free for the rest of today'` — while the third branch
+    (line 97, `\`Until ${hourMinuteUtc(activeReservation.endTs)}\`` for an active booked
+    reservation) correctly omits it. `frontend/admin/src/pages/overview.ts:252` then
+    unconditionally renders `${STATUS_LABEL[status.status]} · ${status.untilText}`, so the
+    two inconsistent branches double up ("Free" + "Free for the rest of today", "In use" +
+    "In use — not booked") while the third (matching the intended `STATUS_LABEL · Until HH:MM`
+    shape) doesn't. Note: this affects the "Free until HH:MM" sub-case too (line 117's other
+    branch) even though no room in the current seed data happened to hit it during
+    reproduction — same doubling would occur there.
+  - Fix applied: dropped the leading status word from `untilText` in the two affected
+    branches (`frontend/admin/src/lib/roomStatus.ts:107,117`) to match line 97's pattern —
+    `'— not booked'` and `next ? \`until ${...}\` : 'for the rest of today'`. Also covers
+    the "Free until HH:MM" sub-case, not just the reproduced "for the rest of today" one.
+  - Tests: updated the 3 existing `roomStatus.test.ts` assertions that hard-coded the old
+    (doubled) strings; all 9 tests pass.
+  - Verified live in mock mode (localhost, VITE_MOCK=1): admin Overview now shows
+    "Free · for the rest of today" and "In use · Until 18:00" with no repeated word.
+
+- [x] (D) admin link should open in a new tab +ui @C #61 — done 2026-08-02
+  - `frontend/index.html`'s `.nav-admin-link` now has `target="_blank" rel="noopener"`.
+  - Extended the existing #59 e2e test (`frontend/e2e/smoke.spec.ts`) to assert both
+    `target` and `rel`, not just `href`.
+
+- [x] (D) move Privacy into the About dropdown +ui @C #62 — done 2026-08-02
+  - Moved the `<a href="#privacy" data-route="privacy">` from the flat nav into
+    `#nav-about-menu` (`frontend/index.html`), after Trust. No `main.ts` changes needed —
+    the #59 dropdown active-state propagation logic already generically handles any link
+    inside a `.nav-dropdown`, keyed only on `data-route`.
+  - Verified live in mock mode: About ▾ dropdown now lists Architecture, Trust, Privacy;
+    flat nav is Dashboard/Live/Find a Room/Friends/Reviews.
+  - Verification common to all three (#60-#62): `pnpm typecheck` clean; `pnpm test`
+    113/113 pass; `pnpm test:e2e` 24/25 pass (same one pre-existing unrelated failure as
+    #59, `report page loads and displays metrics`); nothing pushed yet.

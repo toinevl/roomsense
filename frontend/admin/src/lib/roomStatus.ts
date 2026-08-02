@@ -15,7 +15,9 @@ export interface RoomStatus {
   roomId: string
   status: RoomLifecycleStatus
   activeReservation: Reservation | null
-  /** e.g. "Free until 15:00", "Free for the rest of today", "Until 14:30", "In use — not booked". */
+  /** e.g. "until 15:00", "for the rest of today", "Until 14:30", "— not booked". Deliberately
+   *  does not restate the status word — the caller renders `${STATUS_LABEL} · ${untilText}`,
+   *  so a leading "Free"/"In use" here would double up (#60). */
   untilText: string
   /** e.g. "0 people" or "6 people · 8 booked". Never includes a CO2 figure — no such field in the schema. */
   footerText: string
@@ -104,7 +106,7 @@ export function computeRoomStatus(input: RoomStatusInput): RoomStatus {
       roomId,
       status: 'in-use',
       activeReservation: null,
-      untilText: 'In use — not booked',
+      untilText: '— not booked',
       footerText: `${room.occupancy} people`,
     }
   }
@@ -114,7 +116,7 @@ export function computeRoomStatus(input: RoomStatusInput): RoomStatus {
     roomId,
     status: 'free',
     activeReservation: null,
-    untilText: next ? `Free until ${hourMinuteUtc(next.startTs)}` : 'Free for the rest of today',
+    untilText: next ? `until ${hourMinuteUtc(next.startTs)}` : 'for the rest of today',
     footerText: `${room.occupancy} people`,
   }
 }

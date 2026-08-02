@@ -47,7 +47,7 @@ describe('computeRoomStatus', () => {
       recentOccupancy: [],
     })
     expect(status.status).toBe('free')
-    expect(status.untilText).toBe('Free for the rest of today')
+    expect(status.untilText).toBe('for the rest of today')
   })
 
   it('is ghost when a reservation is active but occupancy stayed at 0 throughout its window', () => {
@@ -83,7 +83,7 @@ describe('computeRoomStatus', () => {
       recentOccupancy: [],
     })
     expect(status.status).toBe('in-use')
-    expect(status.untilText).toBe('In use — not booked')
+    expect(status.untilText).toBe('— not booked')
     expect(status.activeReservation).toBeNull()
   })
 
@@ -106,7 +106,7 @@ describe('computeRoomStatus', () => {
       recentOccupancy: [],
     })
     expect(status.status).toBe('free')
-    expect(status.untilText).toBe('Free until 15:00')
+    expect(status.untilText).toBe('until 15:00')
   })
 
   it('footer includes attendeeCount only when there is an active reservation, and never a CO2 figure', () => {
