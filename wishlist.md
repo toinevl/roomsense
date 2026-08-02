@@ -140,11 +140,14 @@ Consumption plan handles CORS preflight correctly at the platform level. The ori
 Flex Consumption plan short-circuited preflights before function code ran; that is no
 longer the case.
 
-- [ ] Wiki: Exchange Online room reservation integration options +reference-architecture +docs @H #56
-  - [ ] Reference architecture article: Cloud room-dashboard integration patterns (generic)
-  - [ ] Solution architecture article: RoomSense concrete implementation with polling adapter
-  - [ ] Excalidraw diagrams: reference pattern overview + RoomSense concrete flow
-  - [ ] Push both to GitHub wiki
+- [x] Wiki: Exchange Online room reservation integration options +reference-architecture +docs @H #56 — done 2026-07-30 (c5a1031)
+  - [x] Reference architecture article: Cloud room-dashboard integration patterns (generic)
+  - [x] Solution architecture article: RoomSense concrete implementation with polling adapter
+  - [x] Excalidraw diagrams: reference pattern overview + RoomSense concrete flow
+  - [x] Push both to GitHub wiki
+  - Correction 2026-08-02: checkboxes were left unchecked when c5a1031 shipped this on
+    2026-07-30 (flagged, not fixed, earlier this session) — commit message already listed
+    all 4 sub-tasks as done; this just syncs the wishlist to match.
 
 ## API contract for #5-#12 (frozen — frontend mock mode builds against this)
 - GET /api/health → { status: "ok", buildSha, tables: boolean }
