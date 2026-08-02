@@ -498,3 +498,25 @@ addresses) before this ran.
   - Verification common to all three (#60-#62): `pnpm typecheck` clean; `pnpm test`
     113/113 pass; `pnpm test:e2e` 24/25 pass (same one pre-existing unrelated failure as
     #59, `report page loads and displays metrics`); nothing pushed yet.
+
+- [ ] (B) BUG: live/mock mode-toggle button throws at runtime, breaks plain `pnpm dev` +bug @C #63 — found 2026-08-02
+  - Found during #38 Task 9's manual browser verification (recommendation card / streak
+    counter integration) — clicking the topbar's LIVE/MOCK toggle button crashes.
+  - Root cause: `frontend/src/lib/api.ts`'s `setApiClientMode(mock)` does
+    `(apiClient as any) = mock ? makeMockClient() : fetchClient`, but `apiClient` is
+    declared `export const apiClient: ApiClient = ...`. `as any` is a TypeScript
+    compile-time-only escape hatch — it does NOT change JS's runtime `const` binding
+    semantics, so the emitted assignment throws `TypeError: Assignment to constant
+    variable` (ES modules run in strict mode). `frontend/src/main.ts:162` calls
+    `setApiClientMode(nextMock)` directly from the existing mode-toggle click handler,
+    so this is reachable via a normal user click, not just a theoretical type-safety hole.
+  - Independently confirmed by a task-9 code reviewer (traced the emitted-JS semantics
+    of `as any` + grepped the call site) before being logged here — not just the
+    implementer's self-report.
+  - Impact: the mode-toggle button (built for presenter-mode demos, live vs mock data)
+    is currently non-functional; also makes plain `pnpm dev` (non-mock) awkward to work
+    with locally since anything that calls `setApiClientMode` crashes.
+  - Not investigated for a fix yet — likely fix: change `apiClient` from `const` to
+    `let`, or restructure to a mutable-holder pattern (e.g. an object with a `.current`
+    property) so the reassignment is legal at runtime; needs a real fix + regression
+    test, not scoped/attempted here (out of scope for #38, filed as its own item).
