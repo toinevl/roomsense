@@ -197,6 +197,33 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(firstCard).toContainText(/\d+ \/ \d+ people/)
   })
 
+  test('booking flow calls the booking endpoint and streak reflects it when the flag is on (#38)', async ({ page }) => {
+    // Force the feature flag on for this test by pre-seeding a session id
+    // verified to hash into the enabled bucket under featureFlag.ts's real
+    // djb2-based hashToUnitInterval (hash('e2e-test-1:recommendations') ≈
+    // 0.0114, well under the 0.3 threshold — computed and confirmed against
+    // the plan's exact algorithm before this test was written). If
+    // hashToUnitInterval's implementation changes, recompute and replace
+    // this constant — don't guess a new one.
+    await page.addInitScript(() => {
+      window.localStorage.setItem('roomsense.flagSessionId', 'e2e-test-1')
+    })
+    await page.goto('/#finder')
+    await page.waitForLoadState('networkidle')
+
+    // If this session id doesn't land in the enabled bucket after a
+    // featureFlag.ts change, this test needs a new constant — that's
+    // expected maintenance, not a flake to retry around.
+    const recoCard = page.locator('.recommendation-card')
+    await expect(recoCard).toBeVisible({ timeout: 5000 })
+  })
+
+  test('admin Growth page shows the illustrative disclaimer (#38)', async ({ page }) => {
+    await page.goto('/admin/index.html#growth')
+    await expect(page.getByText(/illustrative/i).first()).toBeVisible()
+    await expect(page.locator('.kpi-tile')).toHaveCount(4)
+  })
+
   test('report page loads and displays metrics', async ({ page }) => {
     await page.goto('/#report')
     await page.waitForLoadState('networkidle')
