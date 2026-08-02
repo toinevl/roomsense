@@ -1,5 +1,6 @@
 import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } from '@azure/functions'
 import type { OccupancySnapshot } from '@roomsense/shared'
+import { z } from 'zod'
 import { withCors, corsPreflightResponse } from '../lib/cors'
 import { logError } from '../lib/log'
 import { getTableClient, TABLE_NAMES } from '../lib/tables'
@@ -13,6 +14,15 @@ import { getTableClient, TABLE_NAMES } from '../lib/tables'
 
 const BUCKET_MINUTES = 15
 const BUCKET_MS = BUCKET_MINUTES * 60_000
+
+// `now` is optional (unlike occupancy.ts's mandatory from/to) — defaults to
+// the current time when absent. When present it must be a valid ISO
+// datetime string; otherwise Date.parse(now) below silently yields NaN and
+// the resulting new Date(NaN).toISOString() call throws, surfacing as a
+// generic 500 instead of a clean 400 for bad client input.
+const QuerySchema = z.object({
+  now: z.string().datetime().optional(),
+})
 
 function bucketOfDay(iso: string): number {
   const d = new Date(iso)
@@ -39,7 +49,17 @@ export async function occupancyPredictionHandler(
     if (!roomId) {
       return withCors({ status: 400, jsonBody: { error: 'Missing roomId query parameter.' } }, origin)
     }
-    const now = req.query.get('now') ?? new Date().toISOString()
+    const parsed = QuerySchema.safeParse({ now: req.query.get('now') ?? undefined })
+    if (!parsed.success) {
+      return withCors(
+        {
+          status: 400,
+          jsonBody: { error: 'Invalid query parameters', details: parsed.error.flatten() },
+        },
+        origin,
+      )
+    }
+    const now = parsed.data.now ?? new Date().toISOString()
 
     const client = getTableClient(TABLE_NAMES.snapshots)
     const snapshots: OccupancySnapshot[] = []

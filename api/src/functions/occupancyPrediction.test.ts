@@ -101,4 +101,9 @@ describe('GET /api/occupancy/prediction', () => {
     const res = await occupancyPredictionHandler(makeReq('r1', '2026-08-04T10:00:00.000Z'), ctx)
     expect(res.status).toBe(500)
   })
+
+  it('returns 400 when now is not a valid ISO datetime', async () => {
+    const res = await occupancyPredictionHandler(makeReq('r1', 'not-a-date'), ctx)
+    expect(res.status).toBe(400)
+  })
 })
