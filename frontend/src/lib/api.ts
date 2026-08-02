@@ -12,18 +12,29 @@ import {
 } from './mockDerivations'
 import { getSeedData } from './seedData'
 import { addMockReview, getMockFriends, getMockPresence, getMockPrivacy, getMockReviews } from './mockSocialData'
+import {
+  addMockBooking,
+  getMockOccupancyPrediction,
+  getMockRecommendations,
+  getMockStreak,
+  getMockUnlocks,
+} from './mockGamification'
 import type {
   FriendLink,
   HealthResponse,
   KpisResponse,
+  OccupancyPredictionResponse,
   OccupancySnapshot,
   PrivacySettings,
+  RecommendationsResponse,
   Reservation,
   RoomReview,
   RoomWithOccupancy,
   SensorReading,
   SimulateTickResponse,
   SourceStatus,
+  StreakResponse,
+  UnlockInfo,
   UserPresence,
 } from './apiTypes'
 
@@ -66,6 +77,14 @@ export interface ApiClient {
   }): Promise<RoomReview>
   getPrivacy(userId: string): Promise<PrivacySettings>
   updatePrivacy(userId: string, settings: Partial<PrivacySettings>): Promise<PrivacySettings>
+
+  // ── Gamification (Phase 3, #38) ──
+
+  getRecommendations(userId: string): Promise<RecommendationsResponse>
+  getOccupancyPrediction(roomId: string, now?: string): Promise<OccupancyPredictionResponse>
+  getStreak(userId: string, now?: string): Promise<StreakResponse>
+  postBooking(userId: string, roomId: string, bookedAt: string): Promise<{ userId: string; roomId: string; bookedAt: string }>
+  getUnlocks(userId: string, now?: string): Promise<UnlockInfo[]>
 }
 
 // ---------------------------------------------------------------------------
@@ -129,6 +148,18 @@ const fetchClient: ApiClient = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(settings),
     }),
+
+  // ── Gamification (Phase 3, #38) ──
+  getRecommendations: (userId) => request(`/recommendations${qs({ userId })}`),
+  getOccupancyPrediction: (roomId, now) => request(`/occupancy/prediction${qs({ roomId, now })}`),
+  getStreak: (userId, now) => request(`/users/${encodeURIComponent(userId)}/streak${qs({ now })}`),
+  postBooking: (userId, roomId, bookedAt) =>
+    request(`/users/${encodeURIComponent(userId)}/booking`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ roomId, bookedAt }),
+    }),
+  getUnlocks: (userId, now) => request(`/users/${encodeURIComponent(userId)}/unlocks${qs({ now })}`),
 }
 
 // ---------------------------------------------------------------------------
@@ -226,6 +257,18 @@ function makeMockClient(): ApiClient {
         ...settings,
       }
     },
+
+    // ── Gamification (Phase 3, #38) ──
+    getRecommendations: async (userId) =>
+      getMockRecommendations(deriveRooms(seed, index), userId, new Date().toISOString()),
+    getOccupancyPrediction: async (roomId, now = new Date().toISOString()) =>
+      getMockOccupancyPrediction(roomId, now),
+    getStreak: async (userId, now = new Date().toISOString()) => getMockStreak(userId, now),
+    postBooking: async (userId, roomId, bookedAt) => {
+      await addMockBooking(userId, roomId, bookedAt)
+      return { userId, roomId, bookedAt }
+    },
+    getUnlocks: async (userId, now = new Date().toISOString()) => getMockUnlocks(userId, now),
   }
 }
 
