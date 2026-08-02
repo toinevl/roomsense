@@ -61,6 +61,31 @@ fix it in `main.css` directly, or — if genuinely out of scope right now — ad
 wishlist item on the spot. **A code comment admitting a bug in a sibling app is not
 sufficient tracking; it must go on wishlist.md or get fixed immediately.**
 
+**The reverse failure also happens — over-broad selectors in `main.css` leaking INTO
+the sibling app:** #59's final review (2026-07-30, same day as #58) caught a mobile CSS
+rule added to `main.css`'s `@media (max-width: 760px)` block that hid `.primary-nav`
+below 760px to make room for a new hamburger menu. Correct for the student app — but
+`.primary-nav` is a class, and admin's nav uses the same class with no hamburger to
+reveal it again, so admin's entire navigation silently went unreachable on mobile. This
+slipped past three task-level implementer+reviewer passes because none of them were
+scoped to think about admin at all; it was only caught because a final whole-branch
+review ran afterward.
+
+**Guard (reverse direction):** Before editing or adding a rule in `main.css` — especially
+inside a media query, or anything toggled by JS (a class added/removed at runtime) —
+check whether the selector could also match markup in the OTHER app. Prefer the
+`index.html`-only element's `id` (each app's root nav/controls should have a unique id,
+not just a shared class) over a bare shared class when the rule should apply to one app
+only. Ask explicitly: "does `frontend/admin/` import this file too, and if so, what does
+this selector match there?"
+
+**Test-coverage guard:** `frontend/e2e/admin-smoke.spec.ts` must include a test at any
+viewport/breakpoint that `main.css` defines responsive behavior for (currently: a
+390×844 mobile case, added as part of #59's fix — keep this current as new breakpoints
+are added). A shared-stylesheet media-query change with no admin-side test at that same
+breakpoint is exactly how the #59 regression went undetected for three review rounds —
+admin's suite ran desktop-only (`devices['Desktop Chrome']`) and never crossed 760px.
+
 ## New frontend pages MUST be in THREE places
 
 When adding a new page to the frontend, **three files must change** or the page
