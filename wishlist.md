@@ -104,30 +104,34 @@
     - [~] A/B test: presence on/off feature flag — deferred
   - **Phase 2e: Compliance Gate (Orchestrator)**
     - [ ] Legal/GDPR/FERPA audit before launch (@O)
-- [ ] (D) strategy 3: ai recommendations & gamification (recommendations, predictions, streaks) +extend @C @H @ML #38 dep:#35 — parallel phases
-  - **Phase 3a: Backend Rule-Based MVP (Hermes, week 1-3, blocks avatar stack)**
-    - [ ] Recommendation scoring algorithm (repeat 50% + popularity 30% + distance 20%) (@H)
-    - [ ] GET /api/recommendations?userId={id}&now={ts} endpoint (hero + 2 alts) (@H)
-    - [ ] GET /api/occupancy/prediction endpoint (+30m, +60m) (@H)
-    - [ ] GET /api/users/{id}/streak endpoint (@H)
-    - [ ] POST /api/users/{id}/booking endpoint (increments streak) (@H)
-    - [ ] GET /api/users/{id}/unlocks endpoint (feature progression) (@H)
-  - **Phase 3b: Frontend Components (Claude, after 3a)**
+- [ ] (D) strategy 3: ai recommendations & gamification (recommendations, predictions, streaks) +extend @C @H @ML #38 dep:#35 — in progress 2026-08-02
+  - Spec: docs/superpowers/specs/2026-08-02-strategy3-recommendations-gamification-design.md
+    (fills in exact scoring algorithm, data model, streak-derivation logic, API contracts).
+  - Scope decision (Toine, 2026-08-02): Phase 3a built for real, crossing into api/**
+    directly (same as #44-#46) rather than waiting for Hermes. Phases 3c/3d replaced with
+    clearly-labeled illustrative scaffolding — not achievable for a demo app with no real
+    user traffic (see spec's "Key design decision" and "Future ML Path" sections).
+  - Key deviation from this entry's original phrasing: streak is DERIVED from a
+    `UserBookings` event log on every read, not a stored/incremented counter — matches
+    this project's existing ghost-derivation/latest-occupancy-anchoring convention.
+  - **Phase 3a: Backend (built directly, not waiting for Hermes)**
+    - [ ] Recommendation scoring algorithm (repeat 50% + popularity 30% + distance 20%) (@C)
+    - [ ] GET /api/recommendations?userId={id}&now={ts} endpoint (hero + 2 alts) (@C)
+    - [ ] GET /api/occupancy/prediction endpoint (+30m, +60m) (@C)
+    - [ ] GET /api/users/{id}/streak endpoint (derived, not stored) (@C)
+    - [ ] POST /api/users/{id}/booking endpoint (appends to UserBookings) (@C)
+    - [ ] GET /api/users/{id}/unlocks endpoint (feature progression) (@C)
+  - **Phase 3b: Frontend Components**
     - [ ] RecommendationCard component — hero card + why-recommended tooltip (@C)
     - [ ] OccupancyPrediction component — bar chart (now + 30m + 60m) (@C)
     - [ ] StreakCounter component — persistent nav badge + progress modal (@C)
     - [ ] FeatureUnlock modal — celebration + feature intro (@C)
-    - [ ] Integrate recommendations into room finder (@C)
-    - [ ] A/B test: feature flag for 30% on / 70% control (@C)
-  - **Phase 3c: Measurement & A/B (Claude, after 3b)**
-    - [ ] A/B test infrastructure + event logging (@C)
-    - [ ] Measure: CTR 40%+, time-to-decision -50%, DAU +30% (@C)
-    - [ ] Statistical significance test (p<0.05) (@C)
-  - **Phase 3d: ML Upgrade (Hermes + ML, week 5+, when 8+ weeks data ready)**
-    - [ ] Collaborative filtering model training (@ML)
-    - [ ] Deploy ML recommendations (replace rule-based) (@H/@ML)
-    - [ ] Occupancy prediction ML v2 (per-room + per-day-of-week) (@ML)
-    - [ ] Weekly model retraining pipeline (@ML)
+    - [ ] Integrate recommendations into room finder; wire real booking POST call (@C)
+    - [ ] Deterministic feature flag (localStorage, 30%/70%, not Math.random()) (@C)
+  - **Phase 3c: Illustrative measurement scaffolding (NOT real A/B — see spec)**
+    - [ ] Admin "Growth" page with static sample metrics, clearly labeled illustrative (@C)
+  - **Phase 3d: ML Upgrade — documentation only, not built**
+    - [x] Future ML path documented in spec (collaborative filtering, retraining cadence) — 2026-08-02
 - [ ] (D) real Microsoft Graph adapter (post-demo, if budget lands) +future #27
 - [ ] (D) real IoT Hub ingestion adapter (post-demo) +future #28
 - [x] (B) OPTIONS preflight bypasses function code on Flex Consumption +bug @H #29 — root-caused 2026-07-19 (platform limitation; documented)
