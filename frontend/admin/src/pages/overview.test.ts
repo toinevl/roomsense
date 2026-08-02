@@ -113,6 +113,20 @@ describe('admin overview page', () => {
     expect(byRoomName('Bohr')?.getAttribute('data-status')).toBe('offline')
   })
 
+  it('does not repeat the status word in the rendered status line (#60)', async () => {
+    await overviewPage.mount(container)
+    const cards = container.querySelectorAll('.admin-room-card')
+    const byRoomName = (name: string) =>
+      Array.from(cards).find((c) => c.querySelector('.admin-room-name')?.textContent === name)
+
+    // Helix is free with no reservation today — asserts the exact composed
+    // text, not just the status key, so a regression like #60 (status word
+    // restated inside untilText, doubling up with the STATUS_LABEL prefix)
+    // fails here even though computeRoomStatus()'s own unit tests pass.
+    const statusText = byRoomName('Helix')?.querySelector('.admin-room-status')?.textContent
+    expect(statusText).toBe('Free · for the rest of today')
+  })
+
   it('shows an explicit empty state for a reclaim slot with no qualifying candidate', async () => {
     await overviewPage.mount(container)
     // No room is booked near its capacity limit, so the "oversized" slot must be empty.

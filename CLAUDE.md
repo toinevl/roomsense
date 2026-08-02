@@ -130,6 +130,25 @@ Höganäs`, `Zaal Curaçao`, `Anaïs Dubois`), not just ASCII placeholders. The 
 data is deliberately non-ASCII; a suite that only uses ASCII names cannot catch
 encoding bugs that trigger on real content.
 
+**A composed/templated UI string needs a test on the FINAL rendered text, not
+just its ingredients.** #60 (2026-08-02): `roomStatus.ts`'s `computeRoomStatus()`
+returns an `untilText` field that `overview.ts` renders as
+`${STATUS_LABEL[status]} · ${untilText}`. Two of `untilText`'s three branches
+redundantly restated the status word ('In use — not booked', 'Free for the rest
+of today'), so the rendered text doubled up ("Free · Free for the rest of
+today") for 13 of 15 rooms. This shipped with #57 and stayed live for over a
+week undetected, because `roomStatus.test.ts` asserted `untilText` alone
+(correct in isolation, relative to its own inconsistent definition) and
+`overview.test.ts` only asserted the `data-status` attribute (the status KEY,
+e.g. `'free'`) — nothing anywhere asserted the actual `.status-line`
+`textContent` a user reads. This is the same *shape* of failure as the
+false-affordance and CSS-layout incidents already known in this project (tests
+pass, the real screen is wrong) — a new variant specific to hand-composed text
+templates. **Guard:** when a function returns a string/field that a caller
+concatenates with a label/prefix/template into on-screen text, add at least
+one test asserting the literal final composed string for each branch — not
+just the sub-value in isolation.
+
 ## HTTP response headers must be ASCII-only
 
 The Azure Functions host rejects non-ASCII bytes in response header values
