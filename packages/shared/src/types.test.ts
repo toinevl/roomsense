@@ -172,3 +172,20 @@ describe('REVIEW_TAGS', () => {
     expect(REVIEW_TAGS.length).toBe(14)
   })
 })
+
+// ─── Gamification Types (Phase 3, #38) ───
+
+import { UserBookingSchema } from './types'
+
+describe('UserBookingSchema', () => {
+  test('accepts a valid booking', () => {
+    const b = { userId: 'user-1', roomId: 'atlas-0.710', bookedAt: '2026-08-02T10:00:00.000Z' }
+    expect(UserBookingSchema.parse(b).roomId).toBe('atlas-0.710')
+  })
+
+  test('rejects a non-datetime bookedAt', () => {
+    expect(() =>
+      UserBookingSchema.parse({ userId: 'user-1', roomId: 'atlas-0.710', bookedAt: 'not-a-date' }),
+    ).toThrow()
+  })
+})

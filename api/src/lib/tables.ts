@@ -25,6 +25,7 @@ export const TABLE_NAMES = {
   friends: 'FriendLinks',
   reviews: 'RoomReviews',
   privacy: 'UserPrivacy',
+  userBookings: 'UserBookings',
 } as const
 
 let credentialInstance: DefaultAzureCredential | null = null

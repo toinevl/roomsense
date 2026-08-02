@@ -111,3 +111,12 @@ export const REVIEW_TAGS = [
   'good-lighting', 'dim', 'wheelchair-accessible', 'group-friendly',
 ] as const
 export type ReviewTag = (typeof REVIEW_TAGS)[number]
+
+// ─── Gamification Types (Phase 3, #38) ───
+
+export const UserBookingSchema = z.object({
+  userId: z.string(),
+  roomId: z.string(),
+  bookedAt: z.string().datetime(),
+})
+export type UserBooking = z.infer<typeof UserBookingSchema>
