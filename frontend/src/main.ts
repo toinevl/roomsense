@@ -13,6 +13,9 @@ import { bookingSuccessPage } from './pages/bookingSuccess'
 import { friendsPage } from './pages/friends'
 import { reviewsPage } from './pages/reviews'
 import { privacySettingsPage } from './pages/privacySettings'
+import { createStreakCounter } from './components/streakCounter'
+import { showFeatureUnlockModal } from './components/featureUnlockModal'
+import { isFeatureEnabled } from './lib/featureFlag'
 import type { Page } from './pages/types'
 
 const routes: Record<string, { page: Page; title: string }> = {
@@ -221,3 +224,37 @@ presenterToggle.addEventListener('click', () => {
 
 modeToggle.addEventListener('click', () => { void switchMode() })
 updateModeUI()
+
+// ---------------------------------------------------------------------------
+// Streak counter + unlock celebrations (#38) — topbar badge gated by the
+// same deterministic `recommendations` flag as the Room Finder recommendation
+// card (lib/featureFlag.ts). The celebration modal for a newly-crossed
+// threshold should only ever fire once per browser, so "already shown"
+// thresholds are tracked in sessionStorage — mirrors the SIM_KEY_STORAGE
+// pattern above (session-scoped, never baked into the bundle).
+// ---------------------------------------------------------------------------
+const SHOWN_UNLOCKS_STORAGE = 'roomsense.shownUnlocks'
+
+if (isFeatureEnabled('recommendations')) {
+  const streakContainer = document.createElement('div')
+  streakContainer.id = 'streak-counter-container'
+  document.querySelector('.topbar')?.insertBefore(streakContainer, document.getElementById('topbar-status'))
+
+  void (async () => {
+    const now = new Date().toISOString()
+    const [streak, unlocks] = await Promise.all([
+      apiClient.getStreak('user-1', now),
+      apiClient.getUnlocks('user-1', now),
+    ])
+    createStreakCounter(streakContainer, streak, unlocks)
+
+    const shown = new Set<number>(JSON.parse(sessionStorage.getItem(SHOWN_UNLOCKS_STORAGE) ?? '[]'))
+    for (const unlock of unlocks) {
+      if (unlock.unlocked && !shown.has(unlock.threshold)) {
+        showFeatureUnlockModal(document.body, unlock)
+        shown.add(unlock.threshold)
+      }
+    }
+    sessionStorage.setItem(SHOWN_UNLOCKS_STORAGE, JSON.stringify([...shown]))
+  })()
+}

@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { roomFinderPage } from './roomFinder'
+import { apiClient } from '../lib/api'
 
 // Mock apiClient to avoid real network calls
 vi.mock('../lib/api', () => ({
@@ -22,7 +23,16 @@ vi.mock('../lib/api', () => ({
         occupancy: 8, // at capacity — should not appear
       },
     ]),
+    getRecommendations: vi.fn().mockResolvedValue({ hero: null, alternates: [] }),
+    postBooking: vi.fn().mockResolvedValue({ userId: 'user-1', roomId: 'r1', bookedAt: '2026-01-01T00:00:00.000Z' }),
   },
+}))
+
+// Deterministic: keeps these tests independent of the real 30%
+// session-hash split in lib/featureFlag.ts, which is exercised separately
+// in featureFlag.test.ts.
+vi.mock('../lib/featureFlag', () => ({
+  isFeatureEnabled: vi.fn().mockReturnValue(false),
 }))
 
 describe('roomFinder', () => {
@@ -31,6 +41,12 @@ describe('roomFinder', () => {
   beforeEach(() => {
     container = document.createElement('div')
     container.innerHTML = ''
+    document.body.innerHTML = ''
+    vi.clearAllMocks()
+  })
+
+  afterEach(() => {
+    document.body.innerHTML = ''
   })
 
   it('page exports a valid Page object', () => {
@@ -83,5 +99,21 @@ describe('roomFinder', () => {
 
     expect(roomNames).toContain('Test Room A') // occupancy 5 < capacity 10
     expect(roomNames).not.toContain('Test Room B') // occupancy 8 = capacity 8 (full)
+  })
+
+  it('calls apiClient.postBooking when a booking is confirmed', async () => {
+    await roomFinderPage.mount(container)
+
+    const ctaButton = container.querySelector('.room-card-cta') as HTMLButtonElement
+    ctaButton.click()
+
+    // createConfirmationModal renders into document.body, not `container`.
+    const confirmBtn = document.body.querySelector(
+      '[data-action="confirm"]',
+    ) as HTMLButtonElement
+    expect(confirmBtn).toBeTruthy()
+    confirmBtn.click()
+
+    expect(apiClient.postBooking).toHaveBeenCalledWith('user-1', expect.any(String), expect.any(String))
   })
 })

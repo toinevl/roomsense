@@ -1,5 +1,7 @@
 import { apiClient } from '../lib/api'
 import { createConfirmationModal } from '../components/confirmationModal'
+import { createRecommendationCard } from '../components/recommendationCard'
+import { isFeatureEnabled } from '../lib/featureFlag'
 import type { Page } from './types'
 
 const styles = `
@@ -113,6 +115,25 @@ export const roomFinderPage: Page = {
     subtitle.textContent = 'Green = available now'
     wrapper.appendChild(subtitle)
 
+    // Recommendation card (#38) — above the room grid, gated by the
+    // deterministic `recommendations` flag (lib/featureFlag.ts). Fire-and-
+    // forget: the page doesn't block on it, matching the presenter-mode /
+    // health-ping pattern of letting background calls resolve on their own.
+    if (isFeatureEnabled('recommendations')) {
+      const recoContainer = document.createElement('div')
+      recoContainer.id = 'recommendation-card-container'
+      wrapper.appendChild(recoContainer)
+
+      void apiClient.getRecommendations('user-1').then((recommendation) => {
+        createRecommendationCard(recoContainer, recommendation, {
+          onSelect: (roomId) => {
+            const card = document.querySelector(`[data-room-id="${roomId}"]`)
+            card?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          },
+        })
+      })
+    }
+
     // Fetch rooms
     const rooms = await apiClient.getRooms()
 
@@ -132,6 +153,7 @@ export const roomFinderPage: Page = {
     for (const room of available) {
       const card = document.createElement('div')
       card.className = 'room-card'
+      card.dataset.roomId = room.roomId
 
       const roomName = document.createElement('div')
       roomName.className = 'room-name'
@@ -155,6 +177,7 @@ export const roomFinderPage: Page = {
         e.stopPropagation()
         createConfirmationModal(document.body, room, {
           onConfirm: (roomId) => {
+            void apiClient.postBooking('user-1', roomId, new Date().toISOString())
             sessionStorage.setItem('roomsense.selectedRoomId', roomId)
             sessionStorage.setItem('roomsense.bookingTime', new Date().toISOString())
             window.location.hash = '#booking-success'
