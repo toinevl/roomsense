@@ -108,6 +108,38 @@ async function latestSnapshotForRoom(
   }
 }
 
+/**
+ * Fetch all rooms joined with their latest occupancy snapshot, sorted
+ * building asc / roomId asc. Extracted from `roomsHandler` so the
+ * recommendations endpoint (#38) can reuse the exact same room+occupancy
+ * assembly logic instead of duplicating it.
+ */
+export async function listRoomsWithOccupancy(): Promise<RoomWithLatest[]> {
+  const client = getTableClient(TABLE_NAMES.rooms)
+  const rooms: RoomEntity[] = []
+  for await (const entity of client.listEntities<RoomEntity>()) {
+    rooms.push(entity)
+  }
+
+  // Order: building asc, then roomId asc. Locale-independent compare on the
+  // ASCII partition/row keys — names are never used for ordering.
+  rooms.sort((a, b) =>
+    a.building < b.building ? -1 : a.building > b.building ? 1 : a.roomId < b.roomId ? -1 : a.roomId > b.roomId ? 1 : 0,
+  )
+
+  return Promise.all(
+    rooms.map(async (r) => {
+      const latest = await latestSnapshotForRoom(r.roomId)
+      // Strip table-storage bookkeeping keys before returning.
+      const { partitionKey: _pk, rowKey: _rk, ...roomFields } = r
+      return { ...roomFields, ...latest }
+    }),
+  )
+}
+
+/** Shape recommendations.ts scores against — a structural subset of RoomWithLatest. */
+export type RoomForScoring = RoomWithLatest
+
 export async function roomsHandler(
   req: HttpRequest,
   ctx: InvocationContext,
@@ -117,26 +149,7 @@ export async function roomsHandler(
   }
 
   try {
-    const client = getTableClient(TABLE_NAMES.rooms)
-    const rooms: RoomEntity[] = []
-    for await (const entity of client.listEntities<RoomEntity>()) {
-      rooms.push(entity)
-    }
-
-    // Order: building asc, then roomId asc. Locale-independent compare on the
-    // ASCII partition/row keys — names are never used for ordering.
-    rooms.sort((a, b) =>
-      a.building < b.building ? -1 : a.building > b.building ? 1 : a.roomId < b.roomId ? -1 : a.roomId > b.roomId ? 1 : 0,
-    )
-
-    const body: RoomWithLatest[] = await Promise.all(
-      rooms.map(async (r) => {
-        const latest = await latestSnapshotForRoom(r.roomId)
-        // Strip table-storage bookkeeping keys before returning.
-        const { partitionKey: _pk, rowKey: _rk, ...roomFields } = r
-        return { ...roomFields, ...latest }
-      }),
-    )
+    const body = await listRoomsWithOccupancy()
 
     return withCors(
       {
