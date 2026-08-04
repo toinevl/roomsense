@@ -498,3 +498,16 @@ addresses) before this ran.
   - Verification common to all three (#60-#62): `pnpm typecheck` clean; `pnpm test`
     113/113 pass; `pnpm test:e2e` 24/25 pass (same one pre-existing unrelated failure as
     #59, `report page loads and displays metrics`); nothing pushed yet.
+
+- [x] (D) bump deprecated-Node20 GitHub Actions to supported majors +infra @O #63 — done 2026-08-04
+  - Trigger: sandbox deploy-api run flagged "Node.js 20 is deprecated... being forced to
+    run on Node.js 24" for actions/checkout, actions/setup-node, azure/login,
+    pnpm/action-setup — all four still declared `runs.using: node20` in their action.yml.
+  - Verified each action's latest major now declares `node24` (checked action.yml directly
+    via `gh api`, not assumed) and confirmed no input-interface changes before bumping:
+    actions/checkout@v4→v7, actions/setup-node@v4→v7, pnpm/action-setup@v4→v6,
+    azure/login@v2→v3. `Azure/static-web-apps-deploy@v1` untouched — it runs on `docker`,
+    unrelated to the Node deprecation.
+  - Applied across all 4 workflow files (ci.yml, deploy-api.yml, deploy-frontend.yml,
+    seed-data.yml). Note: this is separate from `actions/setup-node`'s `node-version: "20"`
+    input, which controls the API's own Node runtime (unrelated, left as-is).
