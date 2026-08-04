@@ -10,11 +10,17 @@ const SESSION_ID_KEY = 'roomsense.flagSessionId'
 const ENABLED_RATIO = 0.3
 
 function getOrCreateSessionId(): string {
-  const existing = localStorage.getItem(SESSION_ID_KEY)
-  if (existing) return existing
-  const id = `s-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`
-  localStorage.setItem(SESSION_ID_KEY, id)
-  return id
+  try {
+    const existing = localStorage.getItem(SESSION_ID_KEY)
+    if (existing) return existing
+    const id = `s-${Math.random().toString(36).slice(2)}-${Date.now().toString(36)}`
+    localStorage.setItem(SESSION_ID_KEY, id)
+    return id
+  } catch {
+    // Storage blocked (private browsing, embedded iframe, etc.) — fall back to a
+    // non-persisted id so the flag decision is still made, just not stable across reloads.
+    return `s-fallback-${Math.random().toString(36).slice(2)}`
+  }
 }
 
 /** Simple deterministic string hash (djb2) → [0, 1). */

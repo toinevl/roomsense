@@ -197,7 +197,7 @@ test.describe('RoomSense smoke (mock mode)', () => {
     await expect(firstCard).toContainText(/\d+ \/ \d+ people/)
   })
 
-  test('booking flow calls the booking endpoint and streak reflects it when the flag is on (#38)', async ({ page }) => {
+  test('recommendation card is visible on Find a Room when the feature flag is on (#38)', async ({ page }) => {
     // Force the feature flag on for this test by pre-seeding a session id
     // verified to hash into the enabled bucket under featureFlag.ts's real
     // djb2-based hashToUnitInterval (hash('e2e-test-1:recommendations') ≈

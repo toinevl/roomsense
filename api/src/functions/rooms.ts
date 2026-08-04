@@ -137,7 +137,7 @@ export async function listRoomsWithOccupancy(): Promise<RoomWithLatest[]> {
   )
 }
 
-/** Shape recommendations.ts scores against — a structural subset of RoomWithLatest. */
+/** Shape recommendations.ts scores against — an exact alias of RoomWithLatest. */
 export type RoomForScoring = RoomWithLatest
 
 export async function roomsHandler(

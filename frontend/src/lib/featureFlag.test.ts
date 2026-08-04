@@ -1,9 +1,13 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest'
 import { isFeatureEnabled } from './featureFlag'
 
 describe('isFeatureEnabled', () => {
   beforeEach(() => {
     localStorage.clear()
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it('is deterministic across repeated calls (stable session id)', () => {
@@ -19,9 +23,18 @@ describe('isFeatureEnabled', () => {
 
   it('respects a pre-existing session id already in localStorage', () => {
     localStorage.setItem('roomsense.flagSessionId', 'fixed-id-for-test')
-    const result = isFeatureEnabled('recommendations')
-    // Same fixed id must always produce the same result, run after run.
-    localStorage.setItem('roomsense.flagSessionId', 'fixed-id-for-test')
-    expect(isFeatureEnabled('recommendations')).toBe(result)
+    isFeatureEnabled('recommendations')
+    // The pre-existing id must not be overwritten by the function.
+    expect(localStorage.getItem('roomsense.flagSessionId')).toBe('fixed-id-for-test')
+  })
+
+  it('does not throw when localStorage is blocked (private browsing, embedded iframe, etc.)', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new Error('blocked')
+    })
+    expect(() => isFeatureEnabled('recommendations')).not.toThrow()
   })
 })
