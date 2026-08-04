@@ -165,6 +165,13 @@ describe('POST /api/users/{id}/booking', () => {
     )
     expect(res.status).toBe(500)
   })
+
+  it('returns 400 on malformed JSON body', async () => {
+    const req = makeReq('POST', 'user-1', {})
+    req.text = async () => '{not valid json'
+    const res = await bookingsHandler(req, ctx)
+    expect(res.status).toBe(400)
+  })
 })
 
 describe('GET /api/users/{id}/streak', () => {
@@ -174,6 +181,11 @@ describe('GET /api/users/{id}/streak', () => {
     const res = await streakHandler(makeReq('GET', 'user-1', { now: '2026-08-04T10:00:00.000Z' }), ctx)
     expect(res.status).toBe(200)
     expect((res.jsonBody as any).currentStreakDays).toBe(0)
+  })
+
+  it('returns 400 on a malformed now query param', async () => {
+    const res = await streakHandler(makeReq('GET', 'user-1', { now: 'not-a-date' }), ctx)
+    expect(res.status).toBe(400)
   })
 })
 
@@ -185,5 +197,10 @@ describe('GET /api/users/{id}/unlocks', () => {
     expect(res.status).toBe(200)
     expect((res.jsonBody as any[])).toHaveLength(3)
     expect((res.jsonBody as any[]).every((u) => !u.unlocked)).toBe(true)
+  })
+
+  it('returns 400 on a malformed now query param', async () => {
+    const res = await unlocksHandler(makeReq('GET', 'user-1', { now: 'not-a-date' }), ctx)
+    expect(res.status).toBe(400)
   })
 })

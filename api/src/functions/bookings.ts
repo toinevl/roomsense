@@ -25,6 +25,8 @@ const CreateBookingBody = z.object({
   bookedAt: z.string().datetime(),
 })
 
+const QueryNowSchema = z.object({ now: z.string().datetime().optional() })
+
 const UNLOCK_THRESHOLDS: Array<{ threshold: number; label: string }> = [
   { threshold: 3, label: 'Early access to RoomSense Wrapped' },
   { threshold: 7, label: '"Regular" badge on your reviews' },
@@ -94,10 +96,6 @@ export function deriveStreak(
     if (prevDate === null) {
       running = 1
     } else {
-      let expected = prevDate
-      do {
-        expected = previousDateOnly(expected) // walk forward conceptually by walking prevDate->d check below
-      } while (false)
       // Determine if `d` immediately follows `prevDate` skipping weekends.
       let cursor2 = prevDate
       let stepped = false
@@ -149,7 +147,12 @@ export async function bookingsHandler(
     if (!userId) {
       return withCors({ status: 400, jsonBody: { error: 'Missing id route parameter.' } }, origin)
     }
-    const raw = await parseJsonBody(req)
+    let raw: unknown
+    try {
+      raw = await parseJsonBody(req)
+    } catch {
+      return withCors({ status: 400, jsonBody: { error: 'Malformed JSON body.' } }, origin)
+    }
     const parsed = CreateBookingBody.safeParse(raw)
     if (!parsed.success) {
       return withCors(
@@ -186,7 +189,14 @@ export async function streakHandler(
     if (!userId) {
       return withCors({ status: 400, jsonBody: { error: 'Missing id route parameter.' } }, origin)
     }
-    const now = req.query.get('now') ?? new Date().toISOString()
+    const parsedQuery = QueryNowSchema.safeParse({ now: req.query.get('now') ?? undefined })
+    if (!parsedQuery.success) {
+      return withCors(
+        { status: 400, jsonBody: { error: 'Invalid query parameters', details: parsedQuery.error.flatten() } },
+        origin,
+      )
+    }
+    const now = parsedQuery.data.now ?? new Date().toISOString()
     const bookings = await fetchUserBookings(userId)
     const streak = deriveStreak(bookings, now)
     return withCors({ status: 200, jsonBody: { userId, ...streak } }, origin)
@@ -208,7 +218,14 @@ export async function unlocksHandler(
     if (!userId) {
       return withCors({ status: 400, jsonBody: { error: 'Missing id route parameter.' } }, origin)
     }
-    const now = req.query.get('now') ?? new Date().toISOString()
+    const parsedQuery = QueryNowSchema.safeParse({ now: req.query.get('now') ?? undefined })
+    if (!parsedQuery.success) {
+      return withCors(
+        { status: 400, jsonBody: { error: 'Invalid query parameters', details: parsedQuery.error.flatten() } },
+        origin,
+      )
+    }
+    const now = parsedQuery.data.now ?? new Date().toISOString()
     const bookings = await fetchUserBookings(userId)
     const { currentStreakDays } = deriveStreak(bookings, now)
     return withCors({ status: 200, jsonBody: computeUnlocks(currentStreakDays) }, origin)
