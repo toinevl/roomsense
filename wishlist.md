@@ -511,3 +511,80 @@ addresses) before this ran.
   - Applied across all 4 workflow files (ci.yml, deploy-api.yml, deploy-frontend.yml,
     seed-data.yml). Note: this is separate from `actions/setup-node`'s `node-version: "20"`
     input, which controls the API's own Node runtime (unrelated, left as-is).
+
+## Operations demo: scheduling health + cleaning cost savings (grilled 2026-08-04)
+
+Toine's ask: use RoomSense's data to (1) improve meeting-room scheduling and (2) cut
+cleaning costs by cleaning on an interval-OR-usage-threshold basis instead of fixed daily.
+Fully grilled (superpowers grill-me) before building — decisions below are locked, not
+open questions. Demo/analysis scope only (confirmed): no real Outlook write-back, no real
+IoT Hub sensors, no real cleaning-crew dispatch — same "post-demo, if budget lands"
+boundary as #27/#28. Both features are facility-manager-facing, live in frontend/admin/,
+and cross into api/** with Toine's explicit approval (same precedent as #44-#46).
+
+- [x] (B) Scheduling health page: per-room ghost/oversized/utilization rates +ops @C @H #64 — done 2026-08-04
+  - New endpoint `GET /api/rooms/scheduling-health?from&to` (api/src/functions/
+    schedulingHealth.ts, mirror kpis.ts's full-scan-in-memory style) — returns ALL rooms
+    (not top-5 like /kpis's underusedRooms, which stays untouched) with three independent
+    metrics, NOT a composite score (budget-holder trust > a clever formula, per #47-#55):
+    - ghostRatePct: % of this room's reservation-hours in [from,to] that were ghosts
+      (reuse kpis.ts's ghost-hours-per-reservation logic, scoped per room)
+    - oversizedRatePct: % of reservations where attendeeCount <= 0.3 * capacity (reuse
+      reclaim.ts's OVERSIZED_ATTENDEE_RATIO constant — import it, don't re-declare it)
+    - utilizationPct: mean of snapshot utilizationPct for the room in range (same calc as
+      kpis.ts's underusedRooms, just unfiltered to all rooms)
+  - Default range: trailing 7 days (matches the seeded week + /kpis convention).
+  - New admin route `#scheduling` (frontend/admin/src/pages/scheduling.ts) — sortable
+    table, one row per room, three metric columns + room name/building. Register in
+    frontend/admin/src/main.ts's `routes` object and add nav link in
+    frontend/admin/index.html (admin's own pattern, NOT the main app's 3-places rule).
+  - Read-only. No mutations, no new persisted storage, no changes to packages/shared
+    (frozen) — response types live in frontend/src/lib/apiTypes.ts alongside the existing
+    gamification-endpoint types (#38's precedent), not in packages/shared.
+
+- [x] (B) Cleaning savings report: interval-OR-threshold vs fixed-daily baseline +ops @C @H #65 — done 2026-08-04
+  - New endpoint `GET /api/rooms/cleaning-savings?from&to` (api/src/functions/
+    cleaningSavings.ts) — 100% computed on the fly from existing OccupancySnapshot data,
+    NO new persisted table (matches this project's derived-not-stored convention: ghost
+    meetings, #38's streak counter). Assumes every room is "freshly cleaned" at t=0 of
+    the window.
+  - Usage metric: cumulative occupant-hours ÷ room capacity ("capacity-hours-equivalent")
+    since the last simulated clean — NOT raw occupant-hours (would just proxy room size)
+    and NOT reservation headcount (misses sensor-detected walk-in traffic; occupancy-
+    derived is this project's established source of truth, same reasoning as ghost
+    derivation).
+  - Policy: replay snapshots in time order per room; trigger a simulated clean (reset the
+    clock) when EITHER elapsed time since last clean >= CLEANING_INTERVAL_DAYS OR
+    cumulative capacity-hours-equivalent since last clean >= CLEANING_THRESHOLD_CAPACITY_HOURS,
+    whichever comes first. Baseline for comparison = fixed daily clean (1/room/day in range).
+  - New env vars with defaults (mirror kpis.ts's `COST_PER_DESK_HOUR_EUR` pattern exactly —
+    `Number(process.env.X ?? 'default')`): `CLEANING_INTERVAL_DAYS` (default 3),
+    `CLEANING_THRESHOLD_CAPACITY_HOURS` (default 20), `CLEANING_COST_PER_CLEAN_EUR`
+    (default 15). Implementer must verify against the actual seeded week that these
+    defaults produce a REAL MIX of interval-triggered and threshold-triggered cleans
+    across the 15 rooms (not all-one-kind) — tune the two defaults if the seeded data
+    doesn't naturally produce a mix, and document the verified numbers in this entry.
+  - Response: per-room `{ roomId, name, baselineCleans, policyCleans, cleansAvoided,
+    eurSaved }` for ALL rooms, plus an aggregate totals object (sum of each field) — the
+    admin page renders totals as a header row above the per-room table (per-room detail
+    was explicitly chosen over an aggregate-only headline).
+  - New admin route `#cleaning` (frontend/admin/src/pages/cleaning.ts), same table/nav
+    pattern as #64's Scheduling page. Register in main.ts + index.html same way.
+  - Read-only. No mutations, no new persisted storage, no packages/shared changes.
+
+  **Verified defaults (2026-08-04):** Ran the simulation against the real seed
+  generator (`packages/seed`, `generate({ seed: 42, days: 7 })` — same seed
+  `upload.ts` uses in production) across all 15 rooms. The suggested default
+  `CLEANING_THRESHOLD_CAPACITY_HOURS=20` never fired at all (30 interval-
+  triggered cleans, 0 threshold-triggered) — all-one-kind, failing the "real
+  mix" requirement. Swept 5/8/10/12/15/20/25/30 with `CLEANING_INTERVAL_DAYS`
+  held at 3 (the sane baseline); `8` gives the best real mix: **22
+  interval-triggered vs. 11 threshold-triggered cleans**, with 8 of the 15
+  rooms hitting the threshold at least once (the other 7 are pure-interval —
+  low-traffic rooms that never accumulate enough capacity-hours in 3 days).
+  Shipped defaults: `CLEANING_INTERVAL_DAYS=3`, `CLEANING_THRESHOLD_CAPACITY_HOURS=8`,
+  `CLEANING_COST_PER_CLEAN_EUR=15` (unchanged from spec).
+
+Build order: implement both independently in parallel (disjoint files, no shared new
+code between them) via subagent-per-task, two-stage review before commit — per Toine's
+established workflow preference, not the git-history norm of small single-commit items.

@@ -9,6 +9,7 @@ import {
   deriveReadings,
   deriveReservations,
   deriveRooms,
+  deriveSchedulingHealth,
   deriveSources,
   findLatestActiveIndex,
   isGhostReservation,
@@ -211,6 +212,54 @@ describe('deriveKpis', () => {
 
   test('throws when from is after to', () => {
     expect(() => deriveKpis(seed, index, '2026-07-10T00:00:00.000Z', '2026-07-01T00:00:00.000Z')).toThrow()
+  })
+})
+
+describe('deriveSchedulingHealth', () => {
+  const health = deriveSchedulingHealth(seed, index)
+
+  test('returns ALL 15 rooms (unlike deriveKpis.underusedRooms, capped to 5), sorted by roomId', () => {
+    expect(health.rooms).toHaveLength(15)
+    const ids = health.rooms.map((r) => r.roomId)
+    expect(ids).toEqual([...ids].sort((a, b) => a.localeCompare(b)))
+  })
+
+  test('every room reports three independent 0-100 metrics, never NaN', () => {
+    for (const room of health.rooms) {
+      expect(typeof room.name).toBe('string')
+      expect(typeof room.building).toBe('string')
+      for (const pct of [room.ghostRatePct, room.oversizedRatePct, room.utilizationPct]) {
+        expect(Number.isNaN(pct)).toBe(false)
+        expect(pct).toBeGreaterThanOrEqual(0)
+        expect(pct).toBeLessThanOrEqual(100)
+      }
+    }
+  })
+
+  test('non-ASCII room names survive the derivation round-trip', () => {
+    const names = health.rooms.map((r) => r.name)
+    expect(names).toContain('Vergaderzaal Höganäs')
+    expect(names).toContain('Zaal Curaçao')
+  })
+
+  test('a room with zero reservations/snapshots in a narrow out-of-range window reports all zeros', () => {
+    // A window far outside the 30-day generated range has no snapshots/reservations
+    // for any room — every metric must default to 0, not NaN.
+    const beforeAll = new Date(Date.parse(seed.snapshots[0]!.ts) - 10 * 86_400_000).toISOString()
+    const stillBefore = new Date(Date.parse(seed.snapshots[0]!.ts) - 5 * 86_400_000).toISOString()
+    const empty = deriveSchedulingHealth(seed, index, beforeAll, stillBefore)
+    expect(empty.rooms).toHaveLength(15)
+    for (const room of empty.rooms) {
+      expect(room.ghostRatePct).toBe(0)
+      expect(room.oversizedRatePct).toBe(0)
+      expect(room.utilizationPct).toBe(0)
+    }
+  })
+
+  test('throws when from is after to', () => {
+    expect(() =>
+      deriveSchedulingHealth(seed, index, '2026-07-10T00:00:00.000Z', '2026-07-01T00:00:00.000Z'),
+    ).toThrow()
   })
 })
 

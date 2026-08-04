@@ -116,3 +116,14 @@
 .capacity-chip.active { background: var(--brand); border-color: var(--brand); color: #fff; }
 
 .rooms-list-scroll { overflow-x: auto; }
+.cleaning-table-scroll { overflow-x: auto; }
+
+/* ---------------------------------------------------------------------------
+   Scheduling health page (#64) — sortable column-header buttons.
+   --------------------------------------------------------------------------- */
+.sr-table-sort-btn {
+  font: inherit; font-family: var(--font-mono); font-size: 0.66rem; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600;
+  background: none; border: none; padding: 0; cursor: pointer;
+}
+.sr-table-sort-btn:hover, .sr-table-sort-btn:focus-visible { color: var(--text-primary); }
