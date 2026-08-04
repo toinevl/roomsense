@@ -241,20 +241,29 @@ if (isFeatureEnabled('recommendations')) {
   document.querySelector('.topbar')?.insertBefore(streakContainer, document.getElementById('topbar-status'))
 
   void (async () => {
-    const now = new Date().toISOString()
-    const [streak, unlocks] = await Promise.all([
-      apiClient.getStreak('user-1', now),
-      apiClient.getUnlocks('user-1', now),
-    ])
-    createStreakCounter(streakContainer, streak, unlocks)
+    try {
+      const now = new Date().toISOString()
+      const [streak, unlocks] = await Promise.all([
+        apiClient.getStreak('user-1', now),
+        apiClient.getUnlocks('user-1', now),
+      ])
+      createStreakCounter(streakContainer, streak, unlocks)
 
-    const shown = new Set<number>(JSON.parse(sessionStorage.getItem(SHOWN_UNLOCKS_STORAGE) ?? '[]'))
-    for (const unlock of unlocks) {
-      if (unlock.unlocked && !shown.has(unlock.threshold)) {
-        showFeatureUnlockModal(document.body, unlock)
-        shown.add(unlock.threshold)
+      // Only show the HIGHEST newly-crossed threshold per page load, to avoid
+      // stacking multiple celebration modals if several thresholds were
+      // crossed since the last visit.
+      const shown = new Set<number>(JSON.parse(sessionStorage.getItem(SHOWN_UNLOCKS_STORAGE) ?? '[]'))
+      const newlyUnlocked = unlocks.filter((u) => u.unlocked && !shown.has(u.threshold))
+      if (newlyUnlocked.length > 0) {
+        const highest = newlyUnlocked.reduce((a, b) => (b.threshold > a.threshold ? b : a))
+        showFeatureUnlockModal(document.body, highest)
       }
+      // Mark ALL newly-unlocked thresholds as shown (not just the one displayed) so a
+      // lower one that was skipped doesn't pop up on a later reload.
+      for (const u of newlyUnlocked) shown.add(u.threshold)
+      sessionStorage.setItem(SHOWN_UNLOCKS_STORAGE, JSON.stringify([...shown]))
+    } catch (err) {
+      console.warn('Failed to load streak/unlocks', err)
     }
-    sessionStorage.setItem(SHOWN_UNLOCKS_STORAGE, JSON.stringify([...shown]))
   })()
 }

@@ -1,6 +1,7 @@
 import { apiClient } from '../lib/api'
 import { createConfirmationModal } from '../components/confirmationModal'
 import { createRecommendationCard } from '../components/recommendationCard'
+import { createOccupancyPredictionChart } from '../components/occupancyPrediction'
 import { isFeatureEnabled } from '../lib/featureFlag'
 import type { Page } from './types'
 
@@ -131,6 +132,24 @@ export const roomFinderPage: Page = {
             card?.scrollIntoView({ behavior: 'smooth', block: 'center' })
           },
         })
+
+        // Occupancy prediction for the hero recommended room — ties into the
+        // recommendation card's "why this room" narrative just above it.
+        if (recommendation.hero) {
+          const predictionContainer = document.createElement('div')
+          predictionContainer.id = 'occupancy-prediction-container'
+          recoContainer.appendChild(predictionContainer)
+          void apiClient
+            .getOccupancyPrediction(recommendation.hero.roomId)
+            .then((prediction) => {
+              createOccupancyPredictionChart(predictionContainer, prediction, recommendation.hero!.capacity)
+            })
+            .catch((err) => {
+              console.warn('Failed to load occupancy prediction', err)
+            })
+        }
+      }).catch((err) => {
+        console.warn('Failed to load recommendations', err)
       })
     }
 
@@ -177,7 +196,12 @@ export const roomFinderPage: Page = {
         e.stopPropagation()
         createConfirmationModal(document.body, room, {
           onConfirm: (roomId) => {
-            void apiClient.postBooking('user-1', roomId, new Date().toISOString())
+            // Intentionally NOT gated by the `recommendations` feature flag: the
+            // control cohort should still populate the booking log, so the
+            // repeat-signal and streak exist if a user's cohort ever changes.
+            void apiClient
+              .postBooking('user-1', roomId, new Date().toISOString())
+              .catch((err) => console.warn('Failed to record booking', err))
             sessionStorage.setItem('roomsense.selectedRoomId', roomId)
             sessionStorage.setItem('roomsense.bookingTime', new Date().toISOString())
             window.location.hash = '#booking-success'
