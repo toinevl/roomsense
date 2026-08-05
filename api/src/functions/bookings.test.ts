@@ -79,9 +79,7 @@ declare global {
 }
 ;(globalThis as any).__BOOKINGS_TEST_STATE__ = { bookings: [], throwOnList: false }
 
-vi.mock('../lib/tables', () => ({
-  TABLE_NAMES: { userBookings: 'UserBookings' },
-  getTableClient: (name: string) => {
+function makeBookingsTableClient(name: string) {
     const g = () => (globalThis as any).__BOOKINGS_TEST_STATE__
     if (name === 'UserBookings') {
       return {
@@ -110,7 +108,12 @@ vi.mock('../lib/tables', () => ({
       }
     }
     throw new Error(`unexpected table: ${name}`)
-  },
+}
+
+vi.mock('../lib/tables', () => ({
+  TABLE_NAMES: { userBookings: 'UserBookings' },
+  getTableClient: makeBookingsTableClient,
+  ensureTable: async (name: string) => makeBookingsTableClient(name),
 }))
 
 import { bookingsHandler, streakHandler, unlocksHandler } from './bookings'

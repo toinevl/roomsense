@@ -3,7 +3,7 @@ import { z } from 'zod'
 import type { UserBooking } from '@roomsense/shared'
 import { withCors, corsPreflightResponse } from '../lib/cors'
 import { logError } from '../lib/log'
-import { getTableClient, TABLE_NAMES } from '../lib/tables'
+import { ensureTable, TABLE_NAMES } from '../lib/tables'
 
 /**
  * Phase 3 #38 — gamification. Storage layout: UserBookings (PK: userId,
@@ -126,7 +126,7 @@ export function computeUnlocks(
 }
 
 async function fetchUserBookings(userId: string): Promise<UserBooking[]> {
-  const client = getTableClient(TABLE_NAMES.userBookings)
+  const client = await ensureTable(TABLE_NAMES.userBookings)
   const entities: BookingEntity[] = []
   const iter = client.listEntities<BookingEntity>({
     queryOptions: { filter: `PartitionKey eq '${userId.replace(/'/g, "''")}'` },
@@ -163,7 +163,7 @@ export async function bookingsHandler(
     const { roomId, bookedAt } = parsed.data
     const booking: UserBooking = { userId, roomId, bookedAt }
 
-    const client = getTableClient(TABLE_NAMES.userBookings)
+    const client = await ensureTable(TABLE_NAMES.userBookings)
     await client.createEntity({
       partitionKey: userId,
       rowKey: `${bookedAt}_${roomId}`,

@@ -2,7 +2,7 @@ import { app, type HttpRequest, type HttpResponseInit, type InvocationContext } 
 import type { UserBooking } from '@roomsense/shared'
 import { withCors, corsPreflightResponse } from '../lib/cors'
 import { logError } from '../lib/log'
-import { getTableClient, TABLE_NAMES } from '../lib/tables'
+import { ensureTable, TABLE_NAMES } from '../lib/tables'
 import { listRoomsWithOccupancy, type RoomForScoring } from './rooms'
 
 /**
@@ -49,7 +49,7 @@ export async function recommendationsHandler(
     const rooms = await listRoomsWithOccupancy()
     const freeRooms = rooms.filter((r) => r.occupancy === 0)
 
-    const bookingsClient = getTableClient(TABLE_NAMES.userBookings)
+    const bookingsClient = await ensureTable(TABLE_NAMES.userBookings)
     const bookings: UserBooking[] = []
     for await (const e of bookingsClient.listEntities<UserBooking & { partitionKey: string; rowKey: string }>({
       queryOptions: { filter: `PartitionKey eq '${userId.replace(/'/g, "''")}'` },

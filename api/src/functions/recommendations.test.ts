@@ -49,33 +49,36 @@ declare global {
 }
 ;(globalThis as any).__RECS_TEST_STATE__ = { rooms: [], bookings: [], throwOnList: false }
 
+function makeRecsTableClient(name: string) {
+  const g = () => (globalThis as any).__RECS_TEST_STATE__
+  if (name === 'UserBookings') {
+    return {
+      listEntities(opts?: { queryOptions?: { filter?: string } }) {
+        const s = g()
+        if (s.throwOnList) throw new Error('storage down')
+        let rows = s.bookings.slice()
+        const filter = opts?.queryOptions?.filter
+        if (filter) {
+          const m = filter.match(/PartitionKey eq '([^']+)'/)
+          const want = m ? m[1].replace(/''/g, "'") : null
+          if (want !== null) rows = rows.filter((r: any) => r.userId === want)
+        }
+        return {
+          [Symbol.asyncIterator]() {
+            let i = 0
+            return { next: async () => (i < rows.length ? { value: rows[i++], done: false } : { value: undefined, done: true }) }
+          },
+        }
+      },
+    }
+  }
+  throw new Error(`unexpected table: ${name}`)
+}
+
 vi.mock('../lib/tables', () => ({
   TABLE_NAMES: { rooms: 'Rooms', userBookings: 'UserBookings' },
-  getTableClient: (name: string) => {
-    const g = () => (globalThis as any).__RECS_TEST_STATE__
-    if (name === 'UserBookings') {
-      return {
-        listEntities(opts?: { queryOptions?: { filter?: string } }) {
-          const s = g()
-          if (s.throwOnList) throw new Error('storage down')
-          let rows = s.bookings.slice()
-          const filter = opts?.queryOptions?.filter
-          if (filter) {
-            const m = filter.match(/PartitionKey eq '([^']+)'/)
-            const want = m ? m[1].replace(/''/g, "'") : null
-            if (want !== null) rows = rows.filter((r: any) => r.userId === want)
-          }
-          return {
-            [Symbol.asyncIterator]() {
-              let i = 0
-              return { next: async () => (i < rows.length ? { value: rows[i++], done: false } : { value: undefined, done: true }) }
-            },
-          }
-        },
-      }
-    }
-    throw new Error(`unexpected table: ${name}`)
-  },
+  getTableClient: makeRecsTableClient,
+  ensureTable: async (name: string) => makeRecsTableClient(name),
 }))
 
 vi.mock('./rooms', () => ({
