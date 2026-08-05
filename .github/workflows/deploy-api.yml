@@ -30,6 +30,7 @@ jobs:
       # sandbox lives in a separate subscription/tenant (TU/e) provisioned on
       # Consumption/Y1, same plan tier as prod post-#39 — see wishlist.md.
       APP_NAME: ${{ github.event.inputs.target_env == 'sandbox' && 'roomsense-sandbox-api2' || 'roomsense-api2' }}
+      STORAGE_ACCOUNT: ${{ github.event.inputs.target_env == 'sandbox' && 'roomsensesandboxstorage' || 'roomsensestorage' }}
       CORS_ORIGINS: ${{ github.event.inputs.target_env == 'sandbox' && 'http://localhost:5173' || 'https://lemon-mud-06bc7fd03.7.azurestaticapps.net,http://localhost:5173' }}
       AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
       AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -98,6 +99,38 @@ jobs:
         if: steps.deploy-mode.outputs.mode == 'oidc'
         run: |
           az resource update --resource-group "$RESOURCE_GROUP" --name scm --namespace Microsoft.Web --resource-type basicPublishingCredentialsPolicies --parent "sites/$APP_NAME" --set properties.allow=true || true
+      - name: Ensure all Table Storage tables exist (deploy-time guard)
+        if: steps.deploy-mode.outputs.mode == 'oidc'
+        # Prevents a class of bug seen twice: #45 (sandbox, 2026-07-27 — OccupancySnapshots/
+        # Reservations never provisioned) and #38 (production, 2026-08-05 — UserBookings
+        # never provisioned). Both times a new TABLE_NAMES entry (api/src/lib/tables.ts)
+        # shipped in code but nobody ran the provisioning step in every deployed
+        # environment, so the feature 500'd until someone happened to check by hand —
+        # unit tests and e2e all mock/stub table access, so nothing automated could
+        # ever catch a missing-table gap before this step existed. Reads the expected
+        # table list straight from the built bundle so it can never drift from the code,
+        # and auto-creates (idempotent) anything missing — the same create-if-missing
+        # semantics as lib/tables.ts's ensureTable(), applied at the infra layer so it
+        # doesn't depend on every function file remembering to call it.
+        run: |
+          set -euo pipefail
+          TABLES=$(node -e "
+            const fs = require('fs');
+            const src = fs.readFileSync('./api/src/lib/tables.ts', 'utf8');
+            const m = src.match(/TABLE_NAMES\s*=\s*\{([^}]*)\}/s);
+            if (!m) { console.error('TABLE_NAMES block not found in tables.ts'); process.exit(1); }
+            console.log([...m[1].matchAll(/:\s*'([^']+)'/g)].map(x => x[1]).join(' '));
+          ")
+          echo "Expected tables: $TABLES"
+          for t in $TABLES; do
+            EXISTS=$(az storage table exists --name "$t" --account-name "$STORAGE_ACCOUNT" --auth-mode login --query exists -o tsv)
+            if [ "$EXISTS" != "true" ]; then
+              echo "::warning::Table '$t' missing in $STORAGE_ACCOUNT — creating it now (this would previously have 500'd silently, see #45/#38)."
+              az storage table create --name "$t" --account-name "$STORAGE_ACCOUNT" --auth-mode login --output none
+            else
+              echo "✓ $t exists"
+            fi
+          done
       - name: Verify function app is Consumption-ready
         if: steps.deploy-mode.outputs.mode == 'oidc'
         # Pre-deploy guard: fail fast if plan or content-share settings are wrong.

@@ -213,3 +213,28 @@ curl -D - -X OPTIONS https://roomsense-api2.azurewebsites.net/api/health \
 ```
 
 Should see `Access-Control-Allow-Origin: https://roomsense.van-vliet.eu` in headers.
+
+## A new Table Storage table needs provisioning in every environment, not just code
+
+`api/src/lib/tables.ts`'s `TABLE_NAMES` map is a list of tables the code expects
+to exist — adding an entry there does not create the table anywhere. This bit
+the project twice with the identical root cause: **#45** (sandbox, 2026-07-27 —
+`OccupancySnapshots`/`Reservations` were never provisioned, so `/api/kpis` 500'd
+on any real date range) and **#38** (production, 2026-08-05 — `UserBookings` was
+never provisioned, so `/streak`, `/unlocks`, and `/api/recommendations` all
+500'd right after a fully-reviewed, fully-tested merge went live). Both times
+the automated test suite was clean: unit tests mock the table client, e2e runs
+under `VITE_MOCK=1`, so nothing in CI ever talks to a real Table Storage
+account — a provisioning gap is invisible to every layer except a human
+manually checking the live site, which is what caught #38.
+
+**Guard (now automated):** `deploy-api.yml`'s "Ensure all Table Storage tables
+exist" step runs after every deploy — it parses `TABLE_NAMES` straight out of
+`tables.ts` (so it can't drift from the code) and auto-creates any table
+missing from that environment's storage account, mirroring `ensureTable()`'s
+create-if-missing semantics at the infra layer instead of depending on a human
+to remember a manual seed/provisioning step. If you add a new table name, you
+do not need to do anything extra — the next deploy provisions it in whichever
+environment it targets. Prefer `ensureTable()` over bare `getTableClient()` in
+new code that reads/writes a table introduced in the same feature, as a second
+line of defense.

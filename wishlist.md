@@ -665,3 +665,26 @@ established workflow preference, not the git-history norm of small single-commit
     `let`, or restructure to a mutable-holder pattern (e.g. an object with a `.current`
     property) so the reassignment is legal at runtime; needs a real fix + regression
     test, not scoped/attempted here (out of scope for #38, filed as its own item).
+
+- [x] (A) BUG: production 500s post-#38-merge — missing UserBookings table, no deploy-time
+  guard against the class of bug +infra +bug @O #67 — done 2026-08-05
+  - Found during manual "check live site" verification right after #38's merge/deploy:
+    `/api/users/{id}/streak`, `/unlocks`, and `/api/recommendations` all 500'd in
+    production. Root cause via `az storage table list --account-name roomsensestorage`:
+    `UserBookings` (added to `TABLE_NAMES` by #38) was never provisioned in the real
+    storage account — every test layer (unit tests mock the table client, e2e runs
+    `VITE_MOCK=1`) is blind to this class of gap.
+  - This is the SAME root cause as #45 (sandbox, 2026-07-27 — `OccupancySnapshots`/
+    `Reservations` missing), whose fix back then was a one-off seed-workflow dispatch
+    with no systemic guard added — hence the recurrence. This time the fix is systemic:
+    - Immediate: `az storage table create --name UserBookings ...` to unblock prod.
+    - Code hardening: `bookings.ts`/`recommendations.ts` switched from bare
+      `getTableClient()` to `ensureTable()` (commit `3e03cc3`).
+    - Durable/automated (this item): added an "Ensure all Table Storage tables exist"
+      step to `.github/workflows/deploy-api.yml` — parses `TABLE_NAMES` straight out of
+      `api/src/lib/tables.ts` (so it can never drift from the code) and auto-creates
+      any table missing from that environment's storage account on every deploy. See
+      `CLAUDE.md` § "A new Table Storage table needs provisioning in every environment".
+  - Context: crosses into `.github/workflows/**` (orchestrator lane) — same
+    out-of-lane pattern as #43/#45, justified the same way: this directly prevents a
+    third recurrence of a bug that has now taken down both sandbox and production.
