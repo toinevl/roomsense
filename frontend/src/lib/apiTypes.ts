@@ -124,6 +124,37 @@ export interface PrivacySettings {
   lastUpdated: string
 }
 
+// ─── Gamification Types (Phase 3, #38) ───
+
+export interface RecommendedRoom extends RoomWithOccupancy {
+  score: number
+}
+
+export interface RecommendationsResponse {
+  hero: RecommendedRoom | null
+  alternates: RecommendedRoom[]
+}
+
+export interface OccupancyPredictionResponse {
+  roomId: string
+  now: { occupancy: number }
+  plus30m: { occupancy: number }
+  plus60m: { occupancy: number }
+}
+
+export interface StreakResponse {
+  userId: string
+  currentStreakDays: number
+  longestStreakDays: number
+  totalBookings: number
+}
+
+export interface UnlockInfo {
+  threshold: number
+  label: string
+  unlocked: boolean
+}
+
 // ─── Scheduling health (#64) ───
 // Types for GET /api/rooms/scheduling-health. This endpoint's response
 // lives here rather than packages/shared, same precedent as the

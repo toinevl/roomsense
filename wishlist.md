@@ -104,7 +104,7 @@
     - [~] A/B test: presence on/off feature flag — deferred
   - **Phase 2e: Compliance Gate (Orchestrator)**
     - [ ] Legal/GDPR/FERPA audit before launch (@O)
-- [ ] (D) strategy 3: ai recommendations & gamification (recommendations, predictions, streaks) +extend @C @H @ML #38 dep:#35 — in progress 2026-08-02
+- [x] (D) strategy 3: ai recommendations & gamification (recommendations, predictions, streaks) +extend @C @H @ML #38 dep:#35 — done 2026-08-02
   - Spec: docs/superpowers/specs/2026-08-02-strategy3-recommendations-gamification-design.md
     (fills in exact scoring algorithm, data model, streak-derivation logic, API contracts).
   - Scope decision (Toine, 2026-08-02): Phase 3a built for real, crossing into api/**
@@ -114,24 +114,76 @@
   - Key deviation from this entry's original phrasing: streak is DERIVED from a
     `UserBookings` event log on every read, not a stored/incremented counter — matches
     this project's existing ghost-derivation/latest-occupancy-anchoring convention.
-  - **Phase 3a: Backend (built directly, not waiting for Hermes)**
-    - [ ] Recommendation scoring algorithm (repeat 50% + popularity 30% + distance 20%) (@C)
-    - [ ] GET /api/recommendations?userId={id}&now={ts} endpoint (hero + 2 alts) (@C)
-    - [ ] GET /api/occupancy/prediction endpoint (+30m, +60m) (@C)
-    - [ ] GET /api/users/{id}/streak endpoint (derived, not stored) (@C)
-    - [ ] POST /api/users/{id}/booking endpoint (appends to UserBookings) (@C)
-    - [ ] GET /api/users/{id}/unlocks endpoint (feature progression) (@C)
-  - **Phase 3b: Frontend Components**
-    - [ ] RecommendationCard component — hero card + why-recommended tooltip (@C)
-    - [ ] OccupancyPrediction component — bar chart (now + 30m + 60m) (@C)
-    - [ ] StreakCounter component — persistent nav badge + progress modal (@C)
-    - [ ] FeatureUnlock modal — celebration + feature intro (@C)
-    - [ ] Integrate recommendations into room finder; wire real booking POST call (@C)
-    - [ ] Deterministic feature flag (localStorage, 30%/70%, not Math.random()) (@C)
-  - **Phase 3c: Illustrative measurement scaffolding (NOT real A/B — see spec)**
-    - [ ] Admin "Growth" page with static sample metrics, clearly labeled illustrative (@C)
+  - Built across 12 tasks, commits `bf703a1..46bb27b` (Tasks 1-11) plus this closeout —
+    see `.superpowers/sdd/2026-08-02-strategy3-recommendations-gamification/` for full
+    per-task briefs/reports and per-commit review diffs. Granularity below matches
+    task boundaries rather than one SHA per sub-item.
+  - **Phase 3a: Backend (built directly, not waiting for Hermes)** — commits
+    `bf703a1`, `cf11cf2`, `69f5ac5`, `ee5f164`, `e1f710e`
+    - [x] Recommendation scoring algorithm (repeat 50% + popularity 30% + distance 20%) (@C) — `cf11cf2`
+    - [x] GET /api/recommendations?userId={id} endpoint (hero + 2 alts) (@C) — `cf11cf2`, dead `now` param removed in `69f5ac5`
+    - [x] GET /api/occupancy/prediction endpoint (+30m, +60m) (@C) — `ee5f164`, query validation fix `e1f710e`
+    - [x] GET /api/users/{id}/streak endpoint (derived, not stored) (@C) — `bf703a1`
+    - [x] POST /api/users/{id}/booking endpoint (appends to UserBookings) (@C) — `bf703a1`
+    - [x] GET /api/users/{id}/unlocks endpoint (feature progression) (@C) — `bf703a1`
+  - **Phase 3b: Frontend Components** — commits `ba69a28`, `a9f8ee8`, `55470f8`,
+    `1522828`, `13c2d5d`, `5417786`
+    - [x] RecommendationCard component — hero card + why-recommended tooltip (@C) — `a9f8ee8`
+    - [x] OccupancyPrediction component — bar chart (now + 30m + 60m) (@C) — `55470f8`
+    - [x] StreakCounter component — persistent nav badge + progress modal (@C) — `1522828`
+    - [x] FeatureUnlock modal — celebration + feature intro (@C) — `13c2d5d`
+    - [x] Integrate recommendations into room finder; wire real booking POST call (@C) — `5417786`
+    - [x] Deterministic feature flag (localStorage, 30%/70%, not Math.random()) (@C) — `ba69a28`
+  - **Phase 3c: Illustrative measurement scaffolding (NOT real A/B — see spec)** —
+    commit `7ecfa56`
+    - [x] Admin "Growth" page with static sample metrics, clearly labeled illustrative (@C) — `7ecfa56`
   - **Phase 3d: ML Upgrade — documentation only, not built**
     - [x] Future ML path documented in spec (collaborative filtering, retraining cadence) — 2026-08-02
+  - **Test coverage**: e2e added in `46bb27b` (booking-flow-with-flag-on and admin
+    Growth-page disclaimer tests).
+  - **Task 12 final verification (2026-08-02)**: full check suite re-run clean across all
+    3 packages — `packages/shared` 22/22 vitest, `api` typecheck clean + 125/125 vitest,
+    `frontend` typecheck clean + 136/136 vitest + 26/27 e2e (the one failure is the
+    pre-existing, unrelated `'report page loads and displays metrics'` test, caused by a
+    commit predating this branch — same failure Task 11 already documented, nothing new).
+    Manually browser-verified in mock mode (`VITE_MOCK=1`), using the repo's own
+    `@playwright/test` chromium launcher directly (headless, real Chromium render) since
+    the MCP Playwright browser tool timed out in this sandbox, same known environment
+    issue Task 10 already worked around:
+    - Flag ON (`localStorage['roomsense.flagSessionId'] = 'e2e-test-1'`, verified hash
+      ≈0.0114 < 0.3 threshold): recommendation card visible on Find a Room; streak badge
+      (`🔥 0`) visible in topbar; clicking the badge opens the progress modal
+      ("Longest: 0 days · 1 total bookings", 3 locked unlocks listed); clicking "Book Now"
+      → confirm → `postBooking` fires, navigates to `#booking-success` — 0 console errors
+      throughout.
+    - Booking-persistence caveat (observed, not a regression): the streak badge/modal
+      does not refresh after a booking without a true page reload (the topbar fetch in
+      `main.ts` runs once per script load, not per hash-route change), and a true reload
+      also resets mock booking state back to the seed fixture, because `MOCK_BOOKINGS` in
+      `mockGamification.ts` is an in-memory array with no `localStorage` backing — the
+      same convention every other mock fixture in this app already follows (confirmed: no
+      mock module in `frontend/src/lib/mock*.ts` persists to browser storage). Not
+      specific to #38, not a new regression, and doesn't apply to the real API (backend
+      `bookings.ts` persists to the actual `UserBookings` table, verified by its own
+      14 passing tests). Today's date (2026-08-02) is also a Sunday, and
+      `deriveMockStreak` skips weekend days without a booking-check, so `currentStreakDays`
+      would show 0 regardless of persistence — could not browser-verify a live
+      3-day-streak unlock-celebration crossing under real calendar conditions; the unlock
+      logic itself is a direct, reviewed, unmodified port (Task 9) and unit-tested at the
+      component level (`featureUnlockModal.test.ts`).
+    - Flag OFF (`'flag-off-check-0'`, verified hash ≈0.467 ≥ 0.3): no `.recommendation-card`,
+      no `.streak-badge`, room grid still renders normally (15 rooms) — no regressions.
+    - Admin app: Growth page reachable via nav, "illustrative" disclaimer visible, exactly
+      4 `.kpi-tile` sample metrics, 0 console errors. Spot-checked Overview (4 KPI tiles +
+      15 room cards) and Rooms (15-row table) — both render correctly, 0 console errors,
+      no regressions from this feature's work.
+    - Also spot-checked Dashboard (4 KPI tiles) and Live (15 room cards) in flag-off
+      context — both unchanged from pre-#38 behavior.
+    - Separately-filed, pre-existing bug (found by Task 9, not #38's own scope, not
+      re-verified/fixed here): #66 (renumbered from #63 on 2026-08-05 to resolve a
+      collision with main's own #63 — see #66's entry) — the topbar live/mock mode-toggle
+      button throws at runtime (`setApiClientMode` reassigns a `const`). This is why
+      `pnpm dev` in non-mock mode is awkward; all verification here used `VITE_MOCK=1`.
 - [ ] (D) real Microsoft Graph adapter (post-demo, if budget lands) +future #27
 - [ ] (D) real IoT Hub ingestion adapter (post-demo) +future #28
 - [x] (B) OPTIONS preflight bypasses function code on Flex Consumption +bug @H #29 — root-caused 2026-07-19 (platform limitation; documented)
@@ -588,3 +640,28 @@ and cross into api/** with Toine's explicit approval (same precedent as #44-#46)
 Build order: implement both independently in parallel (disjoint files, no shared new
 code between them) via subagent-per-task, two-stage review before commit — per Toine's
 established workflow preference, not the git-history norm of small single-commit items.
+
+- [ ] (B) BUG: live/mock mode-toggle button throws at runtime, breaks plain `pnpm dev` +bug @C #66 — found 2026-08-02
+  - Found during #38 Task 9's manual browser verification (recommendation card / streak
+    counter integration) — clicking the topbar's LIVE/MOCK toggle button crashes.
+  - Renumbered from #63 to #66 on 2026-08-05 while merging origin/main into the #38
+    feature branch — #63 collided with an unrelated GitHub Actions Node-runtime fix that
+    landed on main in the meantime (main's #63 is unaffected by this renumber).
+  - Root cause: `frontend/src/lib/api.ts`'s `setApiClientMode(mock)` does
+    `(apiClient as any) = mock ? makeMockClient() : fetchClient`, but `apiClient` is
+    declared `export const apiClient: ApiClient = ...`. `as any` is a TypeScript
+    compile-time-only escape hatch — it does NOT change JS's runtime `const` binding
+    semantics, so the emitted assignment throws `TypeError: Assignment to constant
+    variable` (ES modules run in strict mode). `frontend/src/main.ts:162` calls
+    `setApiClientMode(nextMock)` directly from the existing mode-toggle click handler,
+    so this is reachable via a normal user click, not just a theoretical type-safety hole.
+  - Independently confirmed by a task-9 code reviewer (traced the emitted-JS semantics
+    of `as any` + grepped the call site) before being logged here — not just the
+    implementer's self-report.
+  - Impact: the mode-toggle button (built for presenter-mode demos, live vs mock data)
+    is currently non-functional; also makes plain `pnpm dev` (non-mock) awkward to work
+    with locally since anything that calls `setApiClientMode` crashes.
+  - Not investigated for a fix yet — likely fix: change `apiClient` from `const` to
+    `let`, or restructure to a mutable-holder pattern (e.g. an object with a `.current`
+    property) so the reassignment is legal at runtime; needs a real fix + regression
+    test, not scoped/attempted here (out of scope for #38, filed as its own item).

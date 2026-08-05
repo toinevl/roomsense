@@ -3,6 +3,7 @@ import './admin.css'
 import { apiClient } from '../../src/lib/api'
 import { overviewPage } from './pages/overview'
 import { roomsPage } from './pages/rooms'
+import { growthPage } from './pages/growth'
 import { cleaningPage } from './pages/cleaning'
 import { schedulingPage } from './pages/scheduling'
 import type { Page } from '../../src/pages/types'
@@ -21,6 +22,7 @@ import type { Page } from '../../src/pages/types'
 const routes: Record<string, { page: Page; title: string }> = {
   overview: { page: overviewPage, title: 'Overview' },
   rooms: { page: roomsPage, title: 'Rooms' },
+  growth: { page: growthPage, title: 'Growth' },
   cleaning: { page: cleaningPage, title: 'Cleaning' },
   scheduling: { page: schedulingPage, title: 'Scheduling' },
 }

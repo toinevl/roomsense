@@ -1,5 +1,8 @@
 import { apiClient } from '../lib/api'
 import { createConfirmationModal } from '../components/confirmationModal'
+import { createRecommendationCard } from '../components/recommendationCard'
+import { createOccupancyPredictionChart } from '../components/occupancyPrediction'
+import { isFeatureEnabled } from '../lib/featureFlag'
 import type { Page } from './types'
 
 const styles = `
@@ -113,6 +116,43 @@ export const roomFinderPage: Page = {
     subtitle.textContent = 'Green = available now'
     wrapper.appendChild(subtitle)
 
+    // Recommendation card (#38) — above the room grid, gated by the
+    // deterministic `recommendations` flag (lib/featureFlag.ts). Fire-and-
+    // forget: the page doesn't block on it, matching the presenter-mode /
+    // health-ping pattern of letting background calls resolve on their own.
+    if (isFeatureEnabled('recommendations')) {
+      const recoContainer = document.createElement('div')
+      recoContainer.id = 'recommendation-card-container'
+      wrapper.appendChild(recoContainer)
+
+      void apiClient.getRecommendations('user-1').then((recommendation) => {
+        createRecommendationCard(recoContainer, recommendation, {
+          onSelect: (roomId) => {
+            const card = document.querySelector(`[data-room-id="${roomId}"]`)
+            card?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          },
+        })
+
+        // Occupancy prediction for the hero recommended room — ties into the
+        // recommendation card's "why this room" narrative just above it.
+        if (recommendation.hero) {
+          const predictionContainer = document.createElement('div')
+          predictionContainer.id = 'occupancy-prediction-container'
+          recoContainer.appendChild(predictionContainer)
+          void apiClient
+            .getOccupancyPrediction(recommendation.hero.roomId)
+            .then((prediction) => {
+              createOccupancyPredictionChart(predictionContainer, prediction, recommendation.hero!.capacity)
+            })
+            .catch((err) => {
+              console.warn('Failed to load occupancy prediction', err)
+            })
+        }
+      }).catch((err) => {
+        console.warn('Failed to load recommendations', err)
+      })
+    }
+
     // Fetch rooms
     const rooms = await apiClient.getRooms()
 
@@ -132,6 +172,7 @@ export const roomFinderPage: Page = {
     for (const room of available) {
       const card = document.createElement('div')
       card.className = 'room-card'
+      card.dataset.roomId = room.roomId
 
       const roomName = document.createElement('div')
       roomName.className = 'room-name'
@@ -155,6 +196,12 @@ export const roomFinderPage: Page = {
         e.stopPropagation()
         createConfirmationModal(document.body, room, {
           onConfirm: (roomId) => {
+            // Intentionally NOT gated by the `recommendations` feature flag: the
+            // control cohort should still populate the booking log, so the
+            // repeat-signal and streak exist if a user's cohort ever changes.
+            void apiClient
+              .postBooking('user-1', roomId, new Date().toISOString())
+              .catch((err) => console.warn('Failed to record booking', err))
             sessionStorage.setItem('roomsense.selectedRoomId', roomId)
             sessionStorage.setItem('roomsense.bookingTime', new Date().toISOString())
             window.location.hash = '#booking-success'
