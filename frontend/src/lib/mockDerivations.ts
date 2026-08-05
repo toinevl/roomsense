@@ -1,9 +1,29 @@
 import type { SeedOutput } from '@roomsense/seed'
 import type { OccupancySnapshot, Reservation, Room, SensorReading } from '@roomsense/shared'
-import type { HealthResponse, KpisResponse, RoomBreakdownEntry, RoomWithOccupancy, SourceStatus, UnderusedRoom } from './apiTypes'
+import type {
+  CleaningSavingsResponse,
+  CleaningSavingsRoomEntry,
+  HealthResponse,
+  KpisResponse,
+  RoomBreakdownEntry,
+  RoomSchedulingHealth,
+  RoomWithOccupancy,
+  SchedulingHealthResponse,
+  SourceStatus,
+  UnderusedRoom,
+} from './apiTypes'
 
 /** Matches the API's `COST_PER_DESK_HOUR_EUR` env default (wishlist.md contract). */
 export const COST_PER_DESK_HOUR_EUR = 4
+
+/**
+ * Mirrors frontend/admin/src/lib/reclaim.ts's OVERSIZED_ATTENDEE_RATIO and
+ * api/src/functions/schedulingHealth.ts's re-declared copy of the same
+ * constant (#64). Keep in sync manually — reclaim.ts lives in the admin
+ * app, this file lives in the shared src/lib mock layer, and the two
+ * cannot import from each other across the app boundary.
+ */
+const OVERSIZED_ATTENDEE_RATIO = 0.3
 
 /**
  * Index seed output by room / device so every derivation below is a plain
@@ -287,6 +307,80 @@ export function deriveKpis(seed: SeedOutput, index: SeedIndex, from?: string, to
   }
 }
 
+/**
+ * GET /api/rooms/scheduling-health (mock) — per-room ghost/oversized/
+ * utilization rates for ALL rooms (#64). Mirrors
+ * api/src/functions/schedulingHealth.ts's logic: three independent metrics,
+ * not a composite score. Reuses isGhostReservation for the ghost check and
+ * deriveKpis's per-room utilization averaging.
+ */
+export function deriveSchedulingHealth(
+  seed: SeedOutput,
+  index: SeedIndex,
+  from?: string,
+  to?: string,
+): SchedulingHealthResponse {
+  const { fromMs: defaultFrom, toMs: defaultTo } = fullRange(seed)
+  const fromMs = parseTs(from, defaultFrom)
+  const toMs = parseTs(to, defaultTo)
+  if (fromMs > toMs) throw new Error('invalid range: from is after to')
+
+  const inRange = seed.snapshots.filter((s) => {
+    const ts = Date.parse(s.ts)
+    return ts >= fromMs && ts <= toMs
+  })
+  const roomUtil = new Map<string, { sum: number; count: number }>()
+  for (const snap of inRange) {
+    const entry = roomUtil.get(snap.roomId) ?? { sum: 0, count: 0 }
+    entry.sum += snap.utilizationPct
+    entry.count += 1
+    roomUtil.set(snap.roomId, entry)
+  }
+
+  const reservationsInRange = seed.reservations.filter((r) => {
+    const startMs = Date.parse(r.startTs)
+    const endMs = Date.parse(r.endTs)
+    return endMs > fromMs && startMs < toMs
+  })
+  const reservationsByRoom = groupBy(reservationsInRange, (r) => r.roomId)
+
+  const rooms: RoomSchedulingHealth[] = seed.rooms.map((room) => {
+    const util = roomUtil.get(room.roomId)
+    const utilizationPct = util && util.count > 0 ? round1(util.sum / util.count) : 0
+
+    const roomReservations = reservationsByRoom.get(room.roomId) ?? []
+    let totalHours = 0
+    let ghostHours = 0
+    let oversizedCount = 0
+    for (const res of roomReservations) {
+      if (res.attendeeCount <= OVERSIZED_ATTENDEE_RATIO * room.capacity) {
+        oversizedCount += 1
+      }
+      const clipStart = Math.max(Date.parse(res.startTs), fromMs)
+      const clipEnd = Math.min(Date.parse(res.endTs), toMs)
+      const hours = (clipEnd - clipStart) / 3_600_000
+      if (hours <= 0) continue
+      totalHours += hours
+      if (isGhostReservation(index, res)) ghostHours += hours
+    }
+    const ghostRatePct = totalHours > 0 ? round1((ghostHours / totalHours) * 100) : 0
+    const oversizedRatePct =
+      roomReservations.length > 0 ? round1((oversizedCount / roomReservations.length) * 100) : 0
+
+    return {
+      roomId: room.roomId,
+      name: room.name,
+      building: room.building,
+      ghostRatePct,
+      oversizedRatePct,
+      utilizationPct,
+    }
+  })
+
+  rooms.sort((a, b) => a.roomId.localeCompare(b.roomId))
+  return { rooms }
+}
+
 /** GET /api/sources (mock) — mirrors the real handler's sourceId sort (sources.ts). */
 export function deriveSources(seed: SeedOutput): SourceStatus[] {
   return [...seed.sources]
@@ -302,4 +396,103 @@ export function deriveSources(seed: SeedOutput): SourceStatus[] {
 
 function round1(value: number): number {
   return Math.round(value * 10) / 10
+}
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100
+}
+
+/**
+ * Env-var-equivalent constants for the mock derivation (#65). Mirror
+ * api/src/functions/cleaningSavings.ts's `Number(process.env.X ?? 'default')`
+ * defaults exactly — verified against the real 7-day seed (seed=42) to
+ * produce a real mix of interval- and threshold-triggered cleans across the
+ * 15 rooms (see wishlist #65's "Verified defaults" note).
+ */
+const CLEANING_INTERVAL_DAYS = 3
+const CLEANING_THRESHOLD_CAPACITY_HOURS = 8
+const CLEANING_COST_PER_CLEAN_EUR = 15
+const DAY_MS = 24 * 60 * 60 * 1000
+const HOUR_MS = 60 * 60 * 1000
+
+/**
+ * GET /api/rooms/cleaning-savings (mock) — mirrors
+ * api/src/functions/cleaningSavings.ts's simulation exactly: per room,
+ * replay snapshots in [from, to] ascending, tracking hoursSinceClean
+ * (elapsed calendar time) and capacityHoursSinceClean (Σ(occupancy * 0.25h)
+ * / capacity) since the last simulated clean. A clean fires (resetting both
+ * counters) when either counter crosses its threshold. Baseline = fixed
+ * daily clean (1/room/day in the window).
+ */
+export function deriveCleaningSavings(
+  seed: SeedOutput,
+  index: SeedIndex,
+  from?: string,
+  to?: string,
+): CleaningSavingsResponse {
+  const { fromMs: defaultFrom, toMs: defaultTo } = fullRange(seed)
+  const fromMs = parseTs(from, defaultFrom)
+  const toMs = parseTs(to, defaultTo)
+  if (fromMs > toMs) throw new Error('invalid range: from is after to')
+
+  const baselineCleansPerRoom = Math.floor((toMs - fromMs) / DAY_MS)
+
+  const rooms: CleaningSavingsRoomEntry[] = seed.rooms.map((room) => {
+    const snaps = (index.snapshotsByRoom.get(room.roomId) ?? [])
+      .filter((s) => {
+        const ts = Date.parse(s.ts)
+        return ts >= fromMs && ts <= toMs
+      })
+      .slice()
+      .sort((a, b) => Date.parse(a.ts) - Date.parse(b.ts))
+
+    let hoursSinceClean = 0
+    let capacityHoursSinceClean = 0
+    let lastTsMs = fromMs
+    let policyCleans = 0
+
+    for (const snap of snaps) {
+      const tsMs = Date.parse(snap.ts)
+      const elapsedHours = (tsMs - lastTsMs) / HOUR_MS
+      hoursSinceClean += elapsedHours
+      if (room.capacity > 0) {
+        capacityHoursSinceClean += (snap.occupancy * 0.25) / room.capacity
+      }
+      lastTsMs = tsMs
+
+      const intervalFired = hoursSinceClean >= CLEANING_INTERVAL_DAYS * 24
+      const thresholdFired = capacityHoursSinceClean >= CLEANING_THRESHOLD_CAPACITY_HOURS
+      if (intervalFired || thresholdFired) {
+        policyCleans += 1
+        hoursSinceClean = 0
+        capacityHoursSinceClean = 0
+      }
+    }
+
+    const cleansAvoided = Math.max(0, baselineCleansPerRoom - policyCleans)
+    const eurSaved = round2(cleansAvoided * CLEANING_COST_PER_CLEAN_EUR)
+
+    return {
+      roomId: room.roomId,
+      name: room.name,
+      baselineCleans: baselineCleansPerRoom,
+      policyCleans,
+      cleansAvoided,
+      eurSaved,
+    }
+  })
+
+  rooms.sort((a, b) => a.roomId.localeCompare(b.roomId))
+
+  const totals = rooms.reduce(
+    (acc, r) => ({
+      baselineCleans: acc.baselineCleans + r.baselineCleans,
+      policyCleans: acc.policyCleans + r.policyCleans,
+      cleansAvoided: acc.cleansAvoided + r.cleansAvoided,
+      eurSaved: round2(acc.eurSaved + r.eurSaved),
+    }),
+    { baselineCleans: 0, policyCleans: 0, cleansAvoided: 0, eurSaved: 0 },
+  )
+
+  return { rooms, totals }
 }

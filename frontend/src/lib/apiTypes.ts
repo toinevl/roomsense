@@ -154,3 +154,52 @@ export interface UnlockInfo {
   label: string
   unlocked: boolean
 }
+
+// ─── Scheduling health (#64) ───
+// Types for GET /api/rooms/scheduling-health. This endpoint's response
+// lives here rather than packages/shared, same precedent as the
+// gamification types above (#38) — packages/shared is frozen post-Phase-0.
+
+export interface RoomSchedulingHealth {
+  roomId: string
+  name: string
+  building: string
+  /** % of this room's reservation-hours in range that were ghosts. */
+  ghostRatePct: number
+  /** % of this room's reservations (by count) where attendeeCount <= 0.3 * capacity. */
+  oversizedRatePct: number
+  /** Mean of snapshot utilizationPct for this room in range. */
+  utilizationPct: number
+}
+
+export interface SchedulingHealthResponse {
+  rooms: RoomSchedulingHealth[]
+}
+
+// ─── Cleaning savings (#65) ───
+// Types for GET /api/rooms/cleaning-savings. This endpoint's response lives
+// here rather than packages/shared, same precedent as the gamification
+// types above (#38) — packages/shared is frozen post-Phase-0.
+
+export interface CleaningSavingsRoomEntry {
+  roomId: string
+  name: string
+  /** Fixed-daily-schedule comparison point: 1 clean/room/day in the window. */
+  baselineCleans: number
+  /** Simulated interval-OR-threshold policy cleans over the window. */
+  policyCleans: number
+  cleansAvoided: number
+  eurSaved: number
+}
+
+export interface CleaningSavingsTotals {
+  baselineCleans: number
+  policyCleans: number
+  cleansAvoided: number
+  eurSaved: number
+}
+
+export interface CleaningSavingsResponse {
+  rooms: CleaningSavingsRoomEntry[]
+  totals: CleaningSavingsTotals
+}

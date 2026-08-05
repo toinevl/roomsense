@@ -1,12 +1,14 @@
 import { config } from '../config'
 import {
   buildIndex,
+  deriveCleaningSavings,
   deriveHealth,
   deriveKpis,
   deriveOccupancy,
   deriveReadings,
   deriveReservations,
   deriveRooms,
+  deriveSchedulingHealth,
   deriveSources,
   findLatestActiveIndex,
 } from './mockDerivations'
@@ -20,6 +22,7 @@ import {
   getMockUnlocks,
 } from './mockGamification'
 import type {
+  CleaningSavingsResponse,
   FriendLink,
   HealthResponse,
   KpisResponse,
@@ -30,6 +33,7 @@ import type {
   Reservation,
   RoomReview,
   RoomWithOccupancy,
+  SchedulingHealthResponse,
   SensorReading,
   SimulateTickResponse,
   SourceStatus,
@@ -51,6 +55,8 @@ export interface ApiClient {
   getRoomReadings(roomId: string, limit?: number): Promise<SensorReading[]>
   getRoomReservations(roomId: string, date?: string): Promise<Reservation[]>
   getKpis(from?: string, to?: string): Promise<KpisResponse>
+  getSchedulingHealth(from?: string, to?: string): Promise<SchedulingHealthResponse>
+  getCleaningSavings(from?: string, to?: string): Promise<CleaningSavingsResponse>
   getSources(): Promise<SourceStatus[]>
   simulateTick(key: string): Promise<SimulateTickResponse>
   /**
@@ -124,6 +130,22 @@ const fetchClient: ApiClient = {
     const toTs = to ?? new Date().toISOString()
     const fromTs = from ?? new Date(Date.parse(toTs) - 30 * 24 * 60 * 60 * 1000).toISOString()
     return request(`/kpis${qs({ from: fromTs, to: toTs })}`)
+  },
+  getSchedulingHealth: (from, to) => {
+    // Same lenient-mock / strict-live convention as getKpis: the frozen
+    // contract requires an explicit range. Default: trailing 7 days (matches
+    // the seeded week + /kpis convention, per wishlist #64).
+    const toTs = to ?? new Date().toISOString()
+    const fromTs = from ?? new Date(Date.parse(toTs) - 7 * 24 * 60 * 60 * 1000).toISOString()
+    return request(`/rooms/scheduling-health${qs({ from: fromTs, to: toTs })}`)
+  },
+  getCleaningSavings: (from, to) => {
+    // Same lenient-mock / strict-live convention as getKpis: the frozen
+    // contract requires an explicit range. Default: trailing 7 days (this
+    // endpoint's natural window, per wishlist #65).
+    const toTs = to ?? new Date().toISOString()
+    const fromTs = from ?? new Date(Date.parse(toTs) - 7 * 24 * 60 * 60 * 1000).toISOString()
+    return request(`/rooms/cleaning-savings${qs({ from: fromTs, to: toTs })}`)
   },
   getSources: () => request('/sources'),
   simulateTick: (key) =>
@@ -207,6 +229,10 @@ function makeMockClient(): ApiClient {
     getRoomReservations: async (roomId, date) => deriveReservations(index, roomId, date),
 
     getKpis: async (from, to) => deriveKpis(seed, index, from, to),
+
+    getSchedulingHealth: async (from, to) => deriveSchedulingHealth(seed, index, from, to),
+
+    getCleaningSavings: async (from, to) => deriveCleaningSavings(seed, index, from, to),
 
     getSources: async () => deriveSources(seed),
 

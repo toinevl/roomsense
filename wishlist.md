@@ -180,9 +180,10 @@
     - Also spot-checked Dashboard (4 KPI tiles) and Live (15 room cards) in flag-off
       context — both unchanged from pre-#38 behavior.
     - Separately-filed, pre-existing bug (found by Task 9, not #38's own scope, not
-      re-verified/fixed here): #63 — the topbar live/mock mode-toggle button throws at
-      runtime (`setApiClientMode` reassigns a `const`). This is why `pnpm dev` in
-      non-mock mode is awkward; all verification here used `VITE_MOCK=1`.
+      re-verified/fixed here): #66 (renumbered from #63 on 2026-08-05 to resolve a
+      collision with main's own #63 — see #66's entry) — the topbar live/mock mode-toggle
+      button throws at runtime (`setApiClientMode` reassigns a `const`). This is why
+      `pnpm dev` in non-mock mode is awkward; all verification here used `VITE_MOCK=1`.
 - [ ] (D) real Microsoft Graph adapter (post-demo, if budget lands) +future #27
 - [ ] (D) real IoT Hub ingestion adapter (post-demo) +future #28
 - [x] (B) OPTIONS preflight bypasses function code on Flex Consumption +bug @H #29 — root-caused 2026-07-19 (platform limitation; documented)
@@ -550,9 +551,102 @@ addresses) before this ran.
     113/113 pass; `pnpm test:e2e` 24/25 pass (same one pre-existing unrelated failure as
     #59, `report page loads and displays metrics`); nothing pushed yet.
 
-- [ ] (B) BUG: live/mock mode-toggle button throws at runtime, breaks plain `pnpm dev` +bug @C #63 — found 2026-08-02
+- [x] (D) bump deprecated-Node20 GitHub Actions to supported majors +infra @O #63 — done 2026-08-04
+  - Trigger: sandbox deploy-api run flagged "Node.js 20 is deprecated... being forced to
+    run on Node.js 24" for actions/checkout, actions/setup-node, azure/login,
+    pnpm/action-setup — all four still declared `runs.using: node20` in their action.yml.
+  - Verified each action's latest major now declares `node24` (checked action.yml directly
+    via `gh api`, not assumed) and confirmed no input-interface changes before bumping:
+    actions/checkout@v4→v7, actions/setup-node@v4→v7, pnpm/action-setup@v4→v6,
+    azure/login@v2→v3. `Azure/static-web-apps-deploy@v1` untouched — it runs on `docker`,
+    unrelated to the Node deprecation.
+  - Applied across all 4 workflow files (ci.yml, deploy-api.yml, deploy-frontend.yml,
+    seed-data.yml). Note: this is separate from `actions/setup-node`'s `node-version: "20"`
+    input, which controls the API's own Node runtime (unrelated, left as-is).
+
+## Operations demo: scheduling health + cleaning cost savings (grilled 2026-08-04)
+
+Toine's ask: use RoomSense's data to (1) improve meeting-room scheduling and (2) cut
+cleaning costs by cleaning on an interval-OR-usage-threshold basis instead of fixed daily.
+Fully grilled (superpowers grill-me) before building — decisions below are locked, not
+open questions. Demo/analysis scope only (confirmed): no real Outlook write-back, no real
+IoT Hub sensors, no real cleaning-crew dispatch — same "post-demo, if budget lands"
+boundary as #27/#28. Both features are facility-manager-facing, live in frontend/admin/,
+and cross into api/** with Toine's explicit approval (same precedent as #44-#46).
+
+- [x] (B) Scheduling health page: per-room ghost/oversized/utilization rates +ops @C @H #64 — done 2026-08-04
+  - New endpoint `GET /api/rooms/scheduling-health?from&to` (api/src/functions/
+    schedulingHealth.ts, mirror kpis.ts's full-scan-in-memory style) — returns ALL rooms
+    (not top-5 like /kpis's underusedRooms, which stays untouched) with three independent
+    metrics, NOT a composite score (budget-holder trust > a clever formula, per #47-#55):
+    - ghostRatePct: % of this room's reservation-hours in [from,to] that were ghosts
+      (reuse kpis.ts's ghost-hours-per-reservation logic, scoped per room)
+    - oversizedRatePct: % of reservations where attendeeCount <= 0.3 * capacity (reuse
+      reclaim.ts's OVERSIZED_ATTENDEE_RATIO constant — import it, don't re-declare it)
+    - utilizationPct: mean of snapshot utilizationPct for the room in range (same calc as
+      kpis.ts's underusedRooms, just unfiltered to all rooms)
+  - Default range: trailing 7 days (matches the seeded week + /kpis convention).
+  - New admin route `#scheduling` (frontend/admin/src/pages/scheduling.ts) — sortable
+    table, one row per room, three metric columns + room name/building. Register in
+    frontend/admin/src/main.ts's `routes` object and add nav link in
+    frontend/admin/index.html (admin's own pattern, NOT the main app's 3-places rule).
+  - Read-only. No mutations, no new persisted storage, no changes to packages/shared
+    (frozen) — response types live in frontend/src/lib/apiTypes.ts alongside the existing
+    gamification-endpoint types (#38's precedent), not in packages/shared.
+
+- [x] (B) Cleaning savings report: interval-OR-threshold vs fixed-daily baseline +ops @C @H #65 — done 2026-08-04
+  - New endpoint `GET /api/rooms/cleaning-savings?from&to` (api/src/functions/
+    cleaningSavings.ts) — 100% computed on the fly from existing OccupancySnapshot data,
+    NO new persisted table (matches this project's derived-not-stored convention: ghost
+    meetings, #38's streak counter). Assumes every room is "freshly cleaned" at t=0 of
+    the window.
+  - Usage metric: cumulative occupant-hours ÷ room capacity ("capacity-hours-equivalent")
+    since the last simulated clean — NOT raw occupant-hours (would just proxy room size)
+    and NOT reservation headcount (misses sensor-detected walk-in traffic; occupancy-
+    derived is this project's established source of truth, same reasoning as ghost
+    derivation).
+  - Policy: replay snapshots in time order per room; trigger a simulated clean (reset the
+    clock) when EITHER elapsed time since last clean >= CLEANING_INTERVAL_DAYS OR
+    cumulative capacity-hours-equivalent since last clean >= CLEANING_THRESHOLD_CAPACITY_HOURS,
+    whichever comes first. Baseline for comparison = fixed daily clean (1/room/day in range).
+  - New env vars with defaults (mirror kpis.ts's `COST_PER_DESK_HOUR_EUR` pattern exactly —
+    `Number(process.env.X ?? 'default')`): `CLEANING_INTERVAL_DAYS` (default 3),
+    `CLEANING_THRESHOLD_CAPACITY_HOURS` (default 20), `CLEANING_COST_PER_CLEAN_EUR`
+    (default 15). Implementer must verify against the actual seeded week that these
+    defaults produce a REAL MIX of interval-triggered and threshold-triggered cleans
+    across the 15 rooms (not all-one-kind) — tune the two defaults if the seeded data
+    doesn't naturally produce a mix, and document the verified numbers in this entry.
+  - Response: per-room `{ roomId, name, baselineCleans, policyCleans, cleansAvoided,
+    eurSaved }` for ALL rooms, plus an aggregate totals object (sum of each field) — the
+    admin page renders totals as a header row above the per-room table (per-room detail
+    was explicitly chosen over an aggregate-only headline).
+  - New admin route `#cleaning` (frontend/admin/src/pages/cleaning.ts), same table/nav
+    pattern as #64's Scheduling page. Register in main.ts + index.html same way.
+  - Read-only. No mutations, no new persisted storage, no packages/shared changes.
+
+  **Verified defaults (2026-08-04):** Ran the simulation against the real seed
+  generator (`packages/seed`, `generate({ seed: 42, days: 7 })` — same seed
+  `upload.ts` uses in production) across all 15 rooms. The suggested default
+  `CLEANING_THRESHOLD_CAPACITY_HOURS=20` never fired at all (30 interval-
+  triggered cleans, 0 threshold-triggered) — all-one-kind, failing the "real
+  mix" requirement. Swept 5/8/10/12/15/20/25/30 with `CLEANING_INTERVAL_DAYS`
+  held at 3 (the sane baseline); `8` gives the best real mix: **22
+  interval-triggered vs. 11 threshold-triggered cleans**, with 8 of the 15
+  rooms hitting the threshold at least once (the other 7 are pure-interval —
+  low-traffic rooms that never accumulate enough capacity-hours in 3 days).
+  Shipped defaults: `CLEANING_INTERVAL_DAYS=3`, `CLEANING_THRESHOLD_CAPACITY_HOURS=8`,
+  `CLEANING_COST_PER_CLEAN_EUR=15` (unchanged from spec).
+
+Build order: implement both independently in parallel (disjoint files, no shared new
+code between them) via subagent-per-task, two-stage review before commit — per Toine's
+established workflow preference, not the git-history norm of small single-commit items.
+
+- [ ] (B) BUG: live/mock mode-toggle button throws at runtime, breaks plain `pnpm dev` +bug @C #66 — found 2026-08-02
   - Found during #38 Task 9's manual browser verification (recommendation card / streak
     counter integration) — clicking the topbar's LIVE/MOCK toggle button crashes.
+  - Renumbered from #63 to #66 on 2026-08-05 while merging origin/main into the #38
+    feature branch — #63 collided with an unrelated GitHub Actions Node-runtime fix that
+    landed on main in the meantime (main's #63 is unaffected by this renumber).
   - Root cause: `frontend/src/lib/api.ts`'s `setApiClientMode(mock)` does
     `(apiClient as any) = mock ? makeMockClient() : fetchClient`, but `apiClient` is
     declared `export const apiClient: ApiClient = ...`. `as any` is a TypeScript
