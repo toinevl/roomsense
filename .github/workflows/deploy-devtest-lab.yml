@@ -1,0 +1,72 @@
+name: deploy-devtest-lab
+
+# Cost-control demo (wishlist #68). Deliberately NOT triggered by push: it creates
+# billable resources, so a human dispatches it. PRs only compile the Bicep (no Azure login).
+# Setup: infra/devtest-lab/README.md
+
+on:
+  workflow_dispatch:
+    inputs:
+      what_if_only:
+        description: "Preview changes only, do not deploy"
+        type: boolean
+        default: true
+  pull_request:
+    paths: ["infra/devtest-lab/**", ".github/workflows/deploy-devtest-lab.yml"]
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: devtest-lab
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Bicep build
+        run: az bicep build --file infra/devtest-lab/main.bicep --stdout > /dev/null
+
+  deploy:
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: sandbox
+    env:
+      NOTIFICATION_EMAIL: ${{ vars.DTL_NOTIFICATION_EMAIL }}
+      OWNER_TAG: ${{ vars.DTL_OWNER }}
+      ALLOWED_SOURCE: ${{ vars.DTL_ALLOWED_SOURCE || 'Internet' }}
+      SSH_PUBLIC_KEY: ${{ vars.DTL_SSH_PUBLIC_KEY }}
+      RESOURCE_GROUP: ${{ vars.DTL_RESOURCE_GROUP }}
+    steps:
+      - uses: actions/checkout@v7
+      - name: Require configuration
+        run: |
+          for v in NOTIFICATION_EMAIL OWNER_TAG RESOURCE_GROUP; do
+            [ -n "${!v}" ] || { echo "::error::Missing sandbox environment variable DTL_* for $v (see infra/devtest-lab/README.md)"; exit 1; }
+          done
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - name: Confirm target
+        run: az account show --query "{subscription:name, id:id}" -o table
+      - name: What-if
+        run: |
+          az deployment group what-if \
+            --resource-group "$RESOURCE_GROUP" \
+            --parameters infra/devtest-lab/main.bicepparam
+      - name: Deploy
+        if: ${{ !inputs.what_if_only }}
+        run: |
+          az deployment group create \
+            --name "dtl-costdemo-${{ github.run_number }}" \
+            --resource-group "$RESOURCE_GROUP" \
+            --parameters infra/devtest-lab/main.bicepparam \
+            --query "properties.outputs" -o json
+      - name: Inventory
+        run: az resource list --resource-group "$RESOURCE_GROUP" -o table

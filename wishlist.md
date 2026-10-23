@@ -688,3 +688,12 @@ established workflow preference, not the git-history norm of small single-commit
   - Context: crosses into `.github/workflows/**` (orchestrator lane) — same
     out-of-lane pattern as #43/#45, justified the same way: this directly prevents a
     third recurrence of a bug that has now taken down both sandbox and production.
+
+- [ ] (C) Azure DevTest Labs cost-control demo (West Europe, standalone VNet, Internet-only ingress), deployed from GitHub Actions to the TU/e `sandbox` environment +infra +docs @O #68 — in progress 2026-10-23
+  - Scope: `infra/devtest-lab/**` (Bicep + setup script + README) and `.github/workflows/{deploy,teardown}-devtest-lab.yml`.
+    Independent of the RoomSense app: own resource group, own teardown; reuses the existing `sandbox`
+    environment OIDC identity ("RoomSense Deploy" app registration) — no new app registration.
+  - [ ] Bicep: lab, VNet+NSG, VM-count/size/premium policies, auto-shutdown, target cost + alerts, RG budget, expiring sample VM (@O)
+  - [ ] deploy-devtest-lab.yml (workflow_dispatch, what-if + deploy) and teardown-devtest-lab.yml (@O)
+  - [ ] setup.sh: providers + resource group + Contributor for the sandbox identity on that RG only (@O)
+  - [ ] First real deploy to sandbox, verify policies/schedule/budget in portal, then teardown test (@O)
