@@ -2,11 +2,12 @@
 # One-time setup for the DevTest Labs cost demo (wishlist #68).
 # Run after `az login` into the TU/e sandbox subscription. Idempotent.
 #
-# Reuses the existing sandbox deploy identity ("RoomSense Deploy" app registration):
+# Reuses the existing sandbox deploy identity (app registration `roomsense-github-deploy-sandbox`):
 # no new app registration, Contributor only on the NEW demo resource group.
 #
 #   ./setup.sh <sandbox-AZURE_CLIENT_ID> [resource-group] [location]
 set -euo pipefail
+export MSYS_NO_PATHCONV=1 # Git Bash on Windows would rewrite /subscriptions/... scope paths
 
 CLIENT_ID="${1:?usage: setup.sh <AZURE_CLIENT_ID of the sandbox environment> [rg] [location]}"
 RG="${2:-rg-dtl-costdemo-weu}"
@@ -28,7 +29,8 @@ RG_ID="$(az group show --name "$RG" --query id -o tsv)"
 SP_ID="$(az ad sp list --filter "appId eq '$CLIENT_ID'" --query "[0].id" -o tsv)"
 [[ -n "$SP_ID" ]] || { echo "no service principal for appId $CLIENT_ID in this tenant"; exit 1; }
 
-if [[ "$(az role assignment list --assignee "$SP_ID" --scope "$RG_ID" --role Contributor --query 'length(@)' -o tsv)" == "0" ]]; then
+EXISTING="$(az role assignment list --assignee "$SP_ID" --scope "$RG_ID" --role Contributor --query 'length(@)' -o tsv)"
+if [[ "$EXISTING" == "0" ]]; then
   az role assignment create --assignee-object-id "$SP_ID" --assignee-principal-type ServicePrincipal \
     --role Contributor --scope "$RG_ID" >/dev/null
 fi

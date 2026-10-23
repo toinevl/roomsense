@@ -22,7 +22,7 @@ Standalone VNet `10.20.0.0/16`: no peering, VPN, ExpressRoute or service endpoin
 
 ## Identity
 
-Reuses the existing `sandbox` environment identity (the `RoomSense Deploy` app registration, secrets `AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID`). `setup.sh` grants it Contributor on the **new demo resource group only**. This repository is public, so keep every environment-specific value in environment variables or secrets, never in the files.
+Reuses the existing `sandbox` environment identity (the `roomsense-github-deploy-sandbox` app registration, secrets `AZURE_CLIENT_ID` / `AZURE_TENANT_ID` / `AZURE_SUBSCRIPTION_ID`). `setup.sh` grants it Contributor on the **new demo resource group only**. This repository is public, so keep every environment-specific value in environment variables or secrets, never in the files.
 
 ## Setup (once)
 
