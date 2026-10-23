@@ -179,30 +179,36 @@ resource policySet 'Microsoft.DevTestLab/labs/policySets@2018-09-15' existing = 
 var policies = [
   {
     name: 'LabVmCount'
+    factName: 'LabVmCount'
     description: 'Cap total VMs in the lab'
     evaluatorType: 'MaxValuePolicy'
     threshold: string(maxVmsPerLab)
   }
   {
     name: 'UserOwnedLabVmCount'
+    factName: 'UserOwnedLabVmCount'
     description: 'Cap VMs per user'
     evaluatorType: 'MaxValuePolicy'
     threshold: string(maxVmsPerUser)
   }
   {
-    name: 'LabPremiumVmCount'
+    // The lab ships a default policy with this name for fact LabPremiumVmCount.
+    name: 'MaxPremiumVmsAllowedPerLab'
+    factName: 'LabPremiumVmCount'
     description: 'No premium (SSD) VMs in the lab'
     evaluatorType: 'MaxValuePolicy'
     threshold: '0'
   }
   {
     name: 'UserOwnedLabPremiumVmCount'
+    factName: 'UserOwnedLabPremiumVmCount'
     description: 'No premium (SSD) VMs per user'
     evaluatorType: 'MaxValuePolicy'
     threshold: '0'
   }
   {
     name: 'LabVmSize'
+    factName: 'LabVmSize'
     description: 'Only small, cheap VM sizes'
     evaluatorType: 'AllowedValuesPolicy'
     threshold: string(allowedVmSizes)
@@ -216,7 +222,7 @@ resource labPolicies 'Microsoft.DevTestLab/labs/policySets/policies@2018-09-15' 
     properties: {
       description: p.description
       evaluatorType: p.evaluatorType
-      factName: p.name
+      factName: p.factName
       factData: ''
       status: 'Enabled'
       threshold: p.threshold
