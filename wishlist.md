@@ -693,7 +693,9 @@ established workflow preference, not the git-history norm of small single-commit
   - Scope: `infra/devtest-lab/**` (Bicep + setup script + README) and `.github/workflows/{deploy,teardown}-devtest-lab.yml`.
     Independent of the RoomSense app: own resource group, own teardown; reuses the existing `sandbox`
     environment OIDC identity ("RoomSense Deploy" app registration) — no new app registration.
-  - [ ] Bicep: lab, VNet+NSG, VM-count/size/premium policies, auto-shutdown, target cost + alerts, RG budget, expiring sample VM (@O)
-  - [ ] deploy-devtest-lab.yml (workflow_dispatch, what-if + deploy) and teardown-devtest-lab.yml (@O)
-  - [ ] setup.sh: providers + resource group + Contributor for the sandbox identity on that RG only (@O)
-  - [ ] First real deploy to sandbox, verify policies/schedule/budget in portal, then teardown test (@O)
+  - [x] Bicep: lab, VNet+NSG, VM-count/size/premium policies, auto-shutdown, target cost + alerts, RG budget, expiring sample VM (@O) (d4e4a98, policy-name fix in follow-up commit)
+  - [x] deploy-devtest-lab.yml (workflow_dispatch, what-if + deploy) and teardown-devtest-lab.yml (@O) (d4e4a98)
+  - [x] setup.sh: providers + resource group + Contributor for the sandbox identity on that RG only (@O)
+  - [x] First real deploy to sandbox 2026-10-23 (run 39950051272): policies, 19:00 shutdown, 50 target cost + budget verified via ARM; SSH via shared IP works (@O)
+  - [ ] Test teardown-devtest-lab.yml, merge PR #7, then mark #68 done (@O)
+  - Lesson: lab policy resource NAME != factName for some defaults (premium-per-lab is `MaxPremiumVmsAllowedPerLab`); list `policySets/default/policies` on a fresh lab instead of guessing.
