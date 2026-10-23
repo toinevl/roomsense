@@ -697,5 +697,6 @@ established workflow preference, not the git-history norm of small single-commit
   - [x] deploy-devtest-lab.yml (workflow_dispatch, what-if + deploy) and teardown-devtest-lab.yml (@O) (d4e4a98)
   - [x] setup.sh: providers + resource group + Contributor for the sandbox identity on that RG only (@O)
   - [x] First real deploy to sandbox 2026-10-23 (run 39950051272): policies, 19:00 shutdown, 50 target cost + budget verified via ARM; SSH via shared IP works (@O)
-  - [ ] Test teardown-devtest-lab.yml, merge PR #7, then mark #68 done (@O)
+  - [ ] Test teardown-devtest-lab.yml (dispatch needs the workflow on main), merge PR #7, then mark #68 done (@O)
+    - Demo torn down 2026-10-23 with the same az commands by hand (lab, VNet, NSG, budget; RG now empty, lab-managed RG gone); the workflow itself is still untested.
   - Lesson: lab policy resource NAME != factName for some defaults (premium-per-lab is `MaxPremiumVmsAllowedPerLab`); list `policySets/default/policies` on a fresh lab instead of guessing.
